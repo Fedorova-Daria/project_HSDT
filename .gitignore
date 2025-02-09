@@ -1,0 +1,33 @@
+# .gitignore для Django
+
+# Папки и файлы, генерируемые Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__
+db.sqlite3
+*.log
+
+# Виртуальное окружение
+venv/
+env/
+.venv/
+.env/
+
+# Система управления зависимостями
+Pipfile.lock
+poetry.lock
+
+# Миграции Django (если их не нужно хранить в репозитории)
+*/migrations/*
+
+# Настройки PyCharm и других IDE
+.idea/
+
+# Файлы и папки, связанные с тестированием
+.coverage
+*.cover
+
+# Системные файлы
+*.DS_Store
+*.Thumbs.db
