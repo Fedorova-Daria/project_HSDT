@@ -1,9 +1,11 @@
 from django.db import models
 from core.models import Technology
+from django.contrib.auth.hashers import make_password   # Импортируем функцию для создания пароля
 
 
 class Account(models.Model):
     email = models.EmailField(unique=True)  # Почта
+    password = models.CharField(max_length=128, blank=True)
 
     first_name = models.CharField(max_length=100)  # Имя
     last_name = models.CharField(max_length=100)  # Фамилия
@@ -18,6 +20,14 @@ class Account(models.Model):
     rated_by_amount = models.FloatField(default=0)  # Рейтинг
 
     created_at = models.DateTimeField(auto_now_add=True)  # Дата регистрации
+
+    def set_password(self, raw_password):
+        """Хеширует пароль перед сохранением"""
+        self.password = make_password(raw_password)
+
+    def check_password(self, raw_password):
+        """Проверяет пароль"""
+        return check_password(raw_password, self.password)
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
