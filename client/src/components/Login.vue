@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="text-white text-9xl text-center">Портал ВШЦТ</h1>
+    <h1 class="mt-15 text-white text-9xl text-center">Портал ВШЦТ</h1>
     <div class="w-110 m-auto mt-5">
       <div class="flex flex-col items-center p-10">
         <div class="w-full mb-4">
