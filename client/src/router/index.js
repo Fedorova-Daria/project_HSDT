@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
-import Login from "./components/Login.vue"; // Импортируйте компонент Login
-import Register from "./components/Register.vue"; // Импортируйте компонент Register
+import Login from "../components/Login.vue"; // Импортируйте компонент Login
+import Register from "../components/Register.vue"; // Импортируйте компонент Register
 
 const routes = [
   { path: "/", redirect: "/login" }, // Перенаправление с корневого маршрута на страницу входа
