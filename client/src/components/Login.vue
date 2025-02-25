@@ -25,6 +25,7 @@
         </div>
 
         <button
+          @click="goToRialto"
           class="bg-purple-500 text-white font-medium w-90 p-2 rounded-lg hover:bg-purple-600 duration-500"
         >
           Войти
@@ -58,6 +59,9 @@ export default {
   methods: {
     goToRegister() {
       this.$router.push("/register");
+    },
+    goToRialto() {
+      this.$router.push("/rialto");
     },
   },
 };
