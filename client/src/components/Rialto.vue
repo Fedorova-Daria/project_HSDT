@@ -20,6 +20,9 @@
           </li>
         </ul>
         <img src="/notific.svg" alt="notification" class="w-10 ml-5" />
+        <button @click="goToProfile" class="bg-white text-gray-600">
+          Профиль
+        </button>
       </div>
     </header>
 
@@ -52,6 +55,7 @@
       </select>
     </div>
     <button class="bg-purple-600 text-white">Создать идею</button>
+
     <router-view />
   </div>
 </template>
@@ -78,6 +82,9 @@ export default {
     createIdea() {
       console.log("Переход на создание идеи");
       // Заменить на реальный маршрут
+    },
+    goToProfile() {
+      this.$router.push("/profile");
     },
   },
 };
