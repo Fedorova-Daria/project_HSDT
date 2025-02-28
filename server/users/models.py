@@ -1,35 +1,42 @@
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 from core.models import Technology
-from django.contrib.auth.hashers import make_password   # Импортируем функцию для создания пароля
+from .managers import AccountManager
 
 
-class Account(models.Model):
-    email = models.EmailField(unique=True)  # Почта
-    password = models.CharField(max_length=128, blank=True)
+class Account(AbstractUser):
+    email = models.EmailField(unique=True)
+    username = models.CharField(max_length=150, unique=True, blank=True, null=True)
 
-    first_name = models.CharField(max_length=100)  # Имя
-    last_name = models.CharField(max_length=100)  # Фамилия
-    phone = models.CharField(max_length=15)  # Телефон
-    group = models.CharField(max_length=100)  # Группа в ВУЗе
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = []
 
-    bio = models.TextField(blank=True, null=True)  # Био (необязательное)
+    phone = models.CharField(max_length=15, blank=True, null=True)  # Телефон
+    group = models.CharField(max_length=100, blank=True, null=True)  # Группа в ВУЗе
+
+    first_name = models.CharField(max_length=30, blank=True, null=True)
+    last_name = models.CharField(max_length=30, blank=True, null=True)
+
+    bio = models.TextField(blank=True, null=True)
     skills = models.ManyToManyField(Technology, related_name="users_with_skill", blank=True)
-    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)  # Аватарка (необязательное)
+    avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
 
-    total_rating = models.FloatField(default=0)  # Рейтинг
-    rated_by_amount = models.FloatField(default=0)  # Рейтинг
+    total_rating = models.FloatField(default=0)
+    rated_by_amount = models.FloatField(default=0)
 
-    created_at = models.DateTimeField(auto_now_add=True)  # Дата регистрации
+    created_at = models.DateTimeField(auto_now_add=True)
 
-    def set_password(self, raw_password):
-        """Хеширует пароль перед сохранением"""
-        self.password = make_password(raw_password)
+    objects = AccountManager()
 
-    def check_password(self, raw_password):
-        """Проверяет пароль"""
-        return check_password(raw_password, self.password)
+    class Meta:
+        verbose_name = "Аккаунт"
+        verbose_name_plural = "Аккаунты"
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name}"
+        return f"{self.first_name} {self.last_name} ({self.email})"
 
 
+    def save(self, *args, **kwargs):
+        if not self.username:
+            self.username = self.email  # Заполняем username email'ом
+        super().save(*args, **kwargs)
