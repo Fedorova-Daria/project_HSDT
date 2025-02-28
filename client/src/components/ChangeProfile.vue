@@ -44,13 +44,6 @@
         >
           Сохранить изменения
         </button>
-        <button
-          type="button"
-          @click="goToProfile"
-          class="w-full mt-2 p-2 bg-red-500 text-white rounded hover:bg-red-600"
-        >
-          Отмена редактирования
-        </button>
       </form>
 
       <h2 class="text-purple-500 text-xl font-bold mt-6">
@@ -76,6 +69,7 @@ export default {
         bio: "",
         techStack: "",
       },
+      showModal: false, // Добавлено состояние для управления модальным окном
     };
   },
   methods: {

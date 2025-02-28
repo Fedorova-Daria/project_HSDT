@@ -39,17 +39,19 @@
           </h1>
           <p class="text-purple-400 text-lg">{{ user.role }}</p>
         </div>
-        <button
-          @click="goToChangeProfile"
-          class="w-full mt-4 py-2 bg-purple-600 text-white rounded-lg transition duration-300 hover:bg-purple-500 hover:shadow-lg"
-        >
-          Редактировать профиль
-        </button>
+
         <div class="mt-5">
           <p><span class="font-bold">📧 Почта:</span> {{ user.email }}</p>
           <p><span class="font-bold">📞 Телефон:</span> {{ user.phone }}</p>
           <p><span class="font-bold">🎓 Группа:</span> {{ user.group }}</p>
         </div>
+        <!-- Кнопка для открытия модального окна -->
+        <button
+          @click="showModal = true"
+          class="w-full mt-4 py-2 bg-purple-600 text-white rounded-lg transition duration-300 hover:bg-purple-500 hover:shadow-lg"
+        >
+          Редактировать профиль
+        </button>
       </div>
 
       <!-- Правый блок (Проекты, команды, стек технологий, оценки) -->
@@ -124,6 +126,82 @@
         </div>
       </div>
     </div>
+
+    <!-- Модальное окно -->
+    <div
+      v-if="showModal"
+      class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
+    >
+      <div class="bg-zinc-700 p-6 rounded-lg shadow-lg">
+        <h2 class="text-purple-500 text-xl font-bold mb-4">
+          Редактировать профиль
+        </h2>
+        <div
+          class="w-full max-w-md p-6 border border-purple-400 rounded-lg bg-zinc-700 text-white"
+        >
+          <h1 class="text-purple-500 text-2xl font-bold mb-4">
+            Профиль пользователя
+          </h1>
+          <form @submit.prevent="updateProfile">
+            <div class="form-group mb-4">
+              <label for="email" class="font-bold text-purple-300"
+                >Email:</label
+              >
+              <input
+                type="email"
+                id="email"
+                v-model="user.email"
+                required
+                class="mt-1 block w-full p-2 border border-purple-400 rounded"
+              />
+            </div>
+            <div class="form-group mb-4">
+              <label for="phone" class="font-bold text-purple-300"
+                >Телефон:</label
+              >
+              <input
+                type="tel"
+                id="phone"
+                v-model="user.phone"
+                required
+                class="mt-1 block w-full p-2 border border-purple-400 rounded"
+              />
+            </div>
+            <div class="form-group mb-4">
+              <label for="bio" class="font-bold text-purple-300"
+                >Немного о себе:</label
+              >
+              <textarea
+                id="bio"
+                v-model="user.bio"
+                maxlength="40"
+                class="mt-1 block w-full p-2 border border-purple-400 rounded"
+              ></textarea>
+            </div>
+            <button
+              type="submit"
+              class="w-full mt-4 p-2 bg-purple-500 text-white rounded hover:bg-purple-600"
+            >
+              Сохранить изменения
+            </button>
+          </form>
+
+          <h2 class="text-purple-500 text-xl font-bold mt-6">
+            Информация о пользователе
+          </h2>
+
+          <p><strong>Email:</strong> {{ user.email }}</p>
+          <p><strong>Телефон:</strong> {{ user.phone }}</p>
+          <p><strong>Немного о себе:</strong> {{ user.bio }}</p>
+        </div>
+        <button
+          @click="showModal = false"
+          class="mt-4 p-2 bg-purple-500 text-white rounded hover:bg-purple-600"
+        >
+          Закрыть
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -132,6 +210,12 @@ export default {
   data() {
     return {
       user: {
+        name: "",
+        surname: "",
+        email: "",
+        phone: "",
+        bio: "",
+        techStack: "",
         name: "Имён",
         surname: "Имёнович",
         role: "Студент",
@@ -151,9 +235,24 @@ export default {
           { project: "Система тестирования", grade: 10 },
         ],
       },
+      showModal: false, // Добавлено состояние для управления модальным окном
     };
   },
   methods: {
+    updateProfile() {
+      console.log("Профиль обновлен:", this.user);
+      alert("Профиль успешно обновлен!");
+    },
+    cancelEdit() {
+      this.user = {
+        name: "",
+        surname: "",
+        email: "",
+        phone: "",
+        bio: "",
+        techStack: "",
+      };
+    },
     goToChangeProfile() {
       this.$router.push("/ChangeProfile");
     },

@@ -99,7 +99,6 @@ export default {
       LastName: "",
       GroupID: null, // Будем хранить ID группы
       email: "",
-      Phone: "",
       password: "",
       dropdownOpen: false,
       searchQuery: "",
@@ -109,31 +108,35 @@ export default {
     };
   },
   methods: {
-    // Функция регистрации пользователя
     async registerUser() {
       try {
         const response = await fetch(
-          "http://127.0.0.1:8000/api/users/registration/", // URL API для регистрации
+          "http://127.0.0.1:8000/api/users/registration/",
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              Accept: "application/json",
             },
             body: JSON.stringify({
               first_name: this.FirstName,
               last_name: this.LastName,
-              group_id: this.GroupID, // Отправляем ID группы
+              group: Array.isArray(this.GroupID)
+                ? this.GroupID[0]
+                : this.GroupID, // Убираем массив, если это он
               email: this.email,
               password: this.password,
             }),
           }
         );
 
+        // ✅ Читаем JSON только один раз
+        const data = await response.json();
+
         if (response.ok) {
-          const data = await response.json();
           console.log("Пользователь зарегистрирован:", data);
         } else {
-          console.error("Ошибка регистрации");
+          console.error("Ошибка регистрации:", data);
         }
       } catch (error) {
         console.error("Ошибка при отправке данных:", error);

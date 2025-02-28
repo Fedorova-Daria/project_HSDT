@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'users',
     'rest_framework',
     'rest_framework_simplejwt',  # Подключаем JWT
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -56,6 +57,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',  # если у тебя есть
 ]
 
 REST_FRAMEWORK = {
@@ -160,4 +163,6 @@ SESSION_COOKIE_AGE = 2592000  # 30 дней
 
 # Если True, сессия будет сохраняться даже после закрытия браузера
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
+CORS_ALLOW_ALL_ORIGINS = True
 
