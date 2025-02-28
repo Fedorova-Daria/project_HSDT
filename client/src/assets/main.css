@@ -1,7 +1,12 @@
+@import url("https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap");
 @import "tailwindcss";
 body {
   background-color: #121212;
 }
 @theme {
   --color-fiol: #bf8ce1;
+  --font-display: "Unbounded", "sans-serif";
+  --color-bgg: #212121;
+  --color-cards: #3a3a3a;
+  --color-border: #232323;
 }

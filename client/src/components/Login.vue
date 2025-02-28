@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="text-white text-9xl text-center">Портал ВШЦТ</h1>
+    <h1 class="mt-15 text-white text-9xl text-center">Портал ВШЦТ</h1>
     <div class="w-110 m-auto mt-5">
       <div class="flex flex-col items-center p-10">
         <div class="w-full mb-4">
@@ -25,6 +25,7 @@
         </div>
 
         <button
+          @click="goToRialto"
           class="bg-purple-500 text-white font-medium w-90 p-2 rounded-lg hover:bg-purple-600 duration-500"
         >
           Войти
@@ -58,6 +59,9 @@ export default {
   methods: {
     goToRegister() {
       this.$router.push("/register");
+    },
+    goToRialto() {
+      this.$router.push("/rialto");
     },
   },
 };

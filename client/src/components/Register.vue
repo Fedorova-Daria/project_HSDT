@@ -47,6 +47,7 @@
           <h2 class="text-white mb-1">Пароль</h2>
           <input
             v-model="password"
+            type="password"
             class="m-auto w-90 bg-white text-grey px-2 py-2 rounded-lg border-3 border-solid border-fiol duration-500 ease-linear transition-colors hover:border-purple-500 focus:border-purple-600 outline-none"
             placeholder="Введите пароль..."
           />
