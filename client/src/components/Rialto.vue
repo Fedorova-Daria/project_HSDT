@@ -68,7 +68,11 @@
         <option>Которые я знаю</option>
         <option>Остальные стеки...</option>
       </select>
+
+      <!-- Кнопка "Создать идею", отображается только если роль пользователя - "заказчик" -->
       <button
+        v-if="role === 'заказчик'"
+        @click="goToIdeaMaker"
         class="bg-purple-600 text-white rounded-md px-4 py-2 hover:bg-purple-700 transition ml-5 h-10"
       >
         Создать идею
@@ -92,6 +96,8 @@ export default {
   components: { IdeaCard },
   data() {
     return {
+      // Примерная роль пользователя, замените на роль из Vuex или другого хранилища
+      role: "заказчик", // Замените на реальную роль из вашего хранилища данных
       ideas: [
         {
           id: 1,
@@ -113,6 +119,9 @@ export default {
   methods: {
     goToProfile() {
       this.$router.push("/profile");
+    },
+    goToIdeaMaker() {
+      this.$router.push("/IdeaMaker"); // Переход на страницу создания идеи
     },
   },
 };

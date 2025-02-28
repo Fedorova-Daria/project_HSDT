@@ -4,6 +4,7 @@ import Register from "../components/Register.vue"; // Импортируйте �
 import Rialto from "../components/Rialto.vue";
 import Profile from "../components/Profile.vue";
 import ChangeProfile from "../components/ChangeProfile.vue";
+import IdeaMaker from "../components/IdeaMaker.vue";
 const routes = [
   { path: "/", redirect: "/login" }, // Перенаправление с корневого маршрута на страницу входа
   { path: "/login", component: Login }, // Маршрут для страницы входа
@@ -11,6 +12,7 @@ const routes = [
   { path: "/rialto", component: Rialto },
   { path: "/profile", component: Profile },
   { path: "/ChangeProfile", component: ChangeProfile },
+  { path: "/IdeaMaker", component: IdeaMaker },
 ];
 
 const router = createRouter({
