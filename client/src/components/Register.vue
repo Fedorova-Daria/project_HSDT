@@ -99,30 +99,6 @@ export default {
     };
   },
   methods: {
-    async fetchGroups() {
-      try {
-        const response = await fetch(
-          "http://127.0.0.1:8000/api/core/groups/list"
-        ); // Замените на ваш эндпоинт
-        if (!response.ok) throw new Error("Ошибка загрузки групп");
-        const data = await response.json();
-        this.groups = data; // Предполагаем, что сервер возвращает массив { id, name }
-        this.filteredGroups = this.groups;
-      } catch (error) {
-        console.error("Ошибка при загрузке групп:", error);
-      }
-    },
-    filterGroups() {
-      this.filteredGroups = this.groups.filter((group) =>
-        group.name.toLowerCase().includes(this.searchQuery.toLowerCase())
-      );
-    },
-    selectGroup(group) {
-      this.selectedGroup = group;
-      this.GroupID = group.id; // Присваиваем ID, а не name
-      this.searchQuery = "";
-      this.dropdownOpen = false;
-    },
     async registerUser() {
       try {
         const response = await fetch(
