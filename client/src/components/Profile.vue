@@ -27,10 +27,7 @@
     <!-- Основной контейнер профиля -->
     <div class="flex w-4/5 mx-auto mt-10 gap-6">
       <!-- Левый блок (Информация о пользователе) -->
-      <div
-        class="w-1/4 bg-zinc-700 p-6 rounded-2xl shadow-lg"
-        className="p-3 border-solid border-2 border-purple-400 rounded-lg"
-      >
+      <div class="w-1/4 bg-zinc-700 p-6 rounded-2xl shadow-lg">
         <div class="text-center">
           <img
             class="w-32 h-32 rounded-full border-4 border-purple-400 mx-auto"
@@ -42,6 +39,12 @@
           </h1>
           <p class="text-purple-400 text-lg">{{ user.role }}</p>
         </div>
+        <button
+          @click="goToChangeProfile"
+          class="w-full mt-4 py-2 bg-purple-600 text-white rounded-lg transition duration-300 hover:bg-purple-500 hover:shadow-lg"
+        >
+          Редактировать профиль
+        </button>
         <div class="mt-5">
           <p><span class="font-bold">📧 Почта:</span> {{ user.email }}</p>
           <p><span class="font-bold">📞 Телефон:</span> {{ user.phone }}</p>
@@ -50,10 +53,7 @@
       </div>
 
       <!-- Правый блок (Проекты, команды, стек технологий, оценки) -->
-      <div
-        class="w-3/4 bg-zinc-700 p-6 rounded-2xl shadow-lg"
-        className="p-3 border-solid border-2 border-purple-400 rounded-lg"
-      >
+      <div class="w-3/4 bg-zinc-700 p-6 rounded-2xl shadow-lg">
         <h2 class="text-2xl font-semibold mb-4">Информация о пользователе</h2>
 
         <div class="grid grid-cols-2 gap-6">
@@ -152,6 +152,11 @@ export default {
         ],
       },
     };
+  },
+  methods: {
+    goToChangeProfile() {
+      this.$router.push("/ChangeProfile");
+    },
   },
 };
 </script>

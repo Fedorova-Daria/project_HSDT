@@ -3,6 +3,7 @@
     <h1 class="text-white text-8xl text-center">Регистрация</h1>
     <div class="w-110 m-auto mt-5">
       <div class="flex flex-col items-center p-10">
+        <!-- Поля формы -->
         <div class="w-full mb-4">
           <h2 class="text-white mb-1">Имя</h2>
           <input
@@ -54,22 +55,56 @@
         </div>
 
         <button
+          @click="registerUser"
           class="bg-purple-500 mt-4 text-white font-medium w-90 p-2 rounded-lg hover:bg-purple-600 duration-500"
         >
           Войти
         </button>
       </div>
     </div>
-    <div>
-      <router-view></router-view>
-    </div>
   </div>
 </template>
+
 <script>
 export default {
+  data() {
+    return {
+      FirstName: "",
+      LastName: "",
+      Group: "",
+      email: "",
+      Phone: "",
+      password: "",
+    };
+  },
   methods: {
-    goToLogin() {
-      this.$router.push("/");
+    async registerUser() {
+      // Делаем запрос на сервер для регистрации
+      try {
+        const response = await fetch("http://localhost:8000/api/register/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            first_name: this.FirstName,
+            last_name: this.LastName,
+            group: this.Group,
+            email: this.email,
+            phone: this.Phone,
+            password: this.password,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Пользователь зарегистрирован:", data);
+        } else {
+          console.error("Ошибка регистрации");
+        }
+      } catch (error) {
+        console.error("Ошибка при отправке данных:", error);
+      }
     },
   },
 };
