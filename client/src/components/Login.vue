@@ -25,7 +25,7 @@
         </div>
 
         <button
-          @click="goToRialto"
+          @click="login"
           class="bg-purple-500 text-white font-medium w-90 p-2 rounded-lg hover:bg-purple-600 duration-500"
         >
           Войти
@@ -55,13 +55,43 @@
 </template>
 
 <script>
+import axios from "axios"; // импортируем axios
+
 export default {
+  data() {
+    return {
+      email: "",
+      password: "",
+    };
+  },
   methods: {
     goToRegister() {
       this.$router.push("/register");
     },
-    goToRialto() {
-      this.$router.push("/rialto");
+
+    // Метод для входа
+    async login() {
+      try {
+        // Отправка запроса на сервер для входа
+        const response = await axios.post(
+          "http://127.0.0.1:8000/api/users/login/",
+          {
+            email: this.email,
+            password: this.password,
+          }
+        );
+
+        // Проверка на успешный вход
+        if (response.status === 200) {
+          // Редирект на страницу Rialto после успешного входа
+          this.$router.push("/rialto");
+        } else {
+          alert("Неверный логин или пароль");
+        }
+      } catch (error) {
+        console.error("Ошибка входа", error);
+        alert("Произошла ошибка при подключении к серверу.");
+      }
     },
   },
 };
