@@ -140,10 +140,12 @@ export default {
       }
     },
 
-    // Функция для получения списка групп
+    // Функция для получения списка групп с нового URL
     async fetchGroups() {
       try {
-        const response = await fetch("http://127.0.0.1:8000/api/groups/");
+        const response = await fetch(
+          "http://127.0.0.1:8000/api/core/groups/list"
+        );
         if (response.ok) {
           const data = await response.json();
           this.groups = data; // Сохраняем группы
