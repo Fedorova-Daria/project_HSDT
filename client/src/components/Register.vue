@@ -1,92 +1,109 @@
 <template>
-  <div class="w-4xl m-auto mt-10">
-    <h1 class="text-white text-8xl text-center">Регистрация</h1>
-    <div class="w-110 m-auto mt-5">
-      <div class="flex flex-col items-center p-10">
-        <!-- Поля формы -->
-        <div class="w-full mb-4">
-          <h2 class="text-white mb-1">Имя</h2>
-          <input
-            v-model="FirstName"
-            class="m-auto w-90 bg-white text-grey px-2 py-2 rounded-lg border-3 border-solid border-fiol duration-500 ease-linear transition-colors hover:border-purple-500 focus:border-purple-600 outline-none"
-            placeholder="Введите имя..."
-          />
-        </div>
-        <div class="w-full mb-4 flex flex-col">
-          <h2 class="text-white mb-1">Фамилия</h2>
-          <input
-            v-model="LastName"
-            class="m-auto w-90 bg-white text-grey px-2 py-2 rounded-lg border-3 border-solid border-fiol duration-500 ease-linear transition-colors hover:border-purple-500 focus:border-purple-600 outline-none"
-            placeholder="Введите фамилию..."
-          />
-        </div>
-        <div class="w-full mb-4 flex flex-col">
-          <h2 class="text-white mb-1">Почта</h2>
-          <input
-            v-model="email"
-            class="m-auto w-90 bg-white text-grey px-2 py-2 rounded-lg border-3 border-solid border-fiol duration-500 ease-linear transition-colors hover:border-purple-500 focus:border-purple-600 outline-none"
-            placeholder="Введите почту..."
-          />
-        </div>
-
-        <!-- Кнопка для открытия списка -->
-        <div class="relative w-64">
-          <div
-            class="w-full border rounded-md py-2 px-3 bg-white text-black cursor-pointer flex justify-between items-center"
-            @click="dropdownOpen = !dropdownOpen"
-          >
-            <span>{{
-              selectedGroup ? selectedGroup.name : "Выберите группу"
-            }}</span>
-            <span
-              :class="{ 'rotate-180': dropdownOpen }"
-              class="transition-transform"
-            >
-              &#9660;
-            </span>
-          </div>
-
-          <!-- Выпадающий список -->
-          <div
-            v-if="dropdownOpen"
-            class="flex flex-col absolute w-full bg-white border rounded-md shadow-lg mt-1 max-h-48 overflow-y-auto z-50"
-          >
-            <!-- Поле поиска -->
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Поиск..."
-              class="w-full px-3 py-2 border-b outline-none"
-              @input="filterGroups"
-            />
-            <!-- Список групп -->
-            <div
-              v-for="group in filteredGroups"
-              :key="group.id"
-              @click="selectGroup(group)"
-              class="p-2 cursor-pointer hover:bg-gray-200"
-            >
-              {{ group.name }}
+  <div>
+    <img
+      aria-hidden="true"
+      class="absolute top-0 h-screen w-screen bg-cover bg-center bg-fixed"
+      src="/bgg.jpg"
+    />
+    <div>
+      <div class="relative w-4/5 m-auto mt-15">
+        <h1 class="text-white text-8xl text-center font-display">
+          Регистрация
+        </h1>
+        <div class="w-110 m-auto mt-10">
+          <div class="flex flex-col items-center p-10">
+            <!-- Поля формы -->
+            <div class="w-full mb-4">
+              <h2 class="text-white mb-1">Имя</h2>
+              <input
+                v-model="FirstName"
+                class="m-auto w-90 bg-white text-grey px-2 py-2 rounded-lg border-3 border-solid border-fiol duration-500 ease-linear transition-colors hover:border-purple-500 focus:border-purple-600 outline-none"
+                placeholder="Введите имя..."
+              />
             </div>
+            <div class="w-full mb-4 flex flex-col">
+              <h2 class="text-white mb-1">Фамилия</h2>
+              <input
+                v-model="LastName"
+                class="m-auto w-90 bg-white text-grey px-2 py-2 rounded-lg border-3 border-solid border-fiol duration-500 ease-linear transition-colors hover:border-purple-500 focus:border-purple-600 outline-none"
+                placeholder="Введите фамилию..."
+              />
+            </div>
+            <div class="w-full mb-4 flex flex-col">
+              <h2 class="text-white mb-1">Почта</h2>
+              <input
+                v-model="email"
+                class="m-auto w-90 bg-white text-grey px-2 py-2 rounded-lg border-3 border-solid border-fiol duration-500 ease-linear transition-colors hover:border-purple-500 focus:border-purple-600 outline-none"
+                placeholder="Введите почту..."
+              />
+            </div>
+            <div class="w-full mb-4 flex flex-col">
+              <h2 class="text-white mb-1">Группа</h2>
+              <div
+                class="relative m-auto w-90 bg-white text-grey rounded-lg border-2 border-solid border-fiol duration-500 ease-linear transition-colors hover:border-purple-500 focus:border-purple-600 outline-none"
+              >
+                <!-- Кнопка для открытия списка -->
+                <div
+                  class="w-full border border-fiol rounded-md py-2 px-3 bg-white text-black cursor-pointer flex justify-between items-center transition-colors hover:border-purple-500 focus:border-purple-600"
+                  @click="dropdownOpen = !dropdownOpen"
+                >
+                  <span>{{
+                    selectedGroup ? selectedGroup.name : "Выберите группу"
+                  }}</span>
+                  <span
+                    :class="{ 'rotate-180': dropdownOpen }"
+                    class="transition-transform"
+                  >
+                    &#9660;
+                  </span>
+                </div>
+
+                <!-- Выпадающий список -->
+                <div
+                  v-if="dropdownOpen"
+                  class="flex flex-col absolute left-0 w-full bg-white border-3 border-solid border-fiol rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto z-50 transition-colors hover:border-purple-500"
+                >
+                  <!-- Поле поиска -->
+                  <input
+                    v-model="searchQuery"
+                    type="text"
+                    placeholder="Поиск..."
+                    class="w-full px-3 py-2 border-b border-fiol outline-none transition-colors hover:border-purple-500 focus:border-purple-600"
+                    @input="filterGroups"
+                  />
+
+                  <!-- Список групп -->
+                  <div
+                    v-for="group in filteredGroups"
+                    :key="group.id"
+                    @click="selectGroup(group)"
+                    class="p-2 cursor-pointer hover:bg-gray-200 transition-colors duration-300"
+                  >
+                    {{ group.name }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Поле Пароля (Теперь внутри общего контейнера!) -->
+            <div class="w-full mb-4">
+              <h2 class="text-white mb-1">Пароль</h2>
+              <input
+                v-model="password"
+                type="password"
+                class="m-auto w-90 bg-white text-grey px-2 py-2 rounded-lg border-3 border-solid border-fiol duration-500 ease-linear transition-colors hover:border-purple-500 focus:border-purple-600 outline-none"
+                placeholder="Введите пароль..."
+              />
+            </div>
+
+            <button
+              @click="registerUser"
+              class="bg-purple-500 mt-4 text-white font-medium w-90 h-12 p-2 rounded-lg hover:bg-purple-600 duration-500"
+            >
+              Зарегистрироваться
+            </button>
           </div>
         </div>
       </div>
-      <div class="w-full mb-4 flex flex-col">
-        <h2 class="text-white mb-1">Пароль</h2>
-        <input
-          v-model="password"
-          type="password"
-          class="m-auto w-90 bg-white text-grey px-2 py-2 rounded-lg border-3 border-solid border-fiol duration-500 ease-linear transition-colors hover:border-purple-500 focus:border-purple-600 outline-none"
-          placeholder="Введите пароль..."
-        />
-      </div>
-
-      <button
-        @click="registerUser"
-        class="bg-purple-500 mt-4 text-white font-medium w-90 p-2 rounded-lg hover:bg-purple-600 duration-500"
-      >
-        Войти
-      </button>
     </div>
   </div>
 </template>
