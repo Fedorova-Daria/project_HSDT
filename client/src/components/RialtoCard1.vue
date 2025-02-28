@@ -7,10 +7,12 @@
     <div class="flex justify-between items-center mb-3">
       <h1 class="text-2xl font-semibold text-white">{{ idea.title }}</h1>
       <img
-        :src="liked ? '/liked-filled.svg' : '/liked.svg'"
+        :src="liked ? '/liked1.svg' : '/like.svg'"
         alt="Like"
-        class="w-8 h-8 opacity-80 hover:opacity-100 duration-300 cursor-pointer"
+        class="w-6 h-6 mr-4 mb-5 duration-300 cursor-pointer"
+        :class="{ 'animate-like': isAnimating }"
         @click.stop="toggleLike"
+        @animationend="isAnimating = false"
       />
     </div>
 
@@ -57,6 +59,7 @@ export default {
   data() {
     return {
       liked: false, // Состояние лайка
+      isAnimating: false,
     };
   },
   methods: {
@@ -66,6 +69,7 @@ export default {
     toggleLike(event) {
       event.stopPropagation(); // Предотвращаем всплытие события
       this.liked = !this.liked; // Переключаем состояние лайка
+      this.isAnimating = true;
     },
   },
 };
@@ -77,5 +81,20 @@ export default {
   display: flex;
   flex-direction: column;
   height: 100%; /* Чтобы карточка была одинаковой высоты */
+}
+@keyframes likeJump {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.4);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-like {
+  animation: likeJump 0.3s ease-in-out;
 }
 </style>
