@@ -1,6 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from core.models import Technology
+from core.models import Technology, Group
 from .managers import AccountManager
 
 
@@ -12,7 +12,7 @@ class Account(AbstractUser):
     REQUIRED_FIELDS = []
 
     phone = models.CharField(max_length=15, blank=True, null=True)  # Телефон
-    group = models.CharField(max_length=100, blank=True, null=True)  # Группа в ВУЗе
+    group = models.ForeignKey(Group, related_name='students', on_delete=models.CASCADE, null=True, blank=True)
 
     first_name = models.CharField(max_length=30, blank=True, null=True)
     last_name = models.CharField(max_length=30, blank=True, null=True)
@@ -35,8 +35,8 @@ class Account(AbstractUser):
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.email})"
 
-
     def save(self, *args, **kwargs):
         if not self.username:
             self.username = self.email  # Заполняем username email'ом
         super().save(*args, **kwargs)
+

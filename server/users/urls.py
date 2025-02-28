@@ -3,9 +3,9 @@ from .views import AccountListCreateView, AccountDetailView, LoginView, Registra
 
 
 urlpatterns = [
-    path('users/', AccountListCreateView.as_view(), name='user-list'),
-    path('users/<int:pk>/', AccountDetailView.as_view(), name='user-detail'),
-    path('users/login/', LoginView.as_view(), name='login'),
-    path('users/registration/', RegistrationView.as_view(), name='registration')
+    path('list/', AccountListCreateView.as_view(), name='user-list'),
+    path('<int:pk>/', AccountDetailView.as_view(), name='user-detail'),
+    path('login/', LoginView.as_view(), name='login'),
+    path('registration/', RegistrationView.as_view(), name='registration')
 ]
 

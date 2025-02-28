@@ -1,9 +1,11 @@
 from rest_framework import serializers
 from .models import Account
 from django.contrib.auth.hashers import make_password
+from core.models import Group
 
 
 class AccountSerializer(serializers.ModelSerializer):
+    group = serializers.PrimaryKeyRelatedField(queryset=Group.objects.all())  # Добавляем поле для выбора группы
     class Meta:
         model = Account
         fields = ['id', 'email', 'username', 'password', 'first_name', 'last_name', 'group']
