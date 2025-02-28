@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+from datetime import timedelta
 
 # Build paths inside the _project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -44,6 +45,7 @@ INSTALLED_APPS = [
     'requests',
     'users',
     'rest_framework',
+    'rest_framework_simplejwt',  # Подключаем JWT
 ]
 
 MIDDLEWARE = [
@@ -55,6 +57,22 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',  # Подключаем JWT-авторизацию
+    ),
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),  # Живёт 10 минут
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),  # Живёт 7 дней
+    "ROTATE_REFRESH_TOKENS": True,  # Новый refresh-токен при обновлении
+    "BLACKLIST_AFTER_ROTATION": True,  # Старый refresh-токен становится недействителен
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,  # Ключ для подписи токенов
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
 
 ROOT_URLCONF = '_project.urls'
 
@@ -129,6 +147,17 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Медиа
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Модель для пользователя
+AUTH_USER_MODEL = "users.Account"  # Путь к модели
+
+# Cookies
+# Время жизни cookie сессии (в секундах). Например, 30 дней:
+SESSION_COOKIE_AGE = 2592000  # 30 дней
+
+# Если True, сессия будет сохраняться даже после закрытия браузера
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
