@@ -49,7 +49,7 @@
           <!-- Выпадающий список -->
           <div
             v-if="dropdownOpen"
-            class="absolute w-full bg-white border rounded-md shadow-lg mt-1 max-h-48 overflow-y-auto z-50"
+            class="flex flex-col absolute w-full bg-white border rounded-md shadow-lg mt-1 max-h-48 overflow-y-auto z-50"
           >
             <!-- Поле поиска -->
             <input
