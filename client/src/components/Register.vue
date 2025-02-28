@@ -29,8 +29,8 @@
           />
         </div>
 
+        <!-- Кнопка для открытия списка -->
         <div class="relative w-64">
-          <!-- Кнопка для открытия списка -->
           <div
             class="w-full border rounded-md py-2 px-3 bg-white text-black cursor-pointer flex justify-between items-center"
             @click="dropdownOpen = !dropdownOpen"
@@ -41,8 +41,9 @@
             <span
               :class="{ 'rotate-180': dropdownOpen }"
               class="transition-transform"
-              >&#9660;</span
             >
+              &#9660;
+            </span>
           </div>
 
           <!-- Выпадающий список -->
@@ -58,6 +59,15 @@
               class="w-full px-3 py-2 border-b outline-none"
               @input="filterGroups"
             />
+            <!-- Список групп -->
+            <div
+              v-for="group in filteredGroups"
+              :key="group.id"
+              @click="selectGroup(group)"
+              class="p-2 cursor-pointer hover:bg-gray-200"
+            >
+              {{ group.name }}
+            </div>
           </div>
         </div>
       </div>
@@ -95,14 +105,15 @@ export default {
       searchQuery: "",
       selectedGroup: null,
       groups: [], // Список групп загружаем с сервера
-      filteredGroups: [],
+      filteredGroups: [], // Для фильтрации
     };
   },
   methods: {
+    // Функция регистрации пользователя
     async registerUser() {
       try {
         const response = await fetch(
-          "http://127.0.0.1:8000/api/users/registration/",
+          "http://127.0.0.1:8000/api/users/registration/", // URL API для регистрации
           {
             method: "POST",
             headers: {
@@ -111,7 +122,7 @@ export default {
             body: JSON.stringify({
               first_name: this.FirstName,
               last_name: this.LastName,
-              group_id: this.GroupID, // Отправляем ID группы, а не название
+              group_id: this.GroupID, // Отправляем ID группы
               email: this.email,
               password: this.password,
             }),
@@ -128,9 +139,58 @@ export default {
         console.error("Ошибка при отправке данных:", error);
       }
     },
+
+    // Функция для получения списка групп
+    async fetchGroups() {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/api/groups/");
+        if (response.ok) {
+          const data = await response.json();
+          this.groups = data; // Сохраняем группы
+          this.filteredGroups = data; // Инициализируем список для фильтрации
+        } else {
+          console.error("Ошибка при получении групп");
+        }
+      } catch (error) {
+        console.error("Ошибка при загрузке групп:", error);
+      }
+    },
+
+    // Функция для фильтрации групп
+    filterGroups() {
+      this.filteredGroups = this.groups.filter((group) =>
+        group.name.toLowerCase().includes(this.searchQuery.toLowerCase())
+      );
+    },
+
+    // Функция для выбора группы
+    selectGroup(group) {
+      this.selectedGroup = group;
+      this.GroupID = group.id; // Сохраняем ID группы
+      this.dropdownOpen = false; // Закрываем список
+    },
   },
   mounted() {
-    this.fetchGroups(); // Загружаем группы при загрузке страницы
+    this.fetchGroups(); // Загружаем группы при монтировании компонента
   },
 };
 </script>
+
+<style scoped>
+/* Стиль для выпадающего списка */
+.max-h-48 {
+  max-height: 12rem; /* Ограничиваем высоту списка для прокрутки */
+}
+
+.overflow-y-auto {
+  overflow-y: auto; /* Включаем вертикальную прокрутку */
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.hover\:bg-gray-200:hover {
+  background-color: #edf2f7;
+}
+</style>
