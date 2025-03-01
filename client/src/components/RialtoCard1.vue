@@ -1,6 +1,6 @@
 <template>
   <div
-    class="idea-card border border-zinc-700 bg-cards rounded-xl p-5 shadow-lg hover:border-purple-500 duration-300 cursor-pointer"
+    class="idea-card border border-zinc-700 bg-cards rounded-xl p-5 shadow-lg cursor-pointer"
     @click="openIdea"
   >
     <!-- Заголовок и иконка лайка -->

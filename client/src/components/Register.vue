@@ -1,12 +1,14 @@
 <template>
   <div>
+    <div class="absolute inset-0 bg-black opacity-30 z-10"></div>
+    <!-- Картинка на фоне -->
     <img
       aria-hidden="true"
-      class="absolute top-0 h-screen w-screen bg-cover bg-center bg-fixed"
+      class="top-0 left-0 h-screen w-screen object-cover fixed z-0"
       src="/bgg.jpg"
     />
     <div>
-      <div class="relative w-4/5 m-auto mt-15">
+      <div class="relative w-4/5 m-auto mt-15 z-20">
         <h1 class="text-white text-8xl text-center font-display">
           Регистрация
         </h1>
