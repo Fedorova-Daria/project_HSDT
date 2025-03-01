@@ -1,17 +1,33 @@
 <!-- src/components/Rialto.vue -->
+<!-- src/components/IdeaMaker.vue -->
 <template>
   <div>
-    <button @click="goToIdeaMaker">Создать идею</button>
+    <button
+      @click="openModal"
+      class="bg-purple-600 text-white px-4 py-2 rounded"
+    >
+      Создать идею
+    </button>
+    <IdeaModal :isOpen="isModalOpen" @close="closeModal" />
   </div>
 </template>
 
 <script>
+import IdeaModal from "./IdeaModal.vue";
+
 export default {
-  name: "Rialto",
+  components: { IdeaModal },
+  data() {
+    return {
+      isModalOpen: false,
+    };
+  },
   methods: {
-    goToIdeaMaker() {
-      // Переход к странице создания идеи
-      this.$router.push({ name: "IdeaMaker" });
+    openModal() {
+      this.isModalOpen = true;
+    },
+    closeModal() {
+      this.isModalOpen = false;
     },
   },
 };

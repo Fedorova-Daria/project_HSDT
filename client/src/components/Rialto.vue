@@ -70,9 +70,10 @@
       </select>
 
       <!-- Кнопка "Создать идею", отображается только если роль пользователя - "заказчик" -->
+      <!-- Кнопка "Создать идею" теперь открывает модальное окно -->
       <button
         v-if="role === 'заказчик'"
-        @click="goToIdeaMaker"
+        @click="openModal"
         class="bg-purple-600 text-white rounded-md px-4 py-2 hover:bg-purple-700 transition ml-5 h-10"
       >
         Создать идею
@@ -85,15 +86,17 @@
     >
       <IdeaCard v-for="idea in ideas" :key="idea.id" :idea="idea" />
     </div>
+    <!-- Всплывающее окно -->
+    <IdeaModal v-if="isModalOpen" @close="closeModal" />
     <router-view />
   </div>
 </template>
 
 <script>
 import IdeaCard from "@/components/RialtoCard1.vue"; // Проверьте правильность пути
-
+import IdeaModal from "@/components/IdeaModal.vue"; // Импортируем модальное окно
 export default {
-  components: { IdeaCard },
+  components: { IdeaCard, IdeaModal },
   data() {
     return {
       // Примерная роль пользователя
@@ -114,14 +117,18 @@ export default {
         { name: "Команды", link: "/teams" },
         { name: "Идеи", link: "/ideas" },
       ],
+      isModalOpen: false, // Состояние модального окна
     };
   },
   methods: {
     goToProfile() {
       this.$router.push("/profile");
     },
-    goToIdeaMaker() {
-      this.$router.push("/IdeaMaker"); // Переход на страницу создания идеи
+    openModal() {
+      this.isModalOpen = true;
+    },
+    closeModal() {
+      this.isModalOpen = false;
     },
   },
 };
