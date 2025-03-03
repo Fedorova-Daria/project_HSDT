@@ -91,7 +91,7 @@ export default {
         );
 
         // Проверка на успешный вход
-        if (response.status === 200) {
+        if (response.data.success === true) {
           // Редирект на страницу Rialto после успешного входа
           this.$router.push("/rialto");
         } else {
