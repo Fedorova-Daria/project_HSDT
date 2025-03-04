@@ -12,22 +12,28 @@
       <div class="w-110 m-auto mt-15">
         <div class="flex flex-col items-center p-10">
           <!-- Поле ввода почты -->
-          <div class="w-full mb-4">
-            <h2 class="text-white mb-1">Почта</h2>
-            <input
-              v-model="email"
-              @input="clearError('email')"
-              class="m-auto w-90 bg-white text-grey px-2 py-2 rounded-lg border-3 border-solid duration-500 ease-linear transition-colors outline-none"
-              :class="{
-                'border-fiol hover:border-purple-500 focus:border-purple-600':
-                  !emailError,
-                'border-red-500': emailError,
-              }"
-              placeholder="Введите почту..."
-            />
-            <div v-if="emailError" class="flex gap-1 text-red-400 text-sm mt-1">
-              <img src="/error.svg" />
-              {{ emailError }}
+          <div>
+            <div class="w-full mb-4">
+              <h2 class="text-white mb-1">Почта</h2>
+              <input
+                v-model="email"
+                @input="clearError('email')"
+                class="m-auto w-90 bg-white text-grey px-2 py-2 rounded-lg border-3 border-solid duration-500 ease-linear transition-colors outline-none"
+                :class="{
+                  'border-fiol hover:border-purple-500 focus:border-purple-600':
+                    !emailError,
+                  'border-red-500': emailError,
+                }"
+                placeholder="Введите почту..."
+              />
+              <!-- Сообщение об ошибке -->
+              <div
+                v-if="emailError"
+                class="flex gap-1 text-red-400 text-sm mt-1"
+              >
+                <img src="/error.svg" alt="Ошибка" />
+                {{ emailError }}
+              </div>
             </div>
           </div>
 
@@ -130,33 +136,41 @@ export default {
           }
         );
 
-        if (response.status === 200) {
+        // Проверка на успешный вход
+        if (response.data.success === true) {
           this.$router.push("/rialto");
+        } else {
+          // Если success === false, отображаем сообщение об ошибке
+          if (response.data.message === "Invalid credentials") {
+            this.passwordError = "Неверный email или пароль";
+          } else if (response.data.message === "Email not found") {
+            this.emailError = "Данная почта не зарегистрирована";
+          } else {
+            this.passwordError = "Произошла ошибка при входе";
+          }
         }
       } catch (error) {
-        if (error.response) {
-          const { status, data } = error.response;
+        console.error("Ошибка входа", error);
 
-          if (status === 400) {
-            // Обработка ошибок валидации
-            if (data.email) {
-              this.emailError = data.email[0];
+        // Обработка ошибок сети или сервера
+        if (error.response) {
+          // Ошибки от сервера (например, 400, 500)
+          if (error.response.data && error.response.data.message) {
+            if (error.response.data.message === "Invalid credentials") {
+              this.passwordError = "Неверный email или пароль";
+            } else if (error.response.data.message === "Email not found") {
+              this.emailError = "Данная почта не зарегистрирована";
+            } else {
+              this.passwordError = error.response.data.message;
             }
-            if (data.password) {
-              this.passwordError = data.password[0];
-            }
-          } else if (status === 401) {
-            // Обработка ошибки авторизации
-            this.passwordError = "Неверный пароль";
           } else {
             this.passwordError = "Произошла ошибка при входе";
           }
         } else if (error.request) {
-          // Обработка ошибок сети
+          // Ошибки сети (нет ответа от сервера)
           this.passwordError = "Ошибка соединения с сервером";
         } else {
           // Другие ошибки
-          console.error("Ошибка:", error.message);
           this.passwordError = "Произошла непредвиденная ошибка";
         }
       }
