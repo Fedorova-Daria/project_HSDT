@@ -22,6 +22,13 @@ def create_jwt_tokens(user):
     }
 
 
+def create_json_respond(success, email_is_correct):
+    if not email_is_correct:
+        return {
+
+        }
+
+
 class LoginView(APIView):
     def post(self, request):
         email = request.data.get("email")
@@ -30,18 +37,26 @@ class LoginView(APIView):
         try:
             user = Account.objects.get(email=email)  # Ищем пользователя по email
         except Account.DoesNotExist:
-            return Response({"message": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"success": False,
+                             "email_is_correct": False,
+                             "message": "Invalid credentials"
+                             }, status=status.HTTP_400_BAD_REQUEST)
 
         # Проверяем пароль
         if check_password(password, user.password):
             tokens = create_jwt_tokens(user)
             return Response({
+                "success": True,
+                "email_is_correct": True,
                 "message": "Login successful",
                 "access_token": tokens["access_token"],
                 "refresh_token": tokens["refresh_token"]
             }, status=status.HTTP_200_OK)
 
-        return Response({"message": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"success": False, 
+                         "email_is_correct": True, 
+                         "message": "Invalid credentials"
+                         }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class RefreshTokenView(TokenRefreshView):
