@@ -86,9 +86,10 @@
     >
       <IdeaCard v-for="idea in ideas" :key="idea.id" :idea="idea" />
     </div>
+
     <!-- Всплывающее окно -->
-    <IdeaModal v-if="isModalOpen" @close="closeModal" />
-    <router-view />
+    <!-- Обработчик для новой идеи -->
+    <IdeaModal v-if="isModalOpen" @close="closeModal" @submit="addNewIdea" />
   </div>
 </template>
 
@@ -129,6 +130,11 @@ export default {
     },
     closeModal() {
       this.isModalOpen = false;
+    },
+    addNewIdea(newIdea) {
+      // Добавляем новую идею в список
+      this.ideas.unshift(newIdea); // Добавляем в начало списка
+      this.closeModal();
     },
   },
 };

@@ -1,4 +1,3 @@
-<!-- src/components/IdeaModal.vue -->
 <template>
   <div
     class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm"
@@ -39,7 +38,7 @@
           </button>
         </div>
         <!-- Modal body -->
-        <form class="p-4 md:p-5">
+        <form @submit.prevent="submitIdea" class="p-4 md:p-5">
           <div class="grid gap-4 mb-4 grid-cols-2">
             <div class="col-span-2">
               <label
@@ -48,12 +47,13 @@
                 >Название проекта</label
               >
               <input
+                v-model="ideaTitle"
                 type="text"
                 name="name"
                 id="name"
                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-zinc-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                 placeholder="Какой вы придумали проект? Удивите нас!"
-                required=""
+                required
               />
             </div>
 
@@ -63,12 +63,13 @@
                 >Кол-во участников</label
               >
               <input
+                v-model="participantsCount"
                 type="number"
                 name="number"
                 id="number"
                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-zinc-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                 placeholder="7"
-                required=""
+                required
               />
             </div>
 
@@ -145,10 +146,12 @@
                 >Расскажите о том, что нужно сделать</label
               >
               <textarea
+                v-model="ideaDescription"
                 id="description"
                 rows="4"
                 class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 placeholder="Напишите описание проекта здесь"
+                required
               ></textarea>
             </div>
           </div>
@@ -182,8 +185,9 @@ export default {
     return {
       isDropdownOpen: false, // Флаг для управления состоянием выпадающего списка
       selectedStacks: [], // Массив для выбранных технологий
-      ideaTitle: "",
-      ideaDescription: "",
+      ideaTitle: "", // Название проекта
+      ideaDescription: "", // Описание проекта
+      participantsCount: 1, // Количество участников
       stacks: [
         "Vue",
         "React",
@@ -199,13 +203,26 @@ export default {
     closeModal() {
       this.$emit("close"); // Сообщаем родителю закрыть окно
     },
-    submitIdea() {
-      console.log("Идея создана:", this.ideaTitle, this.ideaDescription);
-      this.closeModal();
-    },
-    // Метод для переключения состояния выпадающего списка
     toggleDropdown() {
       this.isDropdownOpen = !this.isDropdownOpen;
+    },
+    submitIdea() {
+      // Создаем объект новой идеи
+      const newIdea = {
+        id: Date.now(), // Уникальный ID
+        title: this.ideaTitle,
+        description: this.ideaDescription,
+        technologies: this.selectedStacks,
+        participantsCount: this.participantsCount,
+        status: "Набор открыт", // Статус по умолчанию
+        author: "Заказчик", // Имя текущего пользователя
+      };
+
+      // Передаем новую идею в родительский компонент
+      this.$emit("submit", newIdea);
+
+      // Закрываем модальное окно
+      this.closeModal();
     },
   },
 };

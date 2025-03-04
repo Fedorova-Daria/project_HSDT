@@ -71,8 +71,26 @@
             Войти
           </button>
         </div>
+        <div class="w-110 m-auto pl-25 mt-8">
+          <button
+            class="bg-sky-500 text-white font-medium w-60 p-2 rounded-lg hover:bg-sky-600 duration-500"
+          >
+            Я заказчик
+          </button>
+        </div>
+        <div class="m-auto w-65 mt-3 flex items-center justify-between">
+          <h2 class="text-white text-ms">Нет аккаунта?</h2>
+          <button
+            @click="goToRegister"
+            class="text-blue-300 text-ms hover:text-blue-400 duration-500"
+          >
+            Зарегистрироваться
+          </button>
+        </div>
+        <div>
+          <router-view></router-view>
+        </div>
       </div>
-      <!-- Остальная часть шаблона без изменений -->
     </div>
   </div>
 </template>
