@@ -9,6 +9,7 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenRefreshView
+from rest_framework.permissions import IsAuthenticated
 
 
 def create_jwt_tokens(user):
@@ -72,6 +73,7 @@ class RegistrationView(APIView):
             # Создаем JWT токены
             tokens = create_jwt_tokens(user)
             return Response({
+                "success": True,
                 "message": "User registered successfully",
                 "access_token": tokens["access_token"],
                 "refresh_token": tokens["refresh_token"]
@@ -80,12 +82,12 @@ class RegistrationView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class AccountListCreateView(generics.ListCreateAPIView):
-    queryset = Account.objects.all()
-    serializer_class = AccountSerializer
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]  # Только авторизованные юзеры
 
+    def get(self, request):
+        user = request.user  # Django сам найдет юзера по JWT токену
+        serializer = AccountSerializer(user)
+        return Response(serializer.data)
 
-class AccountDetailView(generics.RetrieveAPIView):  # Используем RetrieveAPIView для получения одного объекта
-    queryset = Account.objects.all()
-    serializer_class = AccountSerializer
 
