@@ -206,55 +206,110 @@
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   data() {
     return {
-      user: {
+      user: JSON.parse(localStorage.getItem("userData")) || {
         name: "",
         surname: "",
         email: "",
         phone: "",
         bio: "",
-        techStack: "",
-        name: "Имён",
-        surname: "Имёнович",
-        role: "Студент",
-        email: "student@example.com",
-        phone: "+7 800-555-35-35",
-        group: "АСОиУБ-24-1",
-        projects: [
-          "Биржа проектов",
-          "Форум разработчиков",
-          "Система тестирования",
-        ],
-        teams: ["Team Alpha", "Web Masters"],
-        technologies: ["Vue.js", "Node.js", "TailwindCSS"],
-        scores: [
-          { project: "Биржа проектов", grade: 9 },
-          { project: "Форум разработчиков", grade: 8 },
-          { project: "Система тестирования", grade: 10 },
-        ],
+        avatar: "https://via.placeholder.com/150",
+        group: "",
       },
-      showModal: false, // Добавлено состояние для управления модальным окном
+      showModal: false,
+      token: localStorage.getItem("token"), // Токен аутентификации
     };
   },
+  mounted() {
+    // Получаем данные пользователя при загрузке компонента
+    if (!this.user.name) {
+      this.fetchUserData();
+    }
+  },
   methods: {
-    updateProfile() {
-      console.log("Профиль обновлен:", this.user);
-      alert("Профиль успешно обновлен!");
+    methods: {
+      async uploadAvatar() {
+        const formData = new FormData();
+        formData.append("avatar", this.avatarFile); // avatarFile - это файл, который выбрал пользователь
+
+        try {
+          const response = await axios.post(
+            "http://localhost:8000/api/user/avatar/",
+            formData,
+            {
+              headers: {
+                Authorization: `Bearer ${this.token}`,
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          );
+
+          this.user.avatar = response.data.avatarUrl; // Обновляем аватарку
+          localStorage.setItem("userData", JSON.stringify(this.user)); // Обновляем данные пользователя в localStorage
+          alert("Аватарка обновлена!");
+        } catch (error) {
+          console.error("Ошибка при загрузке аватарки:", error);
+        }
+      },
+
+      handleFileChange(event) {
+        const file = event.target.files[0];
+        if (file) {
+          this.avatarFile = file;
+        }
+      },
+      // Получить данные пользователя
+      async fetchUserData() {
+        try {
+          const response = await axios.get("http://localhost:8000/api/user/", {
+            headers: {
+              Authorization: `Bearer ${this.token}`,
+            },
+          });
+          this.user = response.data;
+          localStorage.setItem("userData", JSON.stringify(response.data)); // Сохраняем данные в localStorage
+        } catch (error) {
+          console.error("Ошибка при получении данных пользователя:", error);
+        }
+      },
     },
+    // Обновить данные пользователя
+    async updateProfile() {
+      try {
+        const response = await axios.put(
+          "http://localhost:8000/api/user/",
+          this.user,
+          {
+            headers: {
+              Authorization: `Bearer ${this.token}`,
+            },
+          }
+        );
+        this.user = response.data;
+        localStorage.setItem("userData", JSON.stringify(this.user)); // Обновляем данные в localStorage
+        this.showModal = false;
+        alert("Профиль успешно обновлен!");
+      } catch (error) {
+        console.error("Ошибка при обновлении профиля:", error);
+      }
+    },
+
+    // Закрыть модальное окно
     cancelEdit() {
-      this.user = {
+      this.user = JSON.parse(localStorage.getItem("userData")) || {
         name: "",
         surname: "",
         email: "",
         phone: "",
         bio: "",
-        techStack: "",
+        avatar: "https://via.placeholder.com/150",
+        group: "",
       };
-    },
-    goToChangeProfile() {
-      this.$router.push("/ChangeProfile");
+      this.showModal = false;
     },
   },
 };
