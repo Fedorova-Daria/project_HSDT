@@ -196,7 +196,7 @@
 <script>
 import {
   getUserData,
-  getToken,
+  getAccessToken,
   saveUserData,
   clearStorage,
 } from "@/utils/localStorage";
@@ -213,18 +213,19 @@ export default {
         email: "",
         bio: "",
         avatar: "https://via.placeholder.com/150",
-        group: "",
+        group: { id: "", name: "" }, // Группа теперь объект
         projects: [],
         teams: [],
         technologies: [],
         scores: [],
       },
       showModal: false,
-      token: getToken(),
+      token: getAccessToken(),
       avatarFile: null,
+      groups: [], // Список групп из API
     };
   },
-  mounted() {
+  async mounted() {
     if (this.token) {
       try {
         const decodedToken = jwtDecode(this.token);
@@ -237,9 +238,11 @@ export default {
       this.redirectToLogin();
     }
 
+    // Загружаем данные о пользователе и список групп
     if (!this.user.name) {
-      this.fetchUserData();
+      await this.fetchUserData();
     }
+    await this.fetchGroups();
   },
   methods: {
     redirectToLogin() {
@@ -249,24 +252,58 @@ export default {
 
     async fetchUserData() {
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/user/`, {
+        const response = await axios.get(`${API_BASE_URL}/api/users/me/`, {
           headers: {
             Authorization: `Bearer ${this.token}`,
           },
         });
+
         this.user = response.data;
-        saveUserData(response.data);
+
+        // Если у пользователя указан `id` группы, подменяем его на `name`
+        if (this.groups.length > 0) {
+          const userGroup = this.groups.find((g) => g.id === this.user.group);
+          this.user.group = userGroup
+            ? { id: userGroup.id, name: userGroup.name }
+            : { id: "", name: "Неизвестная группа" };
+        }
+
+        saveUserData(this.user);
       } catch (error) {
         console.error("Ошибка при получении данных пользователя:", error);
         this.redirectToLogin();
       }
     },
 
+    async fetchGroups() {
+      try {
+        const response = await axios.get(
+          `${API_BASE_URL}/api/core/groups/list`
+        );
+        if (response.status === 200) {
+          this.groups = response.data;
+
+          // Если у пользователя уже есть `id` группы, ищем её название
+          if (this.user.group.id) {
+            const userGroup = this.groups.find(
+              (g) => g.id === this.user.group.id
+            );
+            if (userGroup) {
+              this.user.group = { id: userGroup.id, name: userGroup.name };
+              saveUserData(this.user); // Сохраняем обновленные данные
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Ошибка при загрузке групп:", error);
+      }
+    },
+
     async updateProfile() {
       try {
         const response = await axios.put(
-          `${API_BASE_URL}/api/user/`,
-          this.user,
+          `${API_BASE_URL}/api/users/me/`,
+          { ...this.user, group: this.user.group.id }, // Отправляем только `id`
           {
             headers: {
               Authorization: `Bearer ${this.token}`,
@@ -274,6 +311,13 @@ export default {
           }
         );
         this.user = response.data;
+
+        // Обновляем название группы после сохранения
+        const userGroup = this.groups.find((g) => g.id === this.user.group);
+        this.user.group = userGroup
+          ? { id: userGroup.id, name: userGroup.name }
+          : { id: "", name: "Неизвестная группа" };
+
         saveUserData(this.user);
         this.showModal = false;
         alert("Профиль успешно обновлен!");
