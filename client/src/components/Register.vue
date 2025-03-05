@@ -111,12 +111,14 @@
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   data() {
     return {
-      FirstName: "",
-      LastName: "",
-      GroupID: null, // Будем хранить ID группы
+      first_name: "",
+      last_name: "",
+      GroupID: null, // ID выбранной группы
       email: "",
       password: "",
       dropdownOpen: false,
@@ -129,49 +131,85 @@ export default {
   methods: {
     async registerUser() {
       try {
-        const response = await fetch(
+        const response = await axios.post(
           "http://127.0.0.1:8000/api/users/registration/",
           {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            },
-            body: JSON.stringify({
-              first_name: this.FirstName,
-              last_name: this.LastName,
-              group: Array.isArray(this.GroupID)
-                ? this.GroupID[0]
-                : this.GroupID, // Убираем массив, если это он
-              email: this.email,
-              password: this.password,
-            }),
+            first_name: this.first_name,
+            last_name: this.last_name,
+            group: Array.isArray(this.GroupID) ? this.GroupID[0] : this.GroupID,
+            email: this.email,
+            password: this.password,
           }
         );
 
-        // ✅ Читаем JSON только один раз
-        const data = await response.json();
+        if (response.status === 201) {
+          console.log("Пользователь зарегистрирован:", response.data);
 
-        if (response.ok) {
-          console.log("Пользователь зарегистрирован:", data);
+          // ✅ После регистрации сразу логинимся
+          await this.loginUser();
         } else {
-          console.error("Ошибка регистрации:", data);
+          console.error("Ошибка регистрации:", response.data);
         }
       } catch (error) {
         console.error("Ошибка при отправке данных:", error);
       }
     },
 
-    // Функция для получения списка групп с нового URL
+    async loginUser() {
+      try {
+        const response = await axios.post("http://127.0.0.1:8000/api/token/", {
+          email: this.email,
+          password: this.password,
+        });
+
+        const { access, refresh } = response.data;
+
+        // ✅ Сохраняем токены в localStorage
+        localStorage.setItem("access", access);
+        localStorage.setItem("refresh", refresh);
+
+        // ✅ Получаем данные пользователя и сохраняем их
+        await this.fetchUserData();
+
+        // ✅ Переход в профиль после регистрации
+        this.$router.push("/rialto");
+      } catch (error) {
+        console.error("Ошибка входа после регистрации", error);
+      }
+    },
+
+    async fetchUserData() {
+      try {
+        const accessToken = localStorage.getItem("access");
+
+        const response = await axios.get(
+          "http://127.0.0.1:8000/api/users/me/",
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        const userData = response.data;
+
+        // ✅ Сохраняем пользователя в localStorage
+        localStorage.setItem("userData", JSON.stringify(userData));
+      } catch (error) {
+        console.error("Ошибка получения данных пользователя", error);
+      }
+    },
+
     async fetchGroups() {
       try {
-        const response = await fetch(
+        const response = await axios.get(
           "http://127.0.0.1:8000/api/core/groups/list"
         );
-        if (response.ok) {
-          const data = await response.json();
-          this.groups = data; // Сохраняем группы
-          this.filteredGroups = data; // Инициализируем список для фильтрации
+
+        if (response.status === 200) {
+          this.groups = response.data;
+          this.filteredGroups = response.data; // Инициализируем список для фильтрации
         } else {
           console.error("Ошибка при получении групп");
         }
@@ -180,14 +218,12 @@ export default {
       }
     },
 
-    // Функция для фильтрации групп
     filterGroups() {
       this.filteredGroups = this.groups.filter((group) =>
         group.name.toLowerCase().includes(this.searchQuery.toLowerCase())
       );
     },
 
-    // Функция для выбора группы
     selectGroup(group) {
       this.selectedGroup = group;
       this.GroupID = group.id; // Сохраняем ID группы

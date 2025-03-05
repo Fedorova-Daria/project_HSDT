@@ -138,14 +138,13 @@ export default {
     },
 
     async login() {
-      // Сброс предыдущих ошибок
       this.emailError = "";
       this.passwordError = "";
 
-      // Валидация формы
       if (!this.validateForm()) return;
 
       try {
+        // Отправляем запрос на авторизацию
         const response = await axios.post(
           "http://127.0.0.1:8000/api/users/login/",
           {
@@ -154,26 +153,24 @@ export default {
           }
         );
 
-        // Проверка на успешный вход
-        if (response.data.success === true) {
+        if (response.data.access && response.data.refresh) {
+          // Сохраняем токены в localStorage
+          localStorage.setItem("access", response.data.access);
+          localStorage.setItem("refresh", response.data.refresh);
+
+          // Получаем информацию о пользователе
+          await this.fetchUserData(response.data.access);
+
+          // Перенаправляем пользователя на главную страницу
           this.$router.push("/rialto");
         } else {
-          // Если success === false, отображаем сообщение об ошибке
-          if (response.data.message === "Invalid credentials") {
-            this.passwordError = "Неверный email или пароль";
-          } else if (response.data.message === "Email not found") {
-            this.emailError = "Данная почта не зарегистрирована";
-          } else {
-            this.passwordError = "Произошла ошибка при входе";
-          }
+          this.passwordError = "Ошибка при входе: токены не получены";
         }
       } catch (error) {
         console.error("Ошибка входа", error);
 
-        // Обработка ошибок сети или сервера
         if (error.response) {
-          // Ошибки от сервера (например, 400, 500)
-          if (error.response.data && error.response.data.message) {
+          if (error.response.data?.message) {
             if (error.response.data.message === "Invalid credentials") {
               this.passwordError = "Неверный email или пароль";
             } else if (error.response.data.message === "Email not found") {
@@ -185,12 +182,29 @@ export default {
             this.passwordError = "Произошла ошибка при входе";
           }
         } else if (error.request) {
-          // Ошибки сети (нет ответа от сервера)
           this.passwordError = "Ошибка соединения с сервером";
         } else {
-          // Другие ошибки
           this.passwordError = "Произошла непредвиденная ошибка";
         }
+      }
+    },
+
+    async fetchUserData(accessToken) {
+      try {
+        const response = await axios.get(
+          "http://127.0.0.1:8000/api/users/me/",
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        // Сохраняем данные пользователя в localStorage
+        localStorage.setItem("userData", JSON.stringify(response.data));
+      } catch (error) {
+        console.error("Ошибка получения данных пользователя", error);
       }
     },
 

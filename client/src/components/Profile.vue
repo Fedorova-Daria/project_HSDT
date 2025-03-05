@@ -31,19 +31,29 @@
         <div class="text-center">
           <img
             class="w-32 h-32 rounded-full border-4 border-purple-400 mx-auto"
-            src="https://via.placeholder.com/150"
-            alt=""
+            :src="user.avatar || 'https://via.placeholder.com/150'"
+            alt="Аватар пользователя"
           />
-          <h1 class="text-2xl font-semibold mt-4">
+          <h1
+            v-if="user.name && user.surname"
+            class="text-2xl font-semibold mt-4"
+          >
             {{ user.name }} {{ user.surname }}
           </h1>
-          <p class="text-purple-400 text-lg">{{ user.role }}</p>
+          <p v-if="user.role" class="text-purple-400 text-lg">
+            {{ user.role }}
+          </p>
         </div>
 
         <div class="mt-5">
-          <p><span class="font-bold">📧 Почта:</span> {{ user.email }}</p>
-          <p><span class="font-bold">📞 Телефон:</span> {{ user.phone }}</p>
-          <p><span class="font-bold">🎓 Группа:</span> {{ user.group }}</p>
+          <p>
+            <span class="font-bold">📧 Почта:</span>
+            {{ user.email || "Не указано" }}
+          </p>
+          <p>
+            <span class="font-bold">🎓 Группа:</span>
+            {{ user.group || "Не указано" }}
+          </p>
         </div>
         <!-- Кнопка для открытия модального окна -->
         <button
@@ -64,7 +74,7 @@
             <h3 class="text-xl font-semibold border-b pb-2 mb-3">
               👾 Активность пользователя
             </h3>
-            <ul>
+            <ul v-if="user.projects && user.projects.length > 0">
               <li
                 v-for="project in user.projects"
                 :key="project"
@@ -73,6 +83,7 @@
                 {{ project }}
               </li>
             </ul>
+            <p v-else class="text-gray-400">Нет активных проектов</p>
           </div>
 
           <!-- Команды -->
@@ -80,7 +91,7 @@
             <h3 class="text-xl font-semibold border-b pb-2 mb-3">
               👥 Командная деятельность
             </h3>
-            <ul>
+            <ul v-if="user.teams && user.teams.length > 0">
               <li
                 v-for="team in user.teams"
                 :key="team"
@@ -89,6 +100,7 @@
                 {{ team }}
               </li>
             </ul>
+            <p v-else class="text-gray-400">Нет командной активности</p>
           </div>
 
           <!-- Стек технологий -->
@@ -112,7 +124,7 @@
             <h3 class="text-xl font-semibold border-b pb-2 mb-3">
               ⭐️ Баллы за проекты
             </h3>
-            <ul>
+            <ul v-if="user.scores && user.scores.length > 0">
               <li
                 v-for="score in user.scores"
                 :key="score.project"
@@ -122,6 +134,7 @@
                 <span class="font-bold">{{ score.grade }}/10</span>
               </li>
             </ul>
+            <p v-else class="text-gray-400">Нет оценок за проекты</p>
           </div>
         </div>
       </div>
@@ -136,64 +149,39 @@
         <h2 class="text-purple-500 text-xl font-bold mb-4">
           Редактировать профиль
         </h2>
-        <div
+        <form
+          @submit.prevent="updateProfile"
           class="w-full max-w-md p-6 border border-purple-400 rounded-lg bg-zinc-700 text-white"
         >
-          <h1 class="text-purple-500 text-2xl font-bold mb-4">
-            Профиль пользователя
-          </h1>
-          <form @submit.prevent="updateProfile">
-            <div class="form-group mb-4">
-              <label for="email" class="font-bold text-purple-300"
-                >Email:</label
-              >
-              <input
-                type="email"
-                id="email"
-                v-model="user.email"
-                required
-                class="mt-1 block w-full p-2 border border-purple-400 rounded"
-              />
-            </div>
-            <div class="form-group mb-4">
-              <label for="phone" class="font-bold text-purple-300"
-                >Телефон:</label
-              >
-              <input
-                type="tel"
-                id="phone"
-                v-model="user.phone"
-                required
-                class="mt-1 block w-full p-2 border border-purple-400 rounded"
-              />
-            </div>
-            <div class="form-group mb-4">
-              <label for="bio" class="font-bold text-purple-300"
-                >Немного о себе:</label
-              >
-              <textarea
-                id="bio"
-                v-model="user.bio"
-                maxlength="40"
-                class="mt-1 block w-full p-2 border border-purple-400 rounded"
-              ></textarea>
-            </div>
-            <button
-              type="submit"
-              class="w-full mt-4 p-2 bg-purple-500 text-white rounded hover:bg-purple-600"
+          <div class="form-group mb-4">
+            <label for="email" class="font-bold text-purple-300">Email:</label>
+            <input
+              type="email"
+              id="email"
+              v-model="user.email"
+              required
+              class="mt-1 block w-full p-2 border border-purple-400 rounded"
+            />
+          </div>
+          <div class="form-group mb-4">
+            <label for="bio" class="font-bold text-purple-300"
+              >Немного о себе:</label
             >
-              Сохранить изменения
-            </button>
-          </form>
+            <textarea
+              id="bio"
+              v-model="user.bio"
+              maxlength="40"
+              class="mt-1 block w-full p-2 border border-purple-400 rounded"
+            ></textarea>
+          </div>
+          <button
+            type="submit"
+            class="w-full mt-4 p-2 bg-purple-500 text-white rounded hover:bg-purple-600"
+          >
+            Сохранить изменения
+          </button>
+        </form>
 
-          <h2 class="text-purple-500 text-xl font-bold mt-6">
-            Информация о пользователе
-          </h2>
-
-          <p><strong>Email:</strong> {{ user.email }}</p>
-          <p><strong>Телефон:</strong> {{ user.phone }}</p>
-          <p><strong>Немного о себе:</strong> {{ user.bio }}</p>
-        </div>
         <button
           @click="showModal = false"
           class="mt-4 p-2 bg-purple-500 text-white rounded hover:bg-purple-600"
@@ -206,83 +194,116 @@
 </template>
 
 <script>
+import {
+  getUserData,
+  getAccessToken,
+  saveUserData,
+  clearStorage,
+} from "@/utils/localStorage";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
+import { API_BASE_URL } from "@/config";
 
 export default {
   data() {
     return {
-      user: JSON.parse(localStorage.getItem("userData")) || {
+      user: getUserData() || {
         name: "",
         surname: "",
         email: "",
-        phone: "",
         bio: "",
         avatar: "https://via.placeholder.com/150",
-        group: "",
+        group: { id: "", name: "" }, // Группа теперь объект
+        projects: [],
+        teams: [],
+        technologies: [],
+        scores: [],
       },
       showModal: false,
-      token: localStorage.getItem("token"), // Токен аутентификации
+      token: getAccessToken(),
+      avatarFile: null,
+      groups: [], // Список групп из API
     };
   },
-  mounted() {
-    // Получаем данные пользователя при загрузке компонента
-    if (!this.user.name) {
-      this.fetchUserData();
+  async mounted() {
+    if (this.token) {
+      try {
+        const decodedToken = jwtDecode(this.token);
+        this.user = decodedToken.user || getUserData();
+      } catch (error) {
+        console.error("Ошибка при декодировании токена:", error);
+        this.redirectToLogin();
+      }
+    } else {
+      this.redirectToLogin();
     }
+
+    // Загружаем данные о пользователе и список групп
+    if (!this.user.name) {
+      await this.fetchUserData();
+    }
+    await this.fetchGroups();
   },
   methods: {
-    methods: {
-      async uploadAvatar() {
-        const formData = new FormData();
-        formData.append("avatar", this.avatarFile); // avatarFile - это файл, который выбрал пользователь
-
-        try {
-          const response = await axios.post(
-            "http://localhost:8000/api/user/avatar/",
-            formData,
-            {
-              headers: {
-                Authorization: `Bearer ${this.token}`,
-                "Content-Type": "multipart/form-data",
-              },
-            }
-          );
-
-          this.user.avatar = response.data.avatarUrl; // Обновляем аватарку
-          localStorage.setItem("userData", JSON.stringify(this.user)); // Обновляем данные пользователя в localStorage
-          alert("Аватарка обновлена!");
-        } catch (error) {
-          console.error("Ошибка при загрузке аватарки:", error);
-        }
-      },
-
-      handleFileChange(event) {
-        const file = event.target.files[0];
-        if (file) {
-          this.avatarFile = file;
-        }
-      },
-      // Получить данные пользователя
-      async fetchUserData() {
-        try {
-          const response = await axios.get("http://localhost:8000/api/user/", {
-            headers: {
-              Authorization: `Bearer ${this.token}`,
-            },
-          });
-          this.user = response.data;
-          localStorage.setItem("userData", JSON.stringify(response.data)); // Сохраняем данные в localStorage
-        } catch (error) {
-          console.error("Ошибка при получении данных пользователя:", error);
-        }
-      },
+    redirectToLogin() {
+      clearStorage();
+      window.location.href = "/login";
     },
-    // Обновить данные пользователя
+
+    async fetchUserData() {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/users/me/`, {
+          headers: {
+            Authorization: `Bearer ${this.token}`,
+          },
+        });
+
+        this.user = response.data;
+
+        // Если у пользователя указан `id` группы, подменяем его на `name`
+        if (this.groups.length > 0) {
+          const userGroup = this.groups.find((g) => g.id === this.user.group);
+          this.user.group = userGroup
+            ? { id: userGroup.id, name: userGroup.name }
+            : { id: "", name: "Неизвестная группа" };
+        }
+
+        saveUserData(this.user);
+      } catch (error) {
+        console.error("Ошибка при получении данных пользователя:", error);
+        this.redirectToLogin();
+      }
+    },
+
+    async fetchGroups() {
+      try {
+        const response = await axios.get(
+          `${API_BASE_URL}/api/core/groups/list`
+        );
+        if (response.status === 200) {
+          this.groups = response.data;
+
+          // Если у пользователя уже есть `id` группы, ищем её название
+          if (this.user.group.id) {
+            const userGroup = this.groups.find(
+              (g) => g.id === this.user.group.id
+            );
+            if (userGroup) {
+              this.user.group = { id: userGroup.id, name: userGroup.name };
+              saveUserData(this.user); // Сохраняем обновленные данные
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Ошибка при загрузке групп:", error);
+      }
+    },
+
     async updateProfile() {
       try {
         const response = await axios.put(
-          "http://localhost:8000/api/user/",
-          this.user,
+          `${API_BASE_URL}/api/users/me/`,
+          { ...this.user, group: this.user.group.id }, // Отправляем только `id`
           {
             headers: {
               Authorization: `Bearer ${this.token}`,
@@ -290,7 +311,14 @@ export default {
           }
         );
         this.user = response.data;
-        localStorage.setItem("userData", JSON.stringify(this.user)); // Обновляем данные в localStorage
+
+        // Обновляем название группы после сохранения
+        const userGroup = this.groups.find((g) => g.id === this.user.group);
+        this.user.group = userGroup
+          ? { id: userGroup.id, name: userGroup.name }
+          : { id: "", name: "Неизвестная группа" };
+
+        saveUserData(this.user);
         this.showModal = false;
         alert("Профиль успешно обновлен!");
       } catch (error) {
@@ -298,17 +326,8 @@ export default {
       }
     },
 
-    // Закрыть модальное окно
     cancelEdit() {
-      this.user = JSON.parse(localStorage.getItem("userData")) || {
-        name: "",
-        surname: "",
-        email: "",
-        phone: "",
-        bio: "",
-        avatar: "https://via.placeholder.com/150",
-        group: "",
-      };
+      this.user = getUserData();
       this.showModal = false;
     },
   },
