@@ -130,7 +130,7 @@ export default {
     async registerUser() {
       try {
         const response = await fetch(
-          "http://127.0.0.1:8000/api/users/registration/",
+          "${API_BASE_URL}/api/users/registration/",
           {
             method: "POST",
             headers: {
