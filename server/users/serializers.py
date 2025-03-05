@@ -8,7 +8,8 @@ class AccountSerializer(serializers.ModelSerializer):
     group = serializers.PrimaryKeyRelatedField(queryset=Group.objects.all())  # Добавляем поле для выбора группы
     class Meta:
         model = Account
-        fields = ['id', 'email', 'username', 'password', 'first_name', 'last_name', 'group']
+        fields = ['id', 'email', 'username', 'password', 'first_name', 'last_name', 'group', 'phone', 'bio',
+                  'skills', 'avatar', 'created_at']
         extra_kwargs = {
             'password': {'write_only': True}
         }
