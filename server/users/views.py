@@ -23,13 +23,6 @@ def create_jwt_tokens(user):
     }
 
 
-def create_json_respond(success, email_is_correct):
-    if not email_is_correct:
-        return {
-
-        }
-
-
 class LoginView(APIView):
     def post(self, request):
         email = request.data.get("email")

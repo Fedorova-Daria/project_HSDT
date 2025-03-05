@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from core.models import Technology, Group
 from .managers import AccountManager
+from django.contrib.auth import get_user_model
 
 
 class Account(AbstractUser):
@@ -39,4 +40,6 @@ class Account(AbstractUser):
         if not self.username:
             self.username = self.email  # Заполняем username email'ом
         super().save(*args, **kwargs)
+
+
 
