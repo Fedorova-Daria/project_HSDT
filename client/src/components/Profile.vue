@@ -1,29 +1,7 @@
 <template>
   <div class="min-h-screen text-white flex flex-col">
     <!-- Хедер -->
-    <header class="flex justify-between border-b border-zinc-700 p-4">
-      <div class="flex items-center gap-4 ml-auto">
-        <ul class="flex items-center gap-10">
-          <li
-            class="flex items-center gap-3 hover:text-purple-400 duration-500"
-          >
-            <button>Биржа</button>
-          </li>
-          <li
-            class="flex items-center gap-3 hover:text-purple-400 duration-500"
-          >
-            <button>Команды</button>
-          </li>
-          <li
-            class="flex items-center gap-3 hover:text-purple-400 duration-500"
-          >
-            <button>Идеи</button>
-          </li>
-        </ul>
-        <img src="/notific.svg" alt="notification" class="w-10 ml-5" />
-      </div>
-    </header>
-
+    <Header />
     <!-- Основной контейнер профиля -->
     <div class="flex w-4/5 mx-auto mt-10 gap-6">
       <!-- Левый блок (Информация о пользователе) -->
@@ -194,6 +172,7 @@
 </template>
 
 <script>
+import Header from "@/components/header.vue";
 import {
   getUserData,
   getAccessToken,
@@ -205,6 +184,7 @@ import { jwtDecode } from "jwt-decode";
 import { API_BASE_URL } from "@/config";
 
 export default {
+  components: { Header },
   data() {
     return {
       user: getUserData() || {
