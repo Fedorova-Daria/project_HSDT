@@ -26,7 +26,6 @@ export function saveUserData(userData) {
 export function saveTokens(access, refresh) {
   localStorage.setItem("access", access);
   localStorage.setItem("refresh", refresh);
-  s;
 }
 
 export function clearStorage() {
