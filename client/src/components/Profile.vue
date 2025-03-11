@@ -62,7 +62,7 @@
               <table
                 class="w-full border-collapse shadow-lg rounded-lg overflow-hidden"
               >
-                <thead class="bg-cards">
+                <thead class="bg-zinc-800">
                   <tr>
                     <th class="p-3 text-left text-white">Название</th>
                     <th class="p-3 text-left text-white">Статус</th>
