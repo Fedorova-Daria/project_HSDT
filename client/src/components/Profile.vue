@@ -24,14 +24,22 @@
         </div>
 
         <div class="mt-5">
-          <p>
-            <span class="font-bold">📧 Почта:</span>
+          <p class="text-sm flex justify-between text-white">
+            <strong>Почта:</strong>
+          </p>
+          <div
+            class="w-auto mt-2 bg-zinc-700 text-white text-sm rounded-lg p-2.5 border border-zinc-600"
+          >
             {{ user.email || "Не указано" }}
+          </div>
+          <p class="text-sm mt-2 flex justify-between text-white">
+            <strong>Группа:</strong>
           </p>
-          <p>
-            <span class="font-bold">🎓 Группа:</span>
+          <div
+            class="w-auto mt-2 bg-zinc-700 text-white text-sm rounded-lg p-2.5 border border-zinc-600"
+          >
             {{ user.group || "Не указано" }}
-          </p>
+          </div>
         </div>
         <!-- Кнопка для открытия модального окна -->
         <button
@@ -46,74 +54,68 @@
       <div class="w-3/4 bg-zinc-700 p-6 rounded-2xl shadow-lg">
         <h2 class="text-2xl font-semibold mb-4">Информация о пользователе</h2>
 
-        <div class="grid grid-cols-2 gap-6">
+        <div class="flex gap-10">
           <!-- Проекты -->
           <div>
-            <h3 class="text-xl font-semibold border-b pb-2 mb-3">
-              👾 Активность пользователя
-            </h3>
-            <ul v-if="user.projects && user.projects.length > 0">
-              <li
-                v-for="project in user.projects"
-                :key="project"
-                class="p-2 bg-gray-700 rounded-md mb-2"
+            <h3 class="text-xl font-semibold border-b pb-2 mb-3">Проекты</h3>
+            <div class="mt-2">
+              <table
+                class="w-full border-collapse shadow-lg rounded-lg overflow-hidden"
               >
-                {{ project }}
-              </li>
-            </ul>
-            <p v-else class="text-gray-400">Нет активных проектов</p>
+                <thead class="bg-cards">
+                  <tr>
+                    <th class="p-3 text-left text-white">Название</th>
+                    <th class="p-3 text-left text-white">Статус</th>
+                    <th class="p-3 text-left text-white">Оценка</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="bg-zinc-600 transition-colors">
+                    <td class="p-3 border-t border-zinc-200">
+                      Ядерное оружие "Истребление армян"
+                    </td>
+                    <td class="p-3 border-t border-zinc-200">
+                      Окончено с позором!
+                    </td>
+                    <td class="p-3 border-t border-zinc-200">5</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
+          <!-- Стек технологий -->
 
-          <!-- Команды -->
           <div>
             <h3 class="text-xl font-semibold border-b pb-2 mb-3">
-              👥 Командная деятельность
+              Стеки технологий
             </h3>
             <ul v-if="user.teams && user.teams.length > 0">
-              <li
-                v-for="team in user.teams"
-                :key="team"
-                class="p-2 bg-gray-700 rounded-md mb-2"
-              >
-                {{ team }}
-              </li>
+              <li class="p-2 bg-gray-700 rounded-md mb-2"></li>
             </ul>
             <p v-else class="text-gray-400">Нет командной активности</p>
           </div>
-
-          <!-- Стек технологий -->
-          <div>
-            <h3 class="text-xl font-semibold border-b pb-2 mb-3">
-              🛠 Используемый Стек технологий
-            </h3>
-            <div class="flex flex-wrap gap-2">
-              <span
-                v-for="tech in user.technologies"
-                :key="tech"
-                class="p-2 bg-purple-400 rounded-md"
-              >
-                {{ tech }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Оценки за проекты -->
-          <div>
-            <h3 class="text-xl font-semibold border-b pb-2 mb-3">
-              ⭐️ Баллы за проекты
-            </h3>
-            <ul v-if="user.scores && user.scores.length > 0">
-              <li
-                v-for="score in user.scores"
-                :key="score.project"
-                class="p-2 bg-gray-700 rounded-md mb-2"
-              >
-                {{ score.project }} -
-                <span class="font-bold">{{ score.grade }}/10</span>
-              </li>
-            </ul>
-            <p v-else class="text-gray-400">Нет оценок за проекты</p>
-          </div>
+        </div>
+        <!-- Команды -->
+        <h3 class="mt-10 text-xl font-semibold border-b pb-2 mb-3">Команды</h3>
+        <div class="mt-2">
+          <table
+            class="w-full border-collapse shadow-lg rounded-lg overflow-hidden"
+          >
+            <thead class="bg-border">
+              <tr>
+                <th class="p-3 text-left text-white">Название команды</th>
+                <th class="p-3 text-left text-white">Дата вступления</th>
+                <th class="p-3 text-left text-white">Дата ухода</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="bg-zinc-600 transition-colors">
+                <td class="p-3 border-t border-zinc-200"></td>
+                <td class="p-3 border-t border-zinc-200"></td>
+                <td class="p-3 border-t border-zinc-200"></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
