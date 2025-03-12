@@ -124,7 +124,7 @@ export default {
       this.passwordError = "";
     },
 
-    // Валидация формы
+    // НЕ ТРОГАТЬ, здесь написаны ошибки которые выводятся на сайт
     validateForm() {
       let isValid = true;
 
@@ -144,7 +144,7 @@ export default {
       return isValid;
     },
 
-    // Валидация email
+    // НЕ ТРОГАТЬ Валидация email, а точнее проверка вида почты
     validateEmail(email) {
       const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return re.test(email);
@@ -220,7 +220,7 @@ export default {
       return response.data;
     },
 
-    // Метод для обработки ошибок
+    // НЕ ТРОГАТЬ Метод для обработки ошибок
     handleError(error) {
       if (error.response) {
         switch (error.response.data?.message) {
@@ -241,12 +241,12 @@ export default {
       }
     },
 
-    // Метод для перенаправления на главную страницу
+    // НЕ ТРОГАТЬ Метод для перенаправления на главную страницу
     redirectToHome() {
       this.$router.push("/rialto");
     },
 
-    // Метод для перехода на страницу регистрации
+    // НЕ ТРОГАТЬ Метод для перехода на страницу регистрации
     goToRegister() {
       this.$router.push("/register");
     },
