@@ -19,6 +19,12 @@
             {{ userData.first_name }} {{ userData.last_name }}
           </h1>
         </div>
+        <h1
+          v-if="userData.group && userData.group.name"
+          class="text-2xl text-white font-semibold mt-4"
+        >
+          {{ userData.group.name }}
+        </h1>
 
         <div class="mt-5">
           <p class="text-sm flex justify-between text-white">
@@ -195,3 +201,11 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+/* Немного мягче фон */
+.fixed {
+  background: rgba(0, 0, 0, 0.3); /* Полупрозрачный черный */
+  backdrop-filter: blur(5px); /* Эффект размытия */
+}
+</style>
