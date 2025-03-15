@@ -5,6 +5,9 @@ import Rialto from "../components/Rialto.vue";
 import Profile from "../components/Profile.vue";
 import Teams from "../components/Teams.vue";
 import ChangeProfile from "../components/ChangeProfile.vue";
+import TeamDetails from "@/components/TeamDetails.vue";
+import Ideas from "@/components/Ideas.vue";
+
 const routes = [
   { path: "/", redirect: "/login" }, // Перенаправление с корневого маршрута на страницу входа
   { path: "/login", component: Login }, // Маршрут для страницы входа
@@ -13,6 +16,12 @@ const routes = [
   { path: "/profile", component: Profile },
   { path: "/ChangeProfile", component: ChangeProfile },
   { path: "/teams", component: Teams },
+  { path: "/ideas", component: Ideas },
+  {
+    path: "/team/:id",
+    name: "TeamDetails",
+    component: TeamDetails,
+  },
 ];
 
 const router = createRouter({
