@@ -19,12 +19,6 @@
             {{ userData.first_name }} {{ userData.last_name }}
           </h1>
         </div>
-        <h1
-          v-if="userData.group && userData.group.name"
-          class="text-1xl text-white font-semibold mt-4"
-        >
-          {{ userData.group.name }}
-        </h1>
 
         <div class="mt-5">
           <p class="text-sm flex justify-between text-white">
@@ -75,11 +69,9 @@
                 <tbody>
                   <tr class="bg-zinc-600 transition-colors">
                     <td class="p-3 border-t border-zinc-200">
-                      Ядерное оружие "Истребление армян"
+                      Проект "Паровозик" (пример)
                     </td>
-                    <td class="p-3 border-t border-zinc-200">
-                      Окончено с позором!
-                    </td>
+                    <td class="p-3 border-t border-zinc-200">Окончено</td>
                     <td class="p-3 border-t border-zinc-200">5</td>
                   </tr>
                 </tbody>
@@ -183,13 +175,23 @@ import { saveUserData, getUserData } from "@/utils/localStorage.js"; // Импо
 export default {
   components: { Header },
   data() {
-    const userData = getUserData(); // Берет с localstorage все данные о пользователе, в template расписаны немного условия,
-    // для того чтобы они отображались, все сделано в одну строчку буквально
-    console.log("Данные из localStorage:", userData); // Логируем данные
     return {
-      userData, // Возвращаем данные в компонент
+      // Скажу так, это надо чтобы выгружались данные и не было ошибок изначально, ибо если мы это удалим, то страничка тупо не показывается, так что я оставила ради
+      //всего живого в этой странице, ну тупа заглушки такие вот, поэтому все норм)))
+      userData: {
+        avatar: "https://via.placeholder.com/150",
+        first_name: "",
+        last_name: "",
+        email: "",
+        group: { id: "", name: "Не указано" },
+      },
       showModal: false,
     };
+  },
+  async mounted() {
+    // теперь загружаем через моунтед потому что идет реально загрузка этих данных и теперь они более правильно загружаются
+    this.userData = await getUserData(); // Дожидаемся загрузки данных
+    console.log("Данные из localStorage:", this.userData);
   },
   // методы, тут только для обновления профиля и для показа плашки с обновлением данных, надо доделать такую функцию чтобы он запоминал, но это потом...
   methods: {

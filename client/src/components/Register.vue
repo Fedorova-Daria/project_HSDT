@@ -145,7 +145,7 @@ export default {
       const data = {
         first_name: this.first_name,
         last_name: this.last_name,
-        group: this.GroupID,
+        group: this.GroupID, // Отправляем только ID группы
         email: this.email,
         password: this.password,
       };
@@ -153,6 +153,7 @@ export default {
       console.log("Отправляемые данные:", data);
 
       try {
+        // 1. Отправляем запрос на регистрацию
         const response = await axios.post(
           "http://127.0.0.1:8000/api/users/registration/",
           data
@@ -160,6 +161,34 @@ export default {
 
         if (response.status === 201) {
           console.log("Пользователь зарегистрирован:", response.data);
+
+          // 2. Запрашиваем список всех групп
+          const groupResponse = await axios.get(
+            "http://127.0.0.1:8000/api/core/groups/list"
+          );
+
+          if (groupResponse.status === 200) {
+            const groups = groupResponse.data; // Получаем массив групп
+
+            // 3. Ищем нужную группу по ID
+            const userGroup = groups.find((g) => g.id === this.GroupID);
+
+            const userData = {
+              first_name: this.first_name,
+              last_name: this.last_name,
+              email: this.email,
+              group: userGroup
+                ? { id: userGroup.id, name: userGroup.name }
+                : { id: this.GroupID, name: "Неизвестная группа" },
+            };
+
+            console.log("Сохраняем пользователя в localStorage:", userData);
+            localStorage.setItem("userData", JSON.stringify(userData)); // Сохраняем в localStorage
+          } else {
+            console.error("Ошибка при получении списка групп");
+          }
+
+          // 4. Перенаправляем на страницу входа
           this.$router.push("/login");
         } else {
           console.error("Ошибка регистрации:", response.data);
