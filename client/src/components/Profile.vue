@@ -21,7 +21,7 @@
         </div>
         <h1
           v-if="userData.group && userData.group.name"
-          class="text-2xl text-white font-semibold mt-4"
+          class="text-1xl text-white font-semibold mt-4"
         >
           {{ userData.group.name }}
         </h1>
