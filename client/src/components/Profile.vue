@@ -1,29 +1,7 @@
 <template>
   <div class="min-h-screen text-white flex flex-col">
     <!-- Хедер -->
-    <header class="flex justify-between border-b border-zinc-700 p-4">
-      <div class="flex items-center gap-4 ml-auto">
-        <ul class="flex items-center gap-10">
-          <li
-            class="flex items-center gap-3 hover:text-purple-400 duration-500"
-          >
-            <button>Биржа</button>
-          </li>
-          <li
-            class="flex items-center gap-3 hover:text-purple-400 duration-500"
-          >
-            <button>Команды</button>
-          </li>
-          <li
-            class="flex items-center gap-3 hover:text-purple-400 duration-500"
-          >
-            <button>Идеи</button>
-          </li>
-        </ul>
-        <img src="/notific.svg" alt="notification" class="w-10 ml-5" />
-      </div>
-    </header>
-
+    <Header />
     <!-- Основной контейнер профиля -->
     <div class="flex w-4/5 mx-auto mt-10 gap-6">
       <!-- Левый блок (Информация о пользователе) -->
@@ -31,29 +9,34 @@
         <div class="text-center">
           <img
             class="w-32 h-32 rounded-full border-4 border-purple-400 mx-auto"
-            :src="user.avatar || 'https://via.placeholder.com/150'"
+            :src="userData.avatar || 'https://via.placeholder.com/150'"
             alt="Аватар пользователя"
           />
           <h1
-            v-if="user.name && user.surname"
+            v-if="userData.first_name && userData.last_name"
             class="text-2xl font-semibold mt-4"
           >
-            {{ user.name }} {{ user.surname }}
+            {{ userData.first_name }} {{ userData.last_name }}
           </h1>
-          <p v-if="user.role" class="text-purple-400 text-lg">
-            {{ user.role }}
-          </p>
         </div>
 
         <div class="mt-5">
-          <p>
-            <span class="font-bold">📧 Почта:</span>
-            {{ user.email || "Не указано" }}
+          <p class="text-sm flex justify-between text-white">
+            <strong>Почта:</strong>
           </p>
-          <p>
-            <span class="font-bold">🎓 Группа:</span>
-            {{ user.group || "Не указано" }}
+          <div
+            class="w-auto mt-2 bg-zinc-700 text-white text-sm rounded-lg p-2.5 border border-zinc-600"
+          >
+            {{ userData.email || "Не указано" }}
+          </div>
+          <p class="text-sm mt-2 flex justify-between text-white">
+            <strong>Группа:</strong>
           </p>
+          <div
+            class="w-auto mt-2 bg-zinc-700 text-white text-sm rounded-lg p-2.5 border border-zinc-600"
+          >
+            {{ userData.group?.name || "Не указано" }}
+          </div>
         </div>
         <!-- Кнопка для открытия модального окна -->
         <button
@@ -68,74 +51,66 @@
       <div class="w-3/4 bg-zinc-700 p-6 rounded-2xl shadow-lg">
         <h2 class="text-2xl font-semibold mb-4">Информация о пользователе</h2>
 
-        <div class="grid grid-cols-2 gap-6">
+        <div class="flex gap-10">
           <!-- Проекты -->
           <div>
-            <h3 class="text-xl font-semibold border-b pb-2 mb-3">
-              👾 Активность пользователя
-            </h3>
-            <ul v-if="user.projects && user.projects.length > 0">
-              <li
-                v-for="project in user.projects"
-                :key="project"
-                class="p-2 bg-gray-700 rounded-md mb-2"
+            <h3 class="text-xl font-semibold border-b pb-2 mb-3">Проекты</h3>
+            <div class="mt-2">
+              <table
+                class="w-full border-collapse shadow-lg rounded-lg overflow-hidden"
               >
-                {{ project }}
-              </li>
-            </ul>
-            <p v-else class="text-gray-400">Нет активных проектов</p>
-          </div>
-
-          <!-- Команды -->
-          <div>
-            <h3 class="text-xl font-semibold border-b pb-2 mb-3">
-              👥 Командная деятельность
-            </h3>
-            <ul v-if="user.teams && user.teams.length > 0">
-              <li
-                v-for="team in user.teams"
-                :key="team"
-                class="p-2 bg-gray-700 rounded-md mb-2"
-              >
-                {{ team }}
-              </li>
-            </ul>
-            <p v-else class="text-gray-400">Нет командной активности</p>
-          </div>
-
-          <!-- Стек технологий -->
-          <div>
-            <h3 class="text-xl font-semibold border-b pb-2 mb-3">
-              🛠 Используемый Стек технологий
-            </h3>
-            <div class="flex flex-wrap gap-2">
-              <span
-                v-for="tech in user.technologies"
-                :key="tech"
-                class="p-2 bg-purple-400 rounded-md"
-              >
-                {{ tech }}
-              </span>
+                <thead class="bg-zinc-800">
+                  <tr>
+                    <th class="p-3 text-left text-white">Название</th>
+                    <th class="p-3 text-left text-white">Статус</th>
+                    <th class="p-3 text-left text-white">Оценка</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="bg-zinc-600 transition-colors">
+                    <td class="p-3 border-t border-zinc-200">
+                      Проект "Паровозик" (пример)
+                    </td>
+                    <td class="p-3 border-t border-zinc-200">Окончено</td>
+                    <td class="p-3 border-t border-zinc-200">5</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
+          <!-- Стек технологий -->
 
-          <!-- Оценки за проекты -->
           <div>
             <h3 class="text-xl font-semibold border-b pb-2 mb-3">
-              ⭐️ Баллы за проекты
+              Стеки технологий
             </h3>
-            <ul v-if="user.scores && user.scores.length > 0">
-              <li
-                v-for="score in user.scores"
-                :key="score.project"
-                class="p-2 bg-gray-700 rounded-md mb-2"
-              >
-                {{ score.project }} -
-                <span class="font-bold">{{ score.grade }}/10</span>
-              </li>
+            <ul>
+              <li class="p-2 bg-gray-700 rounded-md mb-2"></li>
             </ul>
-            <p v-else class="text-gray-400">Нет оценок за проекты</p>
+            <p>Нет командной активности</p>
           </div>
+        </div>
+        <!-- Команды -->
+        <h3 class="mt-10 text-xl font-semibold border-b pb-2 mb-3">Команды</h3>
+        <div class="mt-2">
+          <table
+            class="w-full border-collapse shadow-lg rounded-lg overflow-hidden"
+          >
+            <thead class="bg-border">
+              <tr>
+                <th class="p-3 text-left text-white">Название команды</th>
+                <th class="p-3 text-left text-white">Дата вступления</th>
+                <th class="p-3 text-left text-white">Дата ухода</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="bg-zinc-600 transition-colors">
+                <td class="p-3 border-t border-zinc-200"></td>
+                <td class="p-3 border-t border-zinc-200"></td>
+                <td class="p-3 border-t border-zinc-200"></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -158,7 +133,7 @@
             <input
               type="email"
               id="email"
-              v-model="user.email"
+              v-model="userData.email"
               required
               class="mt-1 block w-full p-2 border border-purple-400 rounded"
             />
@@ -169,7 +144,7 @@
             >
             <textarea
               id="bio"
-              v-model="user.bio"
+              v-model="userData.bio"
               maxlength="40"
               class="mt-1 block w-full p-2 border border-purple-400 rounded"
             ></textarea>
@@ -194,142 +169,45 @@
 </template>
 
 <script>
-import {
-  getUserData,
-  getAccessToken,
-  saveUserData,
-  clearStorage,
-} from "@/utils/localStorage";
-import axios from "axios";
-import { jwtDecode } from "jwt-decode";
-import { API_BASE_URL } from "@/config";
+import Header from "@/components/header.vue";
+import { saveUserData, getUserData } from "@/utils/localStorage.js"; // Импортируем функцию для получения данных
 
 export default {
+  components: { Header },
   data() {
     return {
-      user: getUserData() || {
-        name: "",
-        surname: "",
-        email: "",
-        bio: "",
+      // Скажу так, это надо чтобы выгружались данные и не было ошибок изначально, ибо если мы это удалим, то страничка тупо не показывается, так что я оставила ради
+      //всего живого в этой странице, ну тупа заглушки такие вот, поэтому все норм)))
+      userData: {
         avatar: "https://via.placeholder.com/150",
-        group: { id: "", name: "" }, // Группа теперь объект
-        projects: [],
-        teams: [],
-        technologies: [],
-        scores: [],
+        first_name: "",
+        last_name: "",
+        email: "",
+        group: { id: "", name: "Не указано" },
       },
       showModal: false,
-      token: getAccessToken(),
-      avatarFile: null,
-      groups: [], // Список групп из API
     };
   },
   async mounted() {
-    if (this.token) {
-      try {
-        const decodedToken = jwtDecode(this.token);
-        this.user = decodedToken.user || getUserData();
-      } catch (error) {
-        console.error("Ошибка при декодировании токена:", error);
-        this.redirectToLogin();
-      }
-    } else {
-      this.redirectToLogin();
-    }
-
-    // Загружаем данные о пользователе и список групп
-    if (!this.user.name) {
-      await this.fetchUserData();
-    }
-    await this.fetchGroups();
+    // теперь загружаем через моунтед потому что идет реально загрузка этих данных и теперь они более правильно загружаются
+    this.userData = await getUserData(); // Дожидаемся загрузки данных
+    console.log("Данные из localStorage:", this.userData);
   },
+  // методы, тут только для обновления профиля и для показа плашки с обновлением данных, надо доделать такую функцию чтобы он запоминал, но это потом...
   methods: {
-    redirectToLogin() {
-      clearStorage();
-      window.location.href = "/login";
-    },
-
-    async fetchUserData() {
-      try {
-        const response = await axios.get(`${API_BASE_URL}/api/users/me/`, {
-          headers: {
-            Authorization: `Bearer ${this.token}`,
-          },
-        });
-
-        this.user = response.data;
-
-        // Если у пользователя указан `id` группы, подменяем его на `name`
-        if (this.groups.length > 0) {
-          const userGroup = this.groups.find((g) => g.id === this.user.group);
-          this.user.group = userGroup
-            ? { id: userGroup.id, name: userGroup.name }
-            : { id: "", name: "Неизвестная группа" };
-        }
-
-        saveUserData(this.user);
-      } catch (error) {
-        console.error("Ошибка при получении данных пользователя:", error);
-        this.redirectToLogin();
-      }
-    },
-
-    async fetchGroups() {
-      try {
-        const response = await axios.get(
-          `${API_BASE_URL}/api/core/groups/list`
-        );
-        if (response.status === 200) {
-          this.groups = response.data;
-
-          // Если у пользователя уже есть `id` группы, ищем её название
-          if (this.user.group.id) {
-            const userGroup = this.groups.find(
-              (g) => g.id === this.user.group.id
-            );
-            if (userGroup) {
-              this.user.group = { id: userGroup.id, name: userGroup.name };
-              saveUserData(this.user); // Сохраняем обновленные данные
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Ошибка при загрузке групп:", error);
-      }
-    },
-
-    async updateProfile() {
-      try {
-        const response = await axios.put(
-          `${API_BASE_URL}/api/users/me/`,
-          { ...this.user, group: this.user.group.id }, // Отправляем только `id`
-          {
-            headers: {
-              Authorization: `Bearer ${this.token}`,
-            },
-          }
-        );
-        this.user = response.data;
-
-        // Обновляем название группы после сохранения
-        const userGroup = this.groups.find((g) => g.id === this.user.group);
-        this.user.group = userGroup
-          ? { id: userGroup.id, name: userGroup.name }
-          : { id: "", name: "Неизвестная группа" };
-
-        saveUserData(this.user);
-        this.showModal = false;
-        alert("Профиль успешно обновлен!");
-      } catch (error) {
-        console.error("Ошибка при обновлении профиля:", error);
-      }
-    },
-
-    cancelEdit() {
-      this.user = getUserData();
+    updateProfile() {
+      saveUserData(this.userData); // Логика для обновления профиля
+      alert("Профиль обновлён!");
       this.showModal = false;
     },
   },
 };
 </script>
+
+<style scoped>
+/* Немного мягче фон */
+.fixed {
+  background: rgba(0, 0, 0, 0.3); /* Полупрозрачный черный */
+  backdrop-filter: blur(5px); /* Эффект размытия */
+}
+</style>

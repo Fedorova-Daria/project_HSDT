@@ -18,7 +18,7 @@
             <div class="w-full mb-4">
               <h2 class="text-white mb-1">Имя</h2>
               <input
-                v-model="FirstName"
+                v-model="first_name"
                 class="m-auto w-90 bg-white text-grey px-2 py-2 rounded-lg border-3 border-solid border-fiol duration-500 ease-linear transition-colors hover:border-purple-500 focus:border-purple-600 outline-none"
                 placeholder="Введите имя..."
               />
@@ -26,7 +26,7 @@
             <div class="w-full mb-4 flex flex-col">
               <h2 class="text-white mb-1">Фамилия</h2>
               <input
-                v-model="LastName"
+                v-model="last_name"
                 class="m-auto w-90 bg-white text-grey px-2 py-2 rounded-lg border-3 border-solid border-fiol duration-500 ease-linear transition-colors hover:border-purple-500 focus:border-purple-600 outline-none"
                 placeholder="Введите фамилию..."
               />
@@ -129,78 +129,79 @@ export default {
     };
   },
   methods: {
+    // Регистрация пользователя
     async registerUser() {
+      if (
+        !this.first_name ||
+        !this.last_name ||
+        !this.email ||
+        !this.password ||
+        !this.GroupID
+      ) {
+        alert("Пожалуйста, заполните все поля.");
+        return;
+      }
+
+      const data = {
+        first_name: this.first_name,
+        last_name: this.last_name,
+        group: this.GroupID, // Отправляем только ID группы
+        email: this.email,
+        password: this.password,
+      };
+
+      console.log("Отправляемые данные:", data);
+
       try {
+        // 1. Отправляем запрос на регистрацию
         const response = await axios.post(
           "http://127.0.0.1:8000/api/users/registration/",
-          {
-            first_name: this.first_name,
-            last_name: this.last_name,
-            group: Array.isArray(this.GroupID) ? this.GroupID[0] : this.GroupID,
-            email: this.email,
-            password: this.password,
-          }
+          data
         );
 
         if (response.status === 201) {
           console.log("Пользователь зарегистрирован:", response.data);
 
-          // ✅ После регистрации сразу логинимся
-          await this.loginUser();
+          // 2. Запрашиваем список всех групп
+          const groupResponse = await axios.get(
+            "http://127.0.0.1:8000/api/core/groups/list"
+          );
+
+          if (groupResponse.status === 200) {
+            const groups = groupResponse.data; // Получаем массив групп
+
+            // 3. Ищем нужную группу по ID
+            const userGroup = groups.find((g) => g.id === this.GroupID);
+
+            const userData = {
+              first_name: this.first_name,
+              last_name: this.last_name,
+              email: this.email,
+              group: userGroup
+                ? { id: userGroup.id, name: userGroup.name }
+                : { id: this.GroupID, name: "Неизвестная группа" },
+            };
+
+            console.log("Сохраняем пользователя в localStorage:", userData);
+            localStorage.setItem("userData", JSON.stringify(userData)); // Сохраняем в localStorage
+          } else {
+            console.error("Ошибка при получении списка групп");
+          }
+
+          // 4. Перенаправляем на страницу входа
+          this.$router.push("/login");
         } else {
           console.error("Ошибка регистрации:", response.data);
         }
       } catch (error) {
         console.error("Ошибка при отправке данных:", error);
+        if (error.response) {
+          console.error("Данные ошибки:", error.response.data);
+        }
+        alert("Ошибка при регистрации. Проверьте введённые данные.");
       }
     },
-
-    async loginUser() {
-      try {
-        const response = await axios.post("http://127.0.0.1:8000/api/token/", {
-          email: this.email,
-          password: this.password,
-        });
-
-        const { access, refresh } = response.data;
-
-        // ✅ Сохраняем токены в localStorage
-        localStorage.setItem("access", access);
-        localStorage.setItem("refresh", refresh);
-
-        // ✅ Получаем данные пользователя и сохраняем их
-        await this.fetchUserData();
-
-        // ✅ Переход в профиль после регистрации
-        this.$router.push("/rialto");
-      } catch (error) {
-        console.error("Ошибка входа после регистрации", error);
-      }
-    },
-
-    async fetchUserData() {
-      try {
-        const accessToken = localStorage.getItem("access");
-
-        const response = await axios.get(
-          "http://127.0.0.1:8000/api/users/me/",
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        const userData = response.data;
-
-        // ✅ Сохраняем пользователя в localStorage
-        localStorage.setItem("userData", JSON.stringify(userData));
-      } catch (error) {
-        console.error("Ошибка получения данных пользователя", error);
-      }
-    },
-
+    // Загрузка списка групп
     async fetchGroups() {
       try {
         const response = await axios.get(
@@ -218,12 +219,14 @@ export default {
       }
     },
 
+    // Фильтрация групп
     filterGroups() {
       this.filteredGroups = this.groups.filter((group) =>
         group.name.toLowerCase().includes(this.searchQuery.toLowerCase())
       );
     },
 
+    // Выбор группы
     selectGroup(group) {
       this.selectedGroup = group;
       this.GroupID = group.id; // Сохраняем ID группы

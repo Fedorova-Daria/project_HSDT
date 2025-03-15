@@ -97,6 +97,15 @@
 
 <script>
 import axios from "axios";
+import {
+  saveUserData,
+  saveTokens,
+  clearStorage,
+} from "@/utils/localStorage.js"; // Предположим, что функции находятся в отдельном файле
+
+const API_BASE_URL = "http://127.0.0.1:8000/api";
+const LOGIN_URL = `${API_BASE_URL}/users/login/`;
+const USER_DATA_URL = `${API_BASE_URL}/users/me/`;
 
 export default {
   data() {
@@ -107,12 +116,15 @@ export default {
       passwordError: "",
     };
   },
+
   methods: {
-    clearError(field) {
-      if (field === "email") this.emailError = "";
-      if (field === "password") this.passwordError = "";
+    // Очистка ошибок
+    clearErrors() {
+      this.emailError = "";
+      this.passwordError = "";
     },
 
+    // НЕ ТРОГАТЬ, здесь написаны ошибки которые выводятся на сайт
     validateForm() {
       let isValid = true;
 
@@ -132,82 +144,109 @@ export default {
       return isValid;
     },
 
+    // НЕ ТРОГАТЬ Валидация email, а точнее проверка вида почты
     validateEmail(email) {
       const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return re.test(email);
     },
 
+    // Основной метод для входа
     async login() {
-      this.emailError = "";
-      this.passwordError = "";
+      this.clearErrors();
 
       if (!this.validateForm()) return;
 
       try {
-        // Отправляем запрос на авторизацию
-        const response = await axios.post(
-          "http://127.0.0.1:8000/api/users/login/",
-          {
-            email: this.email,
-            password: this.password,
-          }
-        );
+        // Очищаем localStorage перед входом
+        clearStorage();
 
-        if (response.data.access && response.data.refresh) {
-          // Сохраняем токены в localStorage
-          localStorage.setItem("access", response.data.access);
-          localStorage.setItem("refresh", response.data.refresh);
+        // Аутентификация пользователя
+        const tokens = await this.authenticateUser(this.email, this.password);
 
-          // Получаем информацию о пользователе
-          await this.fetchUserData(response.data.access);
+        // Получаем и сохраняем данные пользователя
+        await this.fetchAndSaveUserData(tokens.access_token);
 
-          // Перенаправляем пользователя на главную страницу
-          this.$router.push("/rialto");
-        } else {
-          this.passwordError = "Ошибка при входе: токены не получены";
-        }
+        // Перенаправляем пользователя на главную страницу
+        this.redirectToHome();
       } catch (error) {
-        console.error("Ошибка входа", error);
-
-        if (error.response) {
-          if (error.response.data?.message) {
-            if (error.response.data.message === "Invalid credentials") {
-              this.passwordError = "Неверный email или пароль";
-            } else if (error.response.data.message === "Email not found") {
-              this.emailError = "Данная почта не зарегистрирована";
-            } else {
-              this.passwordError = error.response.data.message;
-            }
-          } else {
-            this.passwordError = "Произошла ошибка при входе";
-          }
-        } else if (error.request) {
-          this.passwordError = "Ошибка соединения с сервером";
-        } else {
-          this.passwordError = "Произошла непредвиденная ошибка";
-        }
+        // Обрабатываем ошибки
+        this.handleError(error);
       }
     },
 
-    async fetchUserData(accessToken) {
+    // Метод для аутентификации пользователя
+    async authenticateUser(email, password) {
       try {
-        const response = await axios.get(
-          "http://127.0.0.1:8000/api/users/me/",
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        const response = await axios.post(LOGIN_URL, { email, password });
+        console.log("Ответ сервера:", response.data); // Логируем ответ
 
-        // Сохраняем данные пользователя в localStorage
-        localStorage.setItem("userData", JSON.stringify(response.data));
+        if (!response.data.access_token || !response.data.refresh_token) {
+          throw new Error("Токены не получены");
+        }
+
+        // Используем вашу функцию для сохранения токенов
+        saveTokens(response.data.access_token, response.data.refresh_token);
+
+        return response.data;
       } catch (error) {
-        console.error("Ошибка получения данных пользователя", error);
+        console.error("Ошибка при аутентификации:", error.response || error); // Логируем ошибку
+        throw error;
       }
     },
 
+    // Метод для получения и сохранения данных пользователя
+    async fetchAndSaveUserData(accessToken) {
+      try {
+        const userData = await this.fetchUserData(accessToken);
+        console.log("Данные пользователя:", userData); // Логируем данные пользователя
+
+        // Используем вашу функцию для сохранения данных пользователя
+        saveUserData(userData);
+      } catch (error) {
+        console.error("Ошибка при получении данных пользователя:", error); // Логируем ошибку
+        throw error;
+      }
+    },
+
+    // Метод для получения данных пользователя
+    async fetchUserData(accessToken) {
+      const response = await axios.get(USER_DATA_URL, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      return response.data;
+    },
+
+    // НЕ ТРОГАТЬ Метод для обработки ошибок
+    handleError(error) {
+      if (error.response) {
+        switch (error.response.data?.message) {
+          case "Invalid credentials":
+            this.passwordError = "Неверный email или пароль";
+            break;
+          case "Email not found":
+            this.emailError = "Данная почта не зарегистрирована";
+            break;
+          default:
+            this.passwordError =
+              error.response.data.message || "Произошла ошибка при входе";
+        }
+      } else if (error.request) {
+        this.passwordError = "Ошибка соединения с сервером";
+      } else {
+        this.passwordError = "Произошла непредвиденная ошибка";
+      }
+    },
+
+    // НЕ ТРОГАТЬ Метод для перенаправления на главную страницу
+    redirectToHome() {
+      this.$router.push("/rialto");
+    },
+
+    // НЕ ТРОГАТЬ Метод для перехода на страницу регистрации
     goToRegister() {
       this.$router.push("/register");
     },
