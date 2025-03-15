@@ -1,15 +1,16 @@
 from rest_framework import serializers
 from .models import Account
 from django.contrib.auth.hashers import make_password
-from core.models import Group
+from core.models import UniversityGroup
 
 
 class AccountSerializer(serializers.ModelSerializer):
-    group = serializers.PrimaryKeyRelatedField(queryset=Group.objects.all())  # Добавляем поле для выбора группы
+    university_group = serializers.PrimaryKeyRelatedField(queryset=UniversityGroup.objects.all(), required=False)
+    groups = serializers.SerializerMethodField()
     class Meta:
         model = Account
-        fields = ['id', 'email', 'username', 'password', 'first_name', 'last_name', 'group', 'phone', 'bio',
-                  'skills', 'avatar', 'created_at']
+        fields = ['id', 'email', 'username', 'password', 'groups', 'first_name', 'last_name', 'company_name',
+                  'university_group', 'phone', 'bio', 'skills', 'avatar', 'created_at']
         extra_kwargs = {
             'password': {'write_only': True}
         }
@@ -25,4 +26,6 @@ class AccountSerializer(serializers.ModelSerializer):
         # Создаем пользователя
         return super().create(validated_data)
 
+    def get_groups(self, obj):
+        return [group.name for group in obj.groups.all()]
 

@@ -1,7 +1,7 @@
 from django.contrib import admin
-from .models import Technology, Group
+from .models import Technology, UniversityGroup
 
 
 admin.site.register(Technology)
-admin.site.register(Group)
+admin.site.register(UniversityGroup)
 

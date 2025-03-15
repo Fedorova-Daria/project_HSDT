@@ -14,7 +14,7 @@ class Technology(models.Model):
         verbose_name_plural = "Технологии"
 
 
-class Group(models.Model):
+class UniversityGroup(models.Model):
     name = models.CharField(max_length=255, unique=True)    # Создаём уникальное текстовое поле на 255 символов
 
     def __str__(self):
