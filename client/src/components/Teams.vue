@@ -11,7 +11,7 @@
             <th class="p-3 text-left">Название команды</th>
             <th class="p-3 text-left">Количество человек</th>
             <th class="p-3 text-left">Стек технологий</th>
-            <th class="p-3 text-left">Средний уровень</th>
+            <th class="p-3 text-left">Рейтинг (0-10)</th>
             <th class="p-3 text-left">Статус</th>
             <th class="p-3 text-left">Действия</th>
           </tr>
@@ -33,15 +33,16 @@
                 {{ tech }}
               </span>
             </td>
-            <td class="p-3 border-t border-zinc-600">
-              {{ team.averageLevel }}
-            </td>
+            <td class="p-3 border-t border-zinc-600">{{ team.rating }}</td>
             <td class="p-3 border-t border-zinc-600">
               <span
                 :class="{
                   'bg-green-500': team.status === 'В работе',
                   'bg-yellow-500': team.status === 'В поисках',
                   'bg-red-500': team.status === 'Неактивна',
+                  'bg-purple-500': team.status === 'Заблокирован',
+                  'bg-blue-500': team.status === 'На рассмотрении',
+                  'bg-orange-500': team.status === 'На отдыхе',
                 }"
                 class="px-3 py-1 rounded-full text-sm"
               >
@@ -51,7 +52,7 @@
             <td class="p-3 border-t border-zinc-600">
               <button
                 class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
-                @click="openEditModal(team)"
+                @click="viewTeamDetails(team.name)"
               >
                 Подробнее
               </button>
@@ -88,11 +89,15 @@
             <div class="mb-4">
               <label class="block text-white mb-2">Количество человек</label>
               <input
-                v-model="newTeam.members"
+                v-model.number="newTeam.members"
                 type="number"
+                min="1"
                 class="w-full p-2 rounded bg-zinc-700 text-white"
                 required
               />
+              <p v-if="newTeam.members < 1" class="text-red-500 text-sm mt-1">
+                Количество участников должно быть больше 0.
+              </p>
             </div>
             <div class="mb-4">
               <label class="block text-white mb-2">Стек технологий</label>
@@ -116,15 +121,15 @@
               </div>
             </div>
             <div class="mb-4">
-              <label class="block text-white mb-2">Средний уровень</label>
-              <select
-                v-model="newTeam.averageLevel"
+              <label class="block text-white mb-2">Рейтинг</label>
+              <input
+                v-model.number="newTeam.rating"
+                type="number"
+                min="0"
+                max="10"
                 class="w-full p-2 rounded bg-zinc-700 text-white"
-              >
-                <option value="Низкий">Низкий</option>
-                <option value="Средний">Средний</option>
-                <option value="Высокий">Высокий</option>
-              </select>
+                required
+              />
             </div>
             <div class="mb-4">
               <label class="block text-white mb-2">Статус</label>
@@ -135,6 +140,9 @@
                 <option value="В работе">В работе</option>
                 <option value="В поисках">В поисках</option>
                 <option value="Неактивна">Неактивна</option>
+                <option value="Заблокирован">Заблокирован</option>
+                <option value="На рассмотрении">На рассмотрении</option>
+                <option value="На отдыхе">На отдыхе</option>
               </select>
             </div>
             <div class="flex justify-end">
@@ -148,6 +156,7 @@
               <button
                 type="submit"
                 class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
+                :disabled="newTeam.members < 1"
               >
                 Создать
               </button>
@@ -176,11 +185,18 @@
             <div class="mb-4">
               <label class="block text-white mb-2">Количество человек</label>
               <input
-                v-model="editedTeam.members"
+                v-model.number="editedTeam.members"
                 type="number"
+                min="1"
                 class="w-full p-2 rounded bg-zinc-700 text-white"
                 required
               />
+              <p
+                v-if="editedTeam.members < 1"
+                class="text-red-500 text-sm mt-1"
+              >
+                Количество участников должно быть больше 0.
+              </p>
             </div>
             <div class="mb-4">
               <label class="block text-white mb-2">Стек технологий</label>
@@ -204,15 +220,15 @@
               </div>
             </div>
             <div class="mb-4">
-              <label class="block text-white mb-2">Средний уровень</label>
-              <select
-                v-model="editedTeam.averageLevel"
+              <label class="block text-white mb-2">Рейтинг (0-10)</label>
+              <input
+                v-model.number="editedTeam.rating"
+                type="number"
+                min="0"
+                max="10"
                 class="w-full p-2 rounded bg-zinc-700 text-white"
-              >
-                <option value="Низкий">Низкий</option>
-                <option value="Средний">Средний</option>
-                <option value="Высокий">Высокий</option>
-              </select>
+                required
+              />
             </div>
             <div class="mb-4">
               <label class="block text-white mb-2">Статус</label>
@@ -223,6 +239,9 @@
                 <option value="В работе">В работе</option>
                 <option value="В поисках">В поисках</option>
                 <option value="Неактивна">Неактивна</option>
+                <option value="Заблокирован">Заблокирован</option>
+                <option value="На рассмотрении">На рассмотрении</option>
+                <option value="На отдыхе">На отдыхе</option>
               </select>
             </div>
             <div class="flex justify-end">
@@ -236,6 +255,7 @@
               <button
                 type="submit"
                 class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
+                :disabled="editedTeam.members < 1"
               >
                 Сохранить
               </button>
@@ -262,14 +282,14 @@ export default {
           name: "Команда 1",
           members: 3,
           techStack: ["Vue.js", "Node.js", "PostgreSQL"],
-          averageLevel: "Средний",
+          rating: 7,
           status: "В работе",
         },
         {
           name: "Команда 2",
           members: 5,
           techStack: ["React", "Express", "MongoDB"],
-          averageLevel: "Высокий",
+          rating: 9,
           status: "В поисках",
         },
       ],
@@ -279,9 +299,9 @@ export default {
       // Данные для новой команды
       newTeam: {
         name: "",
-        members: 0,
+        members: 1, // Начальное значение 1, чтобы избежать 0
         techStack: [],
-        averageLevel: "Низкий",
+        rating: 0,
         status: "В поисках",
       },
       // Данные для редактирования команды
@@ -314,6 +334,11 @@ export default {
     };
   },
   methods: {
+    // Переход на страницу деталей команды
+    viewTeamDetails(teamName) {
+      this.$router.push({ name: "TeamDetails", params: { name: teamName } });
+    },
+
     // Открыть модальное окно создания
     openCreateModal() {
       this.isCreateModalOpen = true;
@@ -327,14 +352,17 @@ export default {
     resetNewTeam() {
       this.newTeam = {
         name: "",
-        members: 0,
+        members: 1, // Сбрасываем на 1, чтобы избежать 0
         techStack: [],
-        averageLevel: "Низкий",
+        rating: 0,
         status: "В поисках",
       };
     },
     // Создать новую команду
     createTeam() {
+      if (this.newTeam.members < 1) {
+        return; // Не создаем команду, если участников меньше 1
+      }
       this.teams.push({ ...this.newTeam });
       this.closeCreateModal();
     },
@@ -350,6 +378,9 @@ export default {
     },
     // Сохранить изменения команды
     saveEditedTeam() {
+      if (this.editedTeam.members < 1) {
+        return; // Не сохраняем, если участников меньше 1
+      }
       const index = this.teams.findIndex(
         (team) => team.name === this.editedTeam.name
       );
