@@ -86,6 +86,8 @@
                 required
               />
             </div>
+            <!--ТУТ ШТУКА, КОТОРАЯ ЗАДАЁТ КОЛИЧЕСТВО ЧЕЛОВЕК КОМАНДАМ РУКАМИ-->
+            <!--
             <div class="mb-4">
               <label class="block text-white mb-2">Количество человек</label>
               <input
@@ -98,7 +100,7 @@
               <p v-if="newTeam.members < 1" class="text-red-500 text-sm mt-1">
                 Количество участников должно быть больше 0.
               </p>
-            </div>
+            </div> -->
             <div class="mb-4">
               <label class="block text-white mb-2">Стек технологий</label>
               <div class="grid grid-cols-2 gap-2">
@@ -120,7 +122,10 @@
                 </div>
               </div>
             </div>
-            <div class="mb-4">
+
+            <!--ТУТ ШТУКА, КОТОРАЯ ЗАДАЁТ РЕЙТИНГ КОМАНДАМ РУКАМИ-->
+
+            <!--<div class="mb-4">
               <label class="block text-white mb-2">Рейтинг</label>
               <input
                 v-model.number="newTeam.rating"
@@ -130,7 +135,8 @@
                 class="w-full p-2 rounded bg-zinc-700 text-white"
                 required
               />
-            </div>
+            </div> -->
+
             <div class="mb-4">
               <label class="block text-white mb-2">Статус</label>
               <select
