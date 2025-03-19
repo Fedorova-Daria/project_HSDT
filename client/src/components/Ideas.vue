@@ -77,9 +77,6 @@ export default {
   },
 };
 </script>
-import Header from "@/components/header.vue";
-export default {
-  components: { Header },
 
 <style scoped>
 .ideas-container {
