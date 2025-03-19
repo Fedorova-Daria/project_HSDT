@@ -42,7 +42,6 @@ class VoteIdeaView(APIView):
 
         # Если пользователь эксперт, его голос идёт в зачет
         if user_is_expert:
-            print("эксперт?")
             idea.experts_voted.add(user)
 
         idea.likes.add(user)
@@ -57,3 +56,4 @@ class IdeaCreateView(CreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(initiator=self.request.user)  # Инициатором становится текущий пользователь
+
