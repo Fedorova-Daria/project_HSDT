@@ -44,7 +44,7 @@
                   'bg-blue-500': team.status === 'На рассмотрении',
                   'bg-orange-500': team.status === 'На отдыхе',
                 }"
-                class="px-3 py-1 rounded-full text-sm"
+                class="flex justify-between px-3 py-1 rounded-full text-sm w-22"
               >
                 {{ team.status }}
               </span>
