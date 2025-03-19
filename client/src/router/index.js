@@ -18,7 +18,7 @@ const routes = [
   { path: "/teams", component: Teams },
   { path: "/ideas", component: Ideas },
   {
-    path: "/team/:id",
+    path: "/team/:name",
     name: "TeamDetails",
     component: TeamDetails,
   },
