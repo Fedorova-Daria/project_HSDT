@@ -29,3 +29,4 @@ class AccountSerializer(serializers.ModelSerializer):
     def get_groups(self, obj):
         return [group.name for group in obj.groups.all()]
 
+
