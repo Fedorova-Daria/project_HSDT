@@ -5,6 +5,7 @@ from django.contrib.auth import authenticate, login
 from django.http import JsonResponse
 from django.contrib.auth.hashers import check_password
 from rest_framework.views import APIView
+from rest_framework.generics import RetrieveAPIView
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
@@ -75,7 +76,7 @@ class RegistrationView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserProfileView(APIView):
+class AccountMeView(APIView):
     permission_classes = [IsAuthenticated]  # Только авторизованные юзеры
 
     def get(self, request):
@@ -83,4 +84,9 @@ class UserProfileView(APIView):
         serializer = AccountSerializer(user)
         return Response(serializer.data)
 
+
+class AccountIDView(RetrieveAPIView):
+    queryset = Account.objects.all()
+    serializer_class = AccountSerializer
+    lookup_field = "id"  # Будем искать юзера по ID
 

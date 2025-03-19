@@ -15,6 +15,17 @@ class Account(AbstractUser):
     phone = models.CharField(max_length=15, blank=True, null=True)  # Телефон
     university_group = models.ForeignKey(UniversityGroup, related_name='students', on_delete=models.CASCADE, null=True, blank=True)
 
+    class Role(models.TextChoices):
+        STUDENT = "ST", "Student"
+        CUSTOMER = "CU", "Customer"
+        EXPERT = "EX", "Expert"
+
+    role = models.CharField(
+        max_length=2,
+        choices=Role.choices,
+        default=Role.STUDENT
+    )
+
     first_name = models.CharField(max_length=30, blank=True, null=True)
     last_name = models.CharField(max_length=30, blank=True, null=True)
 
