@@ -1,13 +1,21 @@
 from rest_framework import serializers
 from .models import Idea
+from users.models import Account
 
 class IdeaSerializer(serializers.ModelSerializer):
     likes_count = serializers.IntegerField(source="likes.count", read_only=True)
+    confirmed = serializers.SerializerMethodField()  # Для поля подтверждения
 
     class Meta:
         model = Idea
-        fields = "__all__"  # Вернёт все поля модели + likes_count
-        extra_kwargs = {"likes": {"read_only": True}}  # Лайки нельзя передавать вручную
+        fields = '__all__'
+
+    def get_confirmed(self, obj):
+        # Сравниваем количество голосов с минимально необходимым количеством
+        if obj.experts_voted.count() >= obj.votes_to_approve:
+            return True
+        return False
+
 
 class IdeaShortSerializer(serializers.ModelSerializer):
     likes_count = serializers.IntegerField(source="likes.count", read_only=True)
