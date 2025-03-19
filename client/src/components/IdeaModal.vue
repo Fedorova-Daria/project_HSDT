@@ -137,6 +137,16 @@
                   </ul>
                 </div>
               </div>
+              <!-- Выбранные технологии -->
+              <div class="mt-2 flex flex-wrap gap-2">
+                <span
+                  v-for="tech in selectedStacks"
+                  :key="tech"
+                  class="px-2 py-1 bg-purple-600 text-white rounded"
+                >
+                  {{ tech }}
+                </span>
+              </div>
             </div>
 
             <div class="col-span-2">
@@ -206,23 +216,24 @@ export default {
     toggleDropdown() {
       this.isDropdownOpen = !this.isDropdownOpen;
     },
-    submitIdea() {
-      // Создаем объект новой идеи
-      const newIdea = {
-        id: Date.now(), // Уникальный ID
-        title: this.ideaTitle,
+    async submitIdea() {
+      const ideaData = {
+        name: this.ideaTitle,
         description: this.ideaDescription,
         technologies: this.selectedStacks,
-        participantsCount: this.participantsCount,
-        status: "Набор открыт", // Статус по умолчанию
-        author: "Заказчик", // Имя текущего пользователя
       };
 
-      // Передаем новую идею в родительский компонент
-      this.$emit("submit", newIdea);
-
-      // Закрываем модальное окно
-      this.closeModal();
+      try {
+        const response = await axios.post(
+          "http://localhost:8000/api/ideas/",
+          ideaData
+        );
+        alert("Идея успешно создана!");
+        this.closeModal();
+      } catch (error) {
+        console.error("Ошибка при создании идеи:", error);
+        alert("Ошибка при создании идеи!");
+      }
     },
   },
 };

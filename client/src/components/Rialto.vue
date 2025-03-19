@@ -34,7 +34,6 @@
       <!-- Кнопка "Создать идею", отображается только если роль пользователя - "заказчик" -->
       <!-- Кнопка "Создать идею" теперь открывает модальное окно -->
       <button
-        v-if="role === 'заказчик'"
         @click="openModal"
         class="bg-purple-600 text-white rounded-md px-4 py-2 hover:bg-purple-700 transition ml-5 h-10"
       >
@@ -46,7 +45,12 @@
     <div
       class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-4/5 m-auto mt-10"
     >
-      <IdeaCard v-for="idea in ideas" :key="idea.id" :idea="idea" />
+      <IdeaCard
+        v-for="idea in ideas"
+        :key="idea.id"
+        :idea="idea"
+        @click="goToIdea(idea.id)"
+      />
     </div>
 
     <!-- Всплывающее окно -->
@@ -55,6 +59,7 @@
 </template>
 
 <script>
+import axios from "axios";
 import IdeaCard from "@/components/RialtoCard1.vue"; // Проверьте правильность пути
 import IdeaModal from "@/components/IdeaModal.vue"; // Импортируем модальное окно
 import Header from "@/components/header.vue";
@@ -62,34 +67,30 @@ export default {
   components: { IdeaCard, IdeaModal, Header },
   data() {
     return {
-      // Примерная роль пользователя
-      role: "заказчик", // Реальная роль из хранилища данных
-      ideas: [
-        {
-          id: 1,
-          title: 'Создание сайта для конкурса "Педагог года"',
-          description:
-            "Разработка веб-приложения для анкет преподавателей и голосования.",
-          author: "Екатерина Сердюкова",
-          technologies: ["C#", "Vue.js"],
-          status: "Набор открыт",
-          participantsCount: "3",
-        },
-      ],
+      ideas: [],
       isModalOpen: false, // Состояние модального окна
     };
   },
+  async created() {
+    await this.fetchIdeas();
+  },
   methods: {
+    async fetchIdeas() {
+      try {
+        const response = await axios.get("http://localhost:8000/api/ideas/");
+        this.ideas = response.data;
+      } catch (error) {
+        console.error("Ошибка при получении идей:", error);
+      }
+    },
+    goToIdea(id) {
+      this.$router.push(`/idea/${id}`);
+    },
     openModal() {
       this.isModalOpen = true;
     },
     closeModal() {
       this.isModalOpen = false;
-    },
-    addNewIdea(newIdea) {
-      // Добавляем новую идею в список
-      this.ideas.unshift(newIdea); // Добавляем в начало списка
-      this.closeModal();
     },
   },
 };
