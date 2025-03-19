@@ -210,6 +210,7 @@ export default {
 };
 </script>
 
+
 <style>
 .bg-cards {
   background-color: #1f2937;

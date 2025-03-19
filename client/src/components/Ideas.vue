@@ -1,62 +1,156 @@
 <template>
+  
   <div>
     <Header />
-    <table
-      class="w-3/5 m-auto border-collapse shadow-lg rounded-lg overflow-hidden"
-    >
-      <thead class="bg-zinc-800 text-white">
+    <div class="ideas-container text-white ">
+
+    
+      
+    
+    
+    <!-- Форма для добавления новой идеи -->
+    <div class="add-idea">
+      <input v-model="newIdeaText" placeholder="Введите новую идею" />
+      <button @click="addIdea">Добавить</button>
+    </div>
+    
+    <!-- Таблица идей -->
+    <table>
+      <thead>
         <tr>
-          <th class="p-3 text-left">Название идеи</th>
-          <th class="p-3 text-left">Статус</th>
-          <th class="p-3 text-left">Дата создания</th>
-          <!--жопа-->
+          <th>Идея</th>
+          <th>Статус</th>
+          <th>Действия</th>
         </tr>
       </thead>
       <tbody>
-        <tr class="bg-cards transition-colors text-white hover:bg-zinc-700">
-          <td class="p-3 border-t border-zinc-600"></td>
-          <td class="p-3 border-t border-zinc-600"></td>
-          <td class="p-3 border-t border-zinc-600"></td>
+        <tr v-for="(idea, index) in ideas" :key="idea.id">
+          <td>{{ idea.text }}</td>
+          <td>
+            <select v-model="idea.status">
+              <option value="новая">Новая</option>
+              <option value="в процессе">В процессе</option>
+              <option value="завершена">Завершена</option>
+            </select>
+          </td>
+          <td>
+            <button @click="deleteIdea(index)">Удалить</button>
+          </td>
         </tr>
       </tbody>
     </table>
-    <template>
-      <div class="idea-page">
-        <div class="idea-container">
-          <h1 class="idea-title">{{ idea.name }}</h1>
-          <p class="idea-description">{{ idea.description }}</p>
-
-          <div class="idea-actions">
-            <button @click="editIdea">Редактировать</button>
-            <button @click="deleteIdea">Удалить</button>
-          </div>
-        </div>
-      </div>
-    </template>
-    <template>
-      <div class="modal-overlay">
-        <div class="modal-content">
-          <h3>Создать идею</h3>
-          <form @submit.prevent="handleSubmit">
-            <div>
-              <label for="ideaName">Название идеи</label>
-              <input v-model="idea.name" type="text" id="ideaName" required />
-            </div>
-            <div>
-              <label for="ideaDescription">Описание идеи</label>
-              <textarea
-                v-model="idea.description"
-                id="ideaDescription"
-                required
-              ></textarea>
-            </div>
-            <div class="modal-actions">
-              <button type="submit">Создать</button>
-              <button type="button" @click="$emit('close')">Закрыть</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </template>
+  </div>
   </div>
 </template>
+
+
+<script>
+import Header from "@/components/header.vue";
+export default {
+  components: { Header },
+
+  data() {
+    return {
+      newIdeaText: "",
+      ideas: [],
+    };
+  },
+  methods: {
+    // Метод для добавления новой идеи
+    addIdea() {
+      if (this.newIdeaText.trim() === "") return;
+      
+      const newIdea = {
+        id: Date.now(), // Уникальный ID для каждой идеи
+        text: this.newIdeaText,
+        status: "новая",
+      };
+      
+      this.ideas.push(newIdea);
+      this.newIdeaText = ""; // Очистить поле ввода
+    },
+    
+    // Метод для удаления идеи
+    deleteIdea(index) {
+      this.ideas.splice(index, 1);
+    },
+  },
+};
+</script>
+import Header from "@/components/header.vue";
+export default {
+  components: { Header },
+
+<style scoped>
+.ideas-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.add-idea {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.add-idea input {
+  width: 75%;
+  padding: 8px;
+  font-size: 14px;
+}
+
+.add-idea button {
+  width: 20%;
+  padding: 8px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.add-idea button:hover {
+  background-color: #45a049;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+table, th, td {
+  border: 1px solid #ddd;
+}
+
+th, td {
+  padding: 10px;
+  text-align: left;
+}
+
+td select {
+  width: 100%;
+  padding: 5px;
+}
+
+button {
+  padding: 5px 10px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #d32f2f;
+}
+</style>
+
+
+        
+
