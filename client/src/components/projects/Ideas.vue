@@ -1,48 +1,41 @@
 <template>
-  
   <div>
     <Header />
-    <div class="ideas-container text-white ">
+    <div class="ideas-container text-white">
+      <!-- Форма для добавления новой идеи -->
+      <div class="add-idea">
+        <input v-model="newIdeaText" placeholder="Введите новую идею" />
+        <button @click="addIdea">Добавить</button>
+      </div>
 
-    
-      
-    
-    
-    <!-- Форма для добавления новой идеи -->
-    <div class="add-idea">
-      <input v-model="newIdeaText" placeholder="Введите новую идею" />
-      <button @click="addIdea">Добавить</button>
+      <!-- Таблица идей -->
+      <table>
+        <thead>
+          <tr>
+            <th>Идея</th>
+            <th>Статус</th>
+            <th>Действия</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(idea, index) in ideas" :key="idea.id">
+            <td>{{ idea.text }}</td>
+            <td>
+              <select v-model="idea.status">
+                <option value="новая">Новая</option>
+                <option value="в процессе">В процессе</option>
+                <option value="завершена">Завершена</option>
+              </select>
+            </td>
+            <td>
+              <button @click="deleteIdea(index)">Удалить</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-    
-    <!-- Таблица идей -->
-    <table>
-      <thead>
-        <tr>
-          <th>Идея</th>
-          <th>Статус</th>
-          <th>Действия</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(idea, index) in ideas" :key="idea.id">
-          <td>{{ idea.text }}</td>
-          <td>
-            <select v-model="idea.status">
-              <option value="новая">Новая</option>
-              <option value="в процессе">В процессе</option>
-              <option value="завершена">Завершена</option>
-            </select>
-          </td>
-          <td>
-            <button @click="deleteIdea(index)">Удалить</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
   </div>
 </template>
-
 
 <script>
 import Header from "@/components/header.vue";
@@ -59,17 +52,17 @@ export default {
     // Метод для добавления новой идеи
     addIdea() {
       if (this.newIdeaText.trim() === "") return;
-      
+
       const newIdea = {
         id: Date.now(), // Уникальный ID для каждой идеи
         text: this.newIdeaText,
         status: "новая",
       };
-      
+
       this.ideas.push(newIdea);
       this.newIdeaText = ""; // Очистить поле ввода
     },
-    
+
     // Метод для удаления идеи
     deleteIdea(index) {
       this.ideas.splice(index, 1);
@@ -121,11 +114,14 @@ table {
   margin-top: 20px;
 }
 
-table, th, td {
+table,
+th,
+td {
   border: 1px solid #ddd;
 }
 
-th, td {
+th,
+td {
   padding: 10px;
   text-align: left;
 }
@@ -147,7 +143,3 @@ button:hover {
   background-color: #d32f2f;
 }
 </style>
-
-
-        
-

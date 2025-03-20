@@ -17,8 +17,9 @@
 
 <script>
 import axios from "axios";
-
+import Header from "@/components/header.vue";
 export default {
+  components: { Header },
   data() {
     return {
       idea: null, // Здесь будем хранить данные о выбранной идее

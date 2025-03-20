@@ -106,7 +106,7 @@
 
 <script>
 import Header from "@/components/header.vue";
-import TeamCreate from "@/components/TeamCreate.vue";
+import TeamCreate from "@/components/teams/TeamCreate.vue";
 
 export default {
   components: {
