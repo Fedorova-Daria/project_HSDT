@@ -4,7 +4,7 @@
     <div class="p-6 w-4/5 mx-auto">
       <!-- Кнопка "Назад" -->
       <button
-        class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors mb-6"
+        class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors mb-6 btn cursor-pointer"
         @click="goBack"
       >
         Назад
@@ -39,14 +39,14 @@
           <div class="flex justify-end">
             <button
               type="button"
-              class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors mr-2"
+              class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors mr-2 btn cursor-pointer"
               @click="cancelEditing"
             >
               Отмена
             </button>
             <button
               type="submit"
-              class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
+              class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors btn cursor-pointer"
             >
               Сохранить
             </button>
@@ -67,7 +67,7 @@
 
         <!-- Кнопка "Редактировать" -->
         <button
-          class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
+          class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors btn cursor-pointer"
           @click="startEditing"
         >
           Редактировать
