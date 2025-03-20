@@ -7,6 +7,7 @@ import Teams from "../components/Teams.vue";
 import ChangeProfile from "../components/ChangeProfile.vue";
 import TeamDetails from "@/components/TeamDetails.vue";
 import Ideas from "@/components/Ideas.vue";
+import IdeaDetail from "@/components/IdeaDetail.vue";
 
 const routes = [
   { path: "/", redirect: "/login" }, // Перенаправление с корневого маршрута на страницу входа
@@ -21,6 +22,11 @@ const routes = [
     path: "/team/:name",
     name: "TeamDetails",
     component: TeamDetails,
+  },
+  {
+    path: "/idea/:id", // Параметр id в URL
+    name: "IdeaDetail",
+    component: IdeaDetail,
   },
 ];
 

@@ -16,12 +16,12 @@
     </div>
 
     <p class="text-gray-300 mb-3">
-      {{ truncatedDescription || "Описание отсутствует" }}
+      {{ idea.short_Description || "Описание отсутствует" }}
     </p>
 
     <div class="mt-auto">
       <h3 class="text-xl text-white mb-3">
-        Инициатор: {{ idea.author || "Неизвестный автор" }}
+        Инициатор: {{ idea.initiator_info || "Неизвестный автор" }}
       </h3>
 
       <div class="flex flex-wrap gap-1 mb-5">

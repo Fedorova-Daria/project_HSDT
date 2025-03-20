@@ -72,15 +72,17 @@ export default {
     };
   },
   async created() {
-    await this.fetchIdeas();
+    await this.fetchCustomerIdeas();
   },
   methods: {
-    async fetchIdeas() {
+    async fetchCustomerIdeas() {
       try {
-        const response = await axios.get("http://localhost:8000/api/ideas/");
+        const response = await axios.get("http://localhost:8000/api/ideas/", {
+          params: { role: "CU" }, // Фильтрация по роли заказчика
+        });
         this.ideas = response.data;
       } catch (error) {
-        console.error("Ошибка при получении идей:", error);
+        console.error("Ошибка при загрузке идей заказчиков:", error);
       }
     },
     goToIdea(id) {

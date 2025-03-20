@@ -122,6 +122,7 @@ export default {
       GroupID: null, // ID выбранной группы
       email: "",
       password: "",
+      role: "ST", // Добавляем роль по умолчанию
       dropdownOpen: false,
       searchQuery: "",
       selectedGroup: null,
@@ -146,9 +147,10 @@ export default {
       const data = {
         first_name: this.first_name,
         last_name: this.last_name,
-        group: this.GroupID, // Отправляем только ID группы
+        university_group: this.GroupID, // Переименовано на university_group
         email: this.email,
         password: this.password,
+        role: this.role, // Добавляем роль по умолчанию
       };
 
       console.log("Отправляемые данные:", data);
@@ -165,7 +167,7 @@ export default {
 
           // 2. Запрашиваем список всех групп
           const groupResponse = await axios.get(
-            "http://127.0.0.1:8000/api/core/groups/list"
+            "http://127.0.0.1:8000/api/core/university_groups/list"
           );
 
           if (groupResponse.status === 200) {
@@ -178,6 +180,7 @@ export default {
               first_name: this.first_name,
               last_name: this.last_name,
               email: this.email,
+              role: this.role, // Добавляем роль в userData
               group: userGroup
                 ? { id: userGroup.id, name: userGroup.name }
                 : { id: this.GroupID, name: "Неизвестная группа" },
@@ -202,11 +205,12 @@ export default {
         alert("Ошибка при регистрации. Проверьте введённые данные.");
       }
     },
+
     // Загрузка списка групп
     async fetchGroups() {
       try {
         const response = await axios.get(
-          "http://127.0.0.1:8000/api/core/groups/list"
+          "http://127.0.0.1:8000/api/core/university_groups/list"
         );
 
         if (response.status === 200) {
@@ -234,6 +238,7 @@ export default {
       this.dropdownOpen = false; // Закрываем список
     },
   },
+
   mounted() {
     this.fetchGroups(); // Загружаем группы при монтировании компонента
   },

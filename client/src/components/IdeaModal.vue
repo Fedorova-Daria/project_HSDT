@@ -156,11 +156,19 @@
                 >Расскажите о том, что нужно сделать</label
               >
               <textarea
+                v-model="ideaShortDescription"
+                id="description"
+                rows="2"
+                class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                placeholder="Напишите краткое описание проекта здесь, чтобы его могли видеть все"
+                required
+              ></textarea>
+              <textarea
                 v-model="ideaDescription"
                 id="description"
                 rows="4"
-                class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                placeholder="Напишите описание проекта здесь"
+                class="block mt-3 p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                placeholder="Напишите подробное описание проекта здесь"
                 required
               ></textarea>
             </div>
@@ -190,12 +198,15 @@
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   data() {
     return {
       isDropdownOpen: false, // Флаг для управления состоянием выпадающего списка
       selectedStacks: [], // Массив для выбранных технологий
       ideaTitle: "", // Название проекта
+      ideaShortDescription: "", // Краткое описание проекта
       ideaDescription: "", // Описание проекта
       participantsCount: 1, // Количество участников
       stacks: [
@@ -217,17 +228,30 @@ export default {
       this.isDropdownOpen = !this.isDropdownOpen;
     },
     async submitIdea() {
-      const ideaData = {
-        name: this.ideaTitle,
-        description: this.ideaDescription,
-        technologies: this.selectedStacks,
-      };
-
       try {
-        const response = await axios.post(
-          "http://localhost:8000/api/ideas/",
-          ideaData
-        );
+        const userData = JSON.parse(localStorage.getItem("userData")); // Данные о пользователе из LocalStorage
+
+        const newIdea = {
+          name: this.ideaTitle,
+          description: this.ideaDescription,
+          short_description: this.ideaShortDescription,
+          technologies_info: this.selectedStacks,
+          initiator_info: {
+            id: userData.id,
+            role: userData.role,
+            name:
+              `${userData.first_name || ""} ${
+                userData.last_name || ""
+              }`.trim() || "Неизвестный пользователь",
+          },
+        };
+
+        await axios.post("http://localhost:8000/api/ideas/", newIdea, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access")}`,
+          },
+        });
+
         alert("Идея успешно создана!");
         this.closeModal();
       } catch (error) {
