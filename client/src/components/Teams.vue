@@ -8,6 +8,7 @@
       >
         <thead class="bg-zinc-800 text-white">
           <tr>
+            <th class="p-3 text-left">Избранное</th>
             <th class="p-3 text-left">Название команды</th>
             <th class="p-3 text-left">Количество человек</th>
             <th class="p-3 text-left">Стек технологий</th>
@@ -18,14 +19,24 @@
         </thead>
         <tbody>
           <tr
-            v-for="(team, index) in teams"
+            v-for="(team, index) in sortedTeams"
             :key="index"
             :class="{
               'bg-cards': !team.markedForDeletion,
               'bg-marked-for-deletion': team.markedForDeletion,
+              'bg-favorite': team.isFavorite,
             }"
-            class="transition-colors text-white hover:bg-zinc-700"
+            class="transition-colors text-white hover:bg-zinc-600"
           >
+            <!-- Кнопка "Избранное" -->
+            <td class="p-3 border-t border-zinc-600">
+              <button
+                class="btn bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition-colors w-15 cursor-pointer"
+                @click="toggleFavorite(team)"
+              >
+                {{ team.isFavorite ? "★" : "☆" }}
+              </button>
+            </td>
             <td class="p-3 border-t border-zinc-600">{{ team.name }}</td>
             <td class="p-3 border-t border-zinc-600">{{ team.members }}</td>
             <td class="p-3 border-t border-zinc-600">
@@ -54,16 +65,16 @@
             </td>
             <td class="p-3 border-t border-zinc-600">
               <button
-                class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
+                class="btn bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors cursor-pointer"
                 @click="viewTeamDetails(team.name)"
               >
                 Подробнее
               </button>
               <button
-                class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors ml-2"
+                class="px-4 py-2 rounded-md transition-all transform hover:scale-105 ml-2 cursor-pointer"
                 @click="markTeamForDeletion(team)"
               >
-                Удалить
+                ❌
               </button>
             </td>
           </tr>
@@ -72,10 +83,14 @@
 
       <!-- Кнопка "Создать команду" -->
       <button
-        class="mt-4 bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition-colors"
+        class="w-25 mt-4 px-6 py-2 rounded-md transition-all transform hover:scale-105"
         @click="openCreateModal"
       >
-        Создать команду
+        <img
+          :src="liked ? 'Penis.svg' : 'Penis2.svg'"
+          alt="Like"
+          class="w-6 h-6 mr-4 mb-5 duration-300 cursor-pointer"
+        />
       </button>
 
       <!-- Компонент для создания команды -->
@@ -107,6 +122,7 @@ export default {
           techStack: ["Vue.js", "Node.js", "PostgreSQL"],
           rating: 7,
           status: "В работе",
+          isFavorite: false,
         },
         {
           name: "Команда 2",
@@ -114,6 +130,7 @@ export default {
           techStack: ["React", "Express", "MongoDB"],
           rating: 9,
           status: "В поисках",
+          isFavorite: false,
         },
       ],
       isCreateModalOpen: false,
@@ -143,6 +160,15 @@ export default {
       ],
     };
   },
+  computed: {
+    sortedTeams() {
+      return [...this.teams].sort((a, b) => {
+        if (a.isFavorite && !b.isFavorite) return -1;
+        if (!a.isFavorite && b.isFavorite) return 1;
+        return 0;
+      });
+    },
+  },
   methods: {
     isTeamNameUnique(name) {
       return !this.teams.some((team) => team.name === name);
@@ -164,12 +190,15 @@ export default {
         alert("Команда с таким именем уже существует!");
         return;
       }
-      this.teams.push({ ...newTeam });
+      this.teams.push({ ...newTeam, isFavorite: false });
       this.closeCreateModal();
     },
     markTeamForDeletion(team) {
       team.status = "Проверяем";
       team.markedForDeletion = true;
+    },
+    toggleFavorite(team) {
+      team.isFavorite = !team.isFavorite;
     },
   },
 };
@@ -177,11 +206,11 @@ export default {
 
 <style>
 .bg-cards {
-  background-color: #1f2937;
+  background-color: #374151;
 }
 
 .bg-cards:hover {
-  background-color: #374151;
+  background-color: #4b5563;
 }
 
 .bg-zinc-800 {
@@ -194,5 +223,22 @@ export default {
 
 .bg-marked-for-deletion {
   background-color: #483d8b;
+}
+
+.bg-favorite {
+  background-color: #2c3e50;
+}
+
+.btn {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn:active {
+  transform: scale(0.95);
 }
 </style>

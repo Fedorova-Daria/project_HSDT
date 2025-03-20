@@ -54,14 +54,14 @@
           <div class="flex justify-end">
             <button
               type="button"
-              class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors mr-2"
+              class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors mr-2 btn cursor-pointer"
               @click="closeCreateModal"
             >
               Отмена
             </button>
             <button
               type="submit"
-              class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
+              class="btn cursor-pointer bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
               :disabled="newTeam.members < 1"
             >
               Создать
