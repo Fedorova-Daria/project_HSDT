@@ -8,13 +8,12 @@
       >
         <thead class="bg-zinc-800 text-white">
           <tr>
-            <th class="p-3 text-left">Избранное</th>
             <th class="p-3 text-left">Название команды</th>
             <th class="p-3 text-left">Количество человек</th>
             <th class="p-3 text-left">Стек технологий</th>
             <th class="p-3 text-left">Рейтинг (0-10)</th>
             <th class="p-3 text-left">Статус</th>
-            <th class="p-3 text-left min-w-[200px]">Действия</th>
+            <th class="p-3 text-left">Действия</th>
           </tr>
         </thead>
         <tbody>
@@ -22,25 +21,11 @@
             v-for="(team, index) in teams"
             :key="index"
             :class="{
-              'bg-purple-500': team.markedForDeletion,
-              'bg-zinc-700': !team.markedForDeletion,
+              'bg-cards': !team.markedForDeletion,
+              'bg-marked-for-deletion': team.markedForDeletion,
             }"
-            class="transition-colors text-white hover:bg-zinc-600"
+            class="transition-colors text-white hover:bg-zinc-700"
           >
-            <!-- Кнопка "Избранное" -->
-            <td class="p-3 border-t border-zinc-600">
-              <button
-                class="w-25 mt-4 px-6 py-2 rounded-md transition-all transform hover:scale-105"
-                :class="{ 'animate-pulse': team.isFavorite }"
-                @click="toggleFavorite(team)"
-              >
-                <img
-                  :src="team.isFavorite ? 'cross.svg' : 'cross2.svg'"
-                  alt="Like"
-                  class="w-6 h-6 mr-4 mb-5 duration-300 cursor-pointer hover:text-yellow-500"
-                />
-              </button>
-            </td>
             <td class="p-3 border-t border-zinc-600">{{ team.name }}</td>
             <td class="p-3 border-t border-zinc-600">{{ team.members }}</td>
             <td class="p-3 border-t border-zinc-600">
@@ -68,26 +53,18 @@
               </span>
             </td>
             <td class="p-3 border-t border-zinc-600">
-              <div class="button-container">
-                <button
-                  class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-all transform hover:scale-105 cursor-pointer"
-                  @click="viewTeamDetails(team.name)"
-                >
-                  Подробнее
-                </button>
-                <button
-                  class="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition-all transform hover:scale-105 ml-2 cursor-pointer"
-                  @click="openEditModal(team)"
-                >
-                  Редактировать
-                </button>
-                <button
-                  class="px-4 py-2 rounded-md transition-all transform hover:scale-105 ml-2 cursor-pointer"
-                  @click="markTeamForDeletion(team)"
-                >
-                  ❌
-                </button>
-              </div>
+              <button
+                class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
+                @click="viewTeamDetails(team.name)"
+              >
+                Подробнее
+              </button>
+              <button
+                class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors ml-2"
+                @click="markTeamForDeletion(team)"
+              >
+                Удалить
+              </button>
             </td>
           </tr>
         </tbody>
@@ -95,29 +72,18 @@
 
       <!-- Кнопка "Создать команду" -->
       <button
-        class="w-25 mt-4 px-6 py-2 rounded-md transition-all transform hover:scale-105"
+        class="mt-4 bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition-colors"
         @click="openCreateModal"
       >
-        <img
-          :src="liked ? 'Penis.svg' : 'Penis2.svg'"
-          alt="Like"
-          class="w-6 h-6 mr-4 mb-5 duration-300 cursor-pointer"
-        />
+        Создать команду
       </button>
 
-      <!-- Модальные окна -->
-      <TeamModalDetails
-        v-if="isCreateModalOpen"
-        :available-tech-stack="availableTechStack"
+      <!-- Компонент для создания команды -->
+      <TeamCreate
+        :isCreateModalOpen="isCreateModalOpen"
+        :availableTechStack="availableTechStack"
+        @close-create-modal="closeCreateModal"
         @create-team="createTeam"
-        @close-modal="closeCreateModal"
-      />
-      <TeamModalEdit
-        v-if="isEditModalOpen"
-        :edited-team="editedTeam"
-        :available-tech-stack="availableTechStack"
-        @save-edited-team="saveEditedTeam"
-        @close-modal="closeEditModal"
       />
     </div>
   </div>
@@ -125,14 +91,12 @@
 
 <script>
 import Header from "@/components/header.vue";
-import TeamModalDetails from "@/components/TeamModalDetails.vue";
-import TeamModalEdit from "@/components/TeamModalEdit.vue";
+import TeamCreate from "@/components/TeamCreate.vue";
 
 export default {
   components: {
     Header,
-    TeamModalDetails,
-    TeamModalEdit,
+    TeamCreate,
   },
   data() {
     return {
@@ -143,8 +107,6 @@ export default {
           techStack: ["Vue.js", "Node.js", "PostgreSQL"],
           rating: 7,
           status: "В работе",
-          isFavorite: false,
-          markedForDeletion: false,
         },
         {
           name: "Команда 2",
@@ -152,13 +114,9 @@ export default {
           techStack: ["React", "Express", "MongoDB"],
           rating: 9,
           status: "В поисках",
-          isFavorite: false,
-          markedForDeletion: false,
         },
       ],
       isCreateModalOpen: false,
-      isEditModalOpen: false,
-      editedTeam: null,
       availableTechStack: [
         "Vue.js",
         "React",
@@ -186,32 +144,55 @@ export default {
     };
   },
   methods: {
-    toggleFavorite(team) {
-      team.isFavorite = !team.isFavorite;
+    isTeamNameUnique(name) {
+      return !this.teams.some((team) => team.name === name);
+    },
+    viewTeamDetails(teamName) {
+      this.$router.push({ name: "TeamDetails", params: { name: teamName } });
+    },
+    openCreateModal() {
+      this.isCreateModalOpen = true;
+    },
+    closeCreateModal() {
+      this.isCreateModalOpen = false;
+    },
+    createTeam(newTeam) {
+      if (newTeam.members < 1) {
+        return;
+      }
+      if (!this.isTeamNameUnique(newTeam.name)) {
+        alert("Команда с таким именем уже существует!");
+        return;
+      }
+      this.teams.push({ ...newTeam });
+      this.closeCreateModal();
     },
     markTeamForDeletion(team) {
-      team.markedForDeletion = true;
       team.status = "Проверяем";
+      team.markedForDeletion = true;
     },
-    // Остальные методы
   },
 };
 </script>
 
 <style>
-.animate-pulse {
-  animation: pulse 0.5s ease-in-out;
+.bg-cards {
+  background-color: #1f2937;
 }
 
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.2);
-  }
-  100% {
-    transform: scale(1);
-  }
+.bg-cards:hover {
+  background-color: #374151;
+}
+
+.bg-zinc-800 {
+  background-color: #1f2937;
+}
+
+.border-zinc-600 {
+  border-color: #4b5563;
+}
+
+.bg-marked-for-deletion {
+  background-color: #483d8b;
 }
 </style>

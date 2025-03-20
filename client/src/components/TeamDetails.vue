@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- Шапка -->
     <Header />
     <div class="p-6 w-4/5 mx-auto">
       <!-- Кнопка "Назад" -->
@@ -11,40 +10,108 @@
         Назад
       </button>
 
-      <!-- Блоки -->
-      <div class="space-y-6">
-        <!-- Первый  -->
+      <!-- Форма редактирования -->
+      <div v-if="isEditing">
+        <h2 class="text-white text-xl mb-4">Редактирование команды</h2>
+        <form @submit.prevent="saveChanges">
+          <div class="mb-4">
+            <label class="block text-white mb-2">Название команды</label>
+            <input
+              v-model="editedTeam.name"
+              type="text"
+              class="w-full p-2 rounded bg-zinc-700 text-white"
+              required
+            />
+          </div>
+          <div class="mb-4">
+            <label class="block text-white mb-2">Статус</label>
+            <select
+              v-model="editedTeam.status"
+              class="w-full p-2 rounded bg-zinc-700 text-white"
+            >
+              <option value="В работе">В работе</option>
+              <option value="В поисках">В поисках</option>
+              <option value="Неактивна">Неактивна</option>
+              <option value="Проверяем">Проверяем</option>
+              <option value="Забанена">Забанена</option>
+            </select>
+          </div>
+          <div class="flex justify-end">
+            <button
+              type="button"
+              class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors mr-2"
+              @click="cancelEditing"
+            >
+              Отмена
+            </button>
+            <button
+              type="submit"
+              class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
+            >
+              Сохранить
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Отображение информации о команде -->
+      <div v-else class="space-y-6">
         <div class="bg-white p-6 rounded-lg shadow-md">
-          <h2 class="text-xl font-bold mb-4">Блок 1</h2>
-          <p>Тут типо всякая инфа о команде</p>
+          <h2 class="text-xl font-bold mb-4">Название команды</h2>
+          <p>{{ team.name }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+          <h2 class="text-xl font-bold mb-4">Статус</h2>
+          <p>{{ team.status }}</p>
         </div>
 
-        <!-- Второй  -->
-        <div class="bg-white p-6 rounded-lg shadow-md">
-          <h2 class="text-xl font-bold mb-4">Блок 2</h2>
-          <p>Тут тоже</p>
-        </div>
-
-        <!-- Третий  -->
-        <div class="bg-white p-6 rounded-lg shadow-md">
-          <h2 class="text-xl font-bold mb-4">Блок 3</h2>
-          <p>Ну и тут</p>
-        </div>
+        <!-- Кнопка "Редактировать" -->
+        <button
+          class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
+          @click="startEditing"
+        >
+          Редактировать
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import Header from "@/components/header.vue"; // Импортируем шапку
+import Header from "@/components/header.vue";
 
 export default {
   components: {
     Header,
   },
+  data() {
+    return {
+      isEditing: false, // Режим редактирования
+      team: {
+        name: "Команда 1",
+        status: "В работе",
+      },
+      editedTeam: {}, // Копия команды для редактирования
+    };
+  },
   methods: {
     goBack() {
-      this.$router.go(-1); // Возврат на предыдущую страницу
+      this.$router.go(-1);
+    },
+    startEditing() {
+      // Включаем режим редактирования и копируем данные
+      this.isEditing = true;
+      this.editedTeam = { ...this.team };
+    },
+    cancelEditing() {
+      // Отключаем режим редактирования
+      this.isEditing = false;
+    },
+    saveChanges() {
+      // Сохраняем изменения и отключаем режим редактирования
+      this.team = { ...this.editedTeam };
+      this.isEditing = false;
+      console.log("Изменения сохранены:", this.team);
     },
   },
 };
