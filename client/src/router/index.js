@@ -24,7 +24,7 @@ const routes = [
     component: TeamDetails,
   },
   {
-    path: "/idea/:id", // Параметр id в URL
+    path: "/ideas/:id", // Параметр id в URL
     name: "IdeaDetail",
     component: IdeaDetail,
   },

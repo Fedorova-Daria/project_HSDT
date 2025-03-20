@@ -75,7 +75,7 @@ export default {
   },
   methods: {
     openIdea() {
-      this.$router.push(`/idea/${this.idea.id}`);
+      this.$router.push(`/ideas/${this.idea.id}`);
     },
     toggleLike(event) {
       event.stopPropagation();

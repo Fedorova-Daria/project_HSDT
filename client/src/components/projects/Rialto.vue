@@ -86,7 +86,7 @@ export default {
       }
     },
     goToIdea(id) {
-      this.$router.push(`/idea/${id}`);
+      this.$router.push(`/ideas/${id}`);
     },
     openModal() {
       this.isModalOpen = true;

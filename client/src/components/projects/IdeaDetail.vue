@@ -1,18 +1,32 @@
 <template>
-  <div v-if="idea">
-    <h1>{{ idea.name }}</h1>
-    <p>{{ idea.description }}</p>
-    <p>
-      <strong>Инициатор:</strong> {{ idea.initiator_info.name }} (Роль:
-      {{ idea.initiator_info.role }})
-    </p>
-    <p><strong>Технологии:</strong> {{ idea.technologies_info.join(", ") }}</p>
-    <p><strong>Дата создания:</strong> {{ idea.created_at }}</p>
-    <!-- Добавить другие поля по необходимости -->
+  <div>
+    <Header />
+    <div class="flex w-4/5 mx-auto mt-10 gap-4 text-white">
+      <!-- Левый блок (Название и кнопки для функций идей) -->
+      <div class="w-1/4 bg-zinc-700 p-6 rounded-2xl shadow-lg">
+        <strong class="mt-5 text-3xl"> Идея: пупырышки из пиздырышки</strong>
+        <div class="mt-3 h-0.5 w-full m-auto bg-white"></div>
+        <h1 class="text-xl mt-3">Инициатор:</h1>
+        <h2 class="text-xl mt-1 font-bold">Павел Дуров</h2>
+        <button>Взять идею</button>
+        <button>Лайк сделать</button>
+        <button>Редактировать</button>
+        <button>Удалить</button>
+      </div>
+      <!-- Правый блок (вся информация о идее) -->
+      <div class="w-3/4 bg-zinc-700 p-6 rounded-2xl shadow-lg">
+        <strong class="mt-5 text-3xl"> Информация об идее</strong>
+        <div class="mt-3 h-0.5 w-full m-auto bg-white"></div>
+        <h1 class="text-xl mt-3">
+          Ну тут вся инфа кароче да мы тут все пишем расписываем можем
+          редактировать это спокойно так что вот так вот движемся
+        </h1>
+      </div>
+    </div>
   </div>
-  <div v-else>
+  <!--<div class="text-white" v-else>
     <p>Загрузка...</p>
-  </div>
+  </div>-->
 </template>
 
 <script>
