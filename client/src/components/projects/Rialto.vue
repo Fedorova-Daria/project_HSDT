@@ -61,7 +61,7 @@
 <script>
 import axios from "axios";
 import IdeaCard from "@/components/RialtoCard1.vue"; // Проверьте правильность пути
-import IdeaModal from "@/components/IdeaModal.vue"; // Импортируем модальное окно
+import IdeaModal from "@/components/projects/IdeaModal.vue"; // Импортируем модальное окно
 import Header from "@/components/header.vue";
 export default {
   components: { IdeaCard, IdeaModal, Header },
