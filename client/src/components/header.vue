@@ -5,7 +5,7 @@
     >
       <!-- Логотип слева -->
       <div class="flex items-center">
-        <h1 class="font-display text-fiol text-3xl">ВШЦТ</h1>
+        <h1 class="font-display text-fiolText text-3xl">ВШЦТ</h1>
       </div>
       <!-- Навигация -->
       <nav class="flex items-center gap-10">
@@ -13,12 +13,12 @@
           v-for="item in menuItems"
           :key="item.name"
           :to="item.link"
-          class="relative text-lg font-medium transition-colors duration-300 group text-white hover:text-purple-400"
-          :class="{ 'text-purple-400': $route.path === item.link }"
+          class="relative text-lg font-medium transition-colors duration-300 group text-white hover:text-fiolText"
+          :class="{ 'text-fiolText': $route.path === item.link }"
         >
           {{ item.name }}
           <span
-            class="absolute left-1/2 bottom-[-5px] h-[3px] bg-purple-400 rounded-full transition-all duration-300 w-0 group-hover:w-full group-hover:left-0"
+            class="absolute left-1/2 bottom-[-5px] h-[3px] bg-fiolText rounded-full transition-all duration-300 w-0 group-hover:w-full group-hover:left-0"
             :class="{ 'w-2/3 left-1/6': $route.path === item.link }"
           ></span>
         </router-link>
