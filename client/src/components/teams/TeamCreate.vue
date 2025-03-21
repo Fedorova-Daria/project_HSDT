@@ -5,7 +5,7 @@
       v-if="isCreateModalOpen"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
     >
-      <div class="bg-zinc-800 p-6 rounded-lg w-1/3">
+      <div class="bg-card p-6 rounded-lg w-1/3">
         <h2 class="text-white text-xl mb-4">Создать новую команду</h2>
         <form @submit.prevent="createTeam">
           <div class="mb-4">
