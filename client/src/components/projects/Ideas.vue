@@ -1,55 +1,57 @@
 <template>
   <div>
     <Header />
-    <div class="ideas-container text-white">
-      <!-- Форма для добавления новой идеи -->
-      <div class="add-idea">
-        <input v-model="newIdeaText" placeholder="Введите новую идею" />
-        <button @click="addIdea">Добавить</button>
-      </div>
-
-      <!-- Таблица идей (основная) -->
-      <h2>СПИСОК ГОТОВЫХ ИДЕЙ</h2>
-      <table>
+    <div class="w-4/5 m-auto mt-6 text-white">
+      <table
+        class="w-full border-collapse shadow-lg rounded-lg overflow-hidden bg-card"
+      >
         <thead>
-          <tr>
-            <th>Идея</th>
-            <th>Статус</th>
-            <th>Действия</th>
+          <tr class="bg-bgg text-left">
+            <th class="px-6 py-3">#</th>
+            <th class="px-6 py-3">Название</th>
+            <th class="px-6 py-3">Стеки технологий</th>
+            <th class="px-6 py-3">Статус</th>
+            <th class="px-6 py-3">Дата создания</th>
+            <th class="px-6 py-3"></th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(idea, index) in ideas" :key="idea.id">
-            <td>{{ idea.text }}</td>
-            <td>
-              <select v-model="idea.status">
-                <option value="новая">Новая</option>
-                <option value="в процессе">В процессе</option>
-                <option value="завершена">Завершена</option>
-              </select>
+          <tr
+            v-for="(item, index) in items"
+            :key="index"
+            class="border-b border-zinc-700 hover:bg-card transition duration-200"
+          >
+            <td class="px-6 py-4">{{ index + 1 }}</td>
+            <td class="px-6 py-4 font-medium">{{ item.name }}</td>
+            <td class="px-6 py-4">{{ item.description }}</td>
+            <td class="px-6 py-4">{{ item.description }}</td>
+            <td class="px-6 py-4">
+              <span
+                v-for="tech in item.technologies"
+                :key="tech"
+                class="px-2 py-1 bg-purple-600 text-xs rounded mr-1"
+              >
+                {{ tech }}
+              </span>
             </td>
-            <td>
-              <button @click="deleteIdea(index)">Удалить</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <!-- Таблица с идеями для улучшения работы -->
-      <h2>ЛУЧШИЕ ИДЕИ</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Название идеи</th>
-            <th>Оценка идеи</th>
-            <th>Действия</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(idea, index) in workEfficiencyIdeas" :key="idea.id">
-            <td>{{ idea.text }}</td>
-            <td>
-              <button @click="deleteWorkEfficiencyIdea(index)">Удалить</button>
+            <td class="px-6 py-4 flex gap-5">
+              <button
+                @click="toggleLike(item)"
+                class="px-4 py-2 text-sm font-medium rounded flex items-center gap-1 transition"
+                :class="
+                  item.liked
+                    ? 'bg-red-600 hover:bg-red-700'
+                    : 'bg-gray-600 hover:bg-gray-700'
+                "
+              >
+                ❤️ {{ item.likes }}
+              </button>
+              <button
+                @click="viewItem(item)"
+                class="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 rounded transition"
+              >
+                Посмотреть
+              </button>
             </td>
           </tr>
         </tbody>
@@ -57,125 +59,27 @@
     </div>
   </div>
 </template>
+
 <script>
 import Header from "@/components/header.vue";
 
 export default {
   components: { Header },
-
   data() {
     return {
-      newIdeaText: "",
-      ideas: [],
-      workEfficiencyIdeas: [
-        { id: 1, text: "Знаете, как сделать работу лучше?" },
-        { id: 2, text: "Есть новое и полезное решение?" },
+      items: [
         {
-          id: 3,
-          text: "Использовать систему Pomodoro для повышения концентрации",
+          name: "Проект 1",
+          description: "Описание проекта",
+          technologies: ["Vue", "Tailwind"],
         },
       ],
     };
   },
-
   methods: {
-    // Метод для добавления новой идеи в основную таблицу
-    addIdea() {
-      if (this.newIdeaText.trim() === "") return;
-
-      const newIdea = {
-        id: Date.now(), // Уникальный ID для каждой идеи
-        text: this.newIdeaText,
-        status: "новая",
-      };
-
-      this.ideas.push(newIdea);
-      this.newIdeaText = ""; // Очистить поле ввода
-    },
-
-    // Метод для удаления идеи из основной таблицы
-    deleteIdea(index) {
-      this.ideas.splice(index, 1);
-    },
-
-    // Метод для удаления идеи из таблицы "Идеи для улучшения работы"
-    deleteWorkEfficiencyIdea(index) {
-      this.workEfficiencyIdeas.splice(index, 1);
+    editItem(item) {
+      alert(`Редактирование: ${item.name}`);
     },
   },
 };
 </script>
-
-<style scoped>
-.ideas-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-h1,
-h2 {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.add-idea {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.add-idea input {
-  width: 75%;
-  padding: 8px;
-  font-size: 14px;
-}
-
-.add-idea button {
-  width: 20%;
-  padding: 8px;
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-
-.add-idea button:hover {
-  background-color: #45a049;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-}
-
-table,
-th,
-td {
-  border: 1px solid #ddd;
-}
-
-th,
-td {
-  padding: 10px;
-  text-align: left;
-}
-
-td select {
-  width: 100%;
-  padding: 5px;
-}
-
-button {
-  padding: 5px 10px;
-  background-color: #f44336;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-
-button:hover {
-  background-color: #d32f2f;
-}
-</style>
