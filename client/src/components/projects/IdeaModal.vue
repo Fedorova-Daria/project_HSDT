@@ -246,9 +246,10 @@ export default {
           },
         };
 
-        await axios.post("http://localhost:8000/api/ideas/", newIdea, {
+        await axios.post("http://localhost:8000/api/ideas/create/", newIdea, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("access")}`,
+            Authorization: `Bearer ${localStorage.getItem("access")}`, // Передаём токен
+            "Content-Type": "application/json",
           },
         });
 
