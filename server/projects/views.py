@@ -7,12 +7,17 @@ from .models import Idea
 from users.models import Account
 from .serializers import IdeaSerializer, IdeaShortSerializer, IdeaCreateSerializer
 from django.shortcuts import get_object_or_404
+from .filters import IdeaFilter
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters
 
 class IdeaListView(ListAPIView):
     """Список идей (доступен всем)"""
     queryset = Idea.objects.all()
     serializer_class = IdeaSerializer
-    permission_classes = [AllowAny]  # Доступ для всех, в том числе анонимных пользователей
+    permission_classes = [AllowAny]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_class = IdeaFilter
 
 class IdeaDetailView(RetrieveAPIView):
     """Детальный просмотр идеи"""

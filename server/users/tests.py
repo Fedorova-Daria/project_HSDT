@@ -1,3 +1,3 @@
-from django.test import TestCase
+from users.models import Account
 
-# Create your tests here.
+print(Account.objects.values("id", "role"))
