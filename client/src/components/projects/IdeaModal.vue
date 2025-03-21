@@ -5,7 +5,7 @@
     <!-- Main modal -->
     <div class="relative p-4 w-full max-w-md max-h-full">
       <!-- Modal content -->
-      <div class="relative bg-white rounded-lg shadow-sm dark:bg-cards">
+      <div class="relative rounded-lg shadow-sm bg-card">
         <!-- Modal header -->
         <div
           class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-zinc-600 border-gray-200"
@@ -230,12 +230,27 @@ export default {
     async submitIdea() {
       try {
         const userData = JSON.parse(localStorage.getItem("userData")); // Данные о пользователе из LocalStorage
+        console.log("Отправляем токен:", localStorage.getItem("access"));
+        console.log("Данные новой идеи:", {
+          name: this.ideaTitle,
+          description: this.ideaDescription,
+          short_description: this.ideaShortDescription,
+          technologies_info: Array.from(this.selectedStacks), // Преобразуем в обычный массив
+          initiator_info: {
+            id: userData.id,
+            role: userData.role,
+            name:
+              `${userData.first_name || ""} ${
+                userData.last_name || ""
+              }`.trim() || "Неизвестный пользователь",
+          },
+        });
 
         const newIdea = {
           name: this.ideaTitle,
           description: this.ideaDescription,
           short_description: this.ideaShortDescription,
-          technologies_info: this.selectedStacks,
+          technologies_info: Array.from(this.selectedStacks), // Преобразуем в обычный массив
           initiator_info: {
             id: userData.id,
             role: userData.role,

@@ -1,6 +1,6 @@
 <template>
   <div
-    class="idea-card border border-zinc-700 bg-cards rounded-xl p-5 shadow-lg cursor-pointer"
+    class="idea-card border border-zinc-700 bg-card rounded-xl p-5 shadow-lg cursor-pointer"
     @click="openIdea"
   >
     <div class="flex justify-between items-center mb-3">
@@ -16,12 +16,12 @@
     </div>
 
     <p class="text-gray-300 mb-3">
-      {{ idea.short_Description || "Описание отсутствует" }}
+      {{ idea.short_description || "Описание отсутствует" }}
     </p>
 
     <div class="mt-auto">
       <h3 class="text-xl text-white mb-3">
-        Инициатор: {{ idea.initiator_info || "Неизвестный автор" }}
+        Инициатор: {{ idea.initiator_info.name || "Неизвестный автор" }}
       </h3>
 
       <div class="flex flex-wrap gap-1 mb-5">
@@ -97,7 +97,7 @@ export default {
 
 <style scoped>
 .idea-card {
-  transition: transform 0.3s ease, border-color 0.3s ease;
+  transition: transform 0.3s ease;
   display: flex;
   flex-direction: column;
   height: 100%; /* Чтобы карточка была одинаковой высоты */

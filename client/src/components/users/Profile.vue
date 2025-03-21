@@ -45,6 +45,7 @@
         >
           Редактировать профиль
         </button>
+        <button @click="logout">выйти</button>
       </div>
 
       <!-- Правый блок (Проекты, команды, стек технологий, оценки) -->
@@ -199,6 +200,15 @@ export default {
       saveUserData(this.userData); // Логика для обновления профиля
       alert("Профиль обновлён!");
       this.showModal = false;
+    },
+    logout() {
+      // Удаляем токены и данные пользователя из LocalStorage
+      localStorage.removeItem("access");
+      localStorage.removeItem("refresh");
+      localStorage.removeItem("userData");
+
+      // Дополнительно, если нужно перенаправить пользователя на другую страницу
+      this.$router.push("/login"); // Или на главную страницу
     },
   },
 };
