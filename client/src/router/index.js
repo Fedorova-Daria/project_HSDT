@@ -13,7 +13,7 @@ const routes = [
   { path: "/", redirect: "/login" }, // Перенаправление с корневого маршрута на страницу входа
   { path: "/login", component: Login }, // Маршрут для страницы входа
   { path: "/register", component: Register }, // Маршрут для страницы регистрации
-  { path: "/rialto", component: Rialto },
+  { path: "/rialto", name: "rialto", component: Rialto },
   { path: "/profile", component: Profile },
   { path: "/ChangeProfile", component: ChangeProfile },
   { path: "/teams", component: Teams },

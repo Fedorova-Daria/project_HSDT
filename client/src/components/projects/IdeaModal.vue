@@ -8,7 +8,7 @@
       <div class="relative rounded-lg shadow-sm bg-card">
         <!-- Modal header -->
         <div
-          class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-zinc-600 border-gray-200"
+          class="flex items-center justify-between p-4 md:p-5 border-b rounded-t border-zinc-600"
         >
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
             Создать новый проект

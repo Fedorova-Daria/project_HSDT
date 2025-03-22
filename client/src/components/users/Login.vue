@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="!isLoggedIn">
     <img
       aria-hidden="true"
       class="absolute top-0 h-screen w-screen bg-cover bg-center bg-fixed"
@@ -7,7 +7,7 @@
     />
     <div class="relative">
       <h1 class="mt-20 text-white text-9xl text-center font-display">
-        Портал ВШЦТ
+        ИДЕИ ТИУ
       </h1>
       <div class="w-110 m-auto mt-15">
         <div class="flex flex-col items-center p-10">
@@ -114,6 +114,7 @@ export default {
       password: "",
       emailError: "",
       passwordError: "",
+      isLoggedIn: false,
     };
   },
 
@@ -123,7 +124,15 @@ export default {
       this.emailError = "";
       this.passwordError = "";
     },
-
+    checkToken() {
+      // Проверяем наличие токена в localStorage
+      const token = localStorage.getItem("access");
+      if (token) {
+        // Если токен есть, переходим на страницу биржи
+        this.isLoggedIn = true;
+        this.$router.push({ name: "rialto" }); // Редиректим на страницу биржи
+      }
+    },
     // НЕ ТРОГАТЬ, здесь написаны ошибки которые выводятся на сайт
     validateForm() {
       let isValid = true;
@@ -250,6 +259,9 @@ export default {
     goToRegister() {
       this.$router.push("/register");
     },
+  },
+  mounted() {
+    this.checkToken(); // Проверка токена при загрузке страницы
   },
 };
 </script>

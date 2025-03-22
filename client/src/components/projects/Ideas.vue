@@ -3,17 +3,48 @@
     <Header />
 
     <div class="w-4/5 m-auto mt-6 text-white">
+      <div class="flex m-auto mt-5 text-zinc-700">
+      <div class="relative">
+        <img class="absolute left-2 top-2" src="/search.svg" />
+        <input
+          class="w-full max-w-md border bg-white rounded-md py-2 pl-10 pr-4 outline-none focus:border-purple-400 duration-500"
+          type="text"
+          placeholder="Поиск..."
+        />
+      </div>
+      <select
+  class="ml-5 h-10 py-2 px-3 border bg-white rounded-md focus:border-fiol duration-500"
+>
+  <option value="" disabled selected class="text-gray-500">Выберите институт</option>
+  <option>ВШЦТ</option>
+  <option>ИПТИ</option>
+  <option>СТРОИН</option>
+  <option>АРХИД</option>
+</select>
+
+<select
+  class="ml-5 h-10 py-2 px-3 border bg-white rounded-md focus:border-fiol duration-500"
+>
+  <option value="" disabled selected class="text-gray-500">Сортировать по</option>
+  <option>По новизне</option>
+  <option>По популярности</option>
+</select>
+
+
+      <!-- Кнопка "Создать идею", отображается только если роль пользователя - "заказчик" -->
+      <!-- Кнопка "Создать идею" теперь открывает модальное окно -->
       <button
         @click="openModal"
-        class="bg-purple-600 text-white rounded-md mb-5 px-4 py-2 hover:bg-purple-700 transition ml-5 h-10"
+        class="bg-purple-600 text-white rounded-md px-4 py-2 hover:bg-purple-700 transition ml-5 h-10"
       >
         Создать идею
       </button>
+    </div>
       <table
-        class="w-full border-collapse shadow-lg rounded-lg overflow-hidden bg-card table-auto"
+        class="w-full mt-5 border-collapse shadow-lg rounded-lg overflow-hidden bg-card table-auto"
       >
         <thead>
-          <tr class="bg-bgg text-left">
+          <tr class="bg-card text-left">
             <th class="px-6 py-3 w-10">#</th>
             <th class="px-6 py-3 w-1/4">Название</th>
             <th class="px-6 py-3 w-1/4">Стеки технологий</th>
@@ -59,7 +90,7 @@
 
             <td class="px-6 py-4 flex justify-end gap-2">
               <button
-                @click="viewItem(item)"
+                 @click="openIdeaDetail(item.id)"
                 class="px-4 py-2 text-sm font-medium bg-buttonoff hover:bg-buttonon rounded transition"
               >
                 Посмотреть
@@ -82,21 +113,35 @@
     </div>
     <!-- Всплывающее окно -->
     <IdeaModal v-if="isModalOpen" @close="closeModal" @submit="addNewIdea" />
+    <transition
+    name="slide"
+    @before-enter="beforeEnter"
+    @after-enter="afterEnter"
+    @before-leave="beforeLeave"
+    @after-leave="afterLeave"
+  >
+    <IdeaDetail
+      v-show="selectedIdeaId"
+      :ideaId="selectedIdeaId"
+      @close="closeIdeaDetail"
+    />
+  </transition>
   </div>
 </template>
 
 <script>
 import Header from "@/components/header.vue";
 import IdeaModal from "@/components/projects/IdeaModal.vue"; // Импортируем модальное окно
-
+import IdeaDetail from "@/components/projects/IdeaDetail.vue";
 export default {
-  components: { IdeaModal, Header },
+  components: { IdeaDetail, IdeaModal, Header },
   data() {
     return {
       isAnimating: false,
       items: [], // Список идей
       isModalOpen: false,
       likedItems: {}, // Объект для хранения лайков по каждому элементу
+      selectedIdeaId: null, // id выбранной идеи
     };
   },
   methods: {
@@ -109,8 +154,12 @@ export default {
         console.error("Ошибка при загрузке идей:", error);
       }
     },
-    viewItem(item) {
-      this.$router.push(`/ideas/${item.id}`);
+    openIdeaDetail(id) {
+      this.selectedIdeaId = id;
+    },
+    closeIdeaDetail() {
+      // Закрываем модальное окно и сбрасываем выбранное id
+      this.selectedIdeaId = null;
     },
     openModal() {
       this.isModalOpen = true;

@@ -1,97 +1,95 @@
 <template>
-  <div>
-    <Header />
-    <div class="flex w-4/5 mx-auto mt-10 gap-4 text-white">
-      <!-- Левый блок (Название и кнопки для функций идей) -->
-      <div class="w-1/4 bg-zinc-700 p-6 rounded-2xl shadow-lg">
-        <strong class="mt-5 text-3xl">{{ idea?.name }}</strong>
-        <!-- Отображение имени идеи -->
-        <div class="mt-3 h-0.5 w-full m-auto bg-white"></div>
-        <h1 class="text-xl mt-3">Инициатор:</h1>
-        <h2 class="text-xl mt-1 font-bold">{{ idea.initiator_info.name }}</h2>
-        <!-- Инициатор -->
-        <div class="flex gap-3 mt-3">
-          <button
-            class="px-4 py-2 text-sm font-medium bg-buttonoff hover:bg-buttonon rounded transition"
-          >
-            <svg
-              class="me-1 -ms-1 w-5 h-5"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-                clip-rule="evenodd"
-              ></path>
-            </svg>
-          </button>
-
-          <img
-            :src="liked ? '/liked.svg' : '/like.svg'"
-            alt="Like"
-            class="w-6 h-6 mr-2 mt-1 duration-300 cursor-pointer"
-            :class="{ 'animate-like': isAnimating }"
-            @click.stop="toggleLike"
-            @animationend="isAnimating = false"
-          />
-
-          <button
-            class="px-4 py-2 text-sm font-medium bg-buttonoff hover:bg-buttonon rounded transition"
-          >
-            Редактировать
-          </button>
-          <button
-            class="px-4 py-2 text-sm font-medium bg-buttonoff hover:bg-buttonon rounded transition"
-          >
-            Удалить
-          </button>
-        </div>
-      </div>
-      <!-- Правый блок (вся информация о идее) -->
-      <div class="w-3/4 bg-zinc-700 p-6 rounded-2xl shadow-lg">
-        <strong class="mt-5 text-3xl"> Информация об идее</strong>
-        <div class="mt-3 h-0.5 w-full m-auto bg-white"></div>
-        <h1 class="text-xl mt-3">
-          {{ idea?.description }}
-          <!-- Отображение описания идеи -->
-        </h1>
-      </div>
+  <div
+    class="fixed top-0 right-0 w-1/2 h-full bg-zinc-800 bg-opacity-75 rounded-lg p-4 modal"
+    @click.self="closeModal"
+  >
+    <div class="w-full h-full bg-card rounded-lg p-6 overflow-auto">
+      <h2 class="text-2xl font-semibold mb-4">{{ idea.name }}</h2>
+      <p class="mb-4">{{ idea.description }}</p>
+      <p><strong>Инициатор:</strong> {{ idea.initiator_name }}</p>
+      <p><strong>Роль:</strong> {{ idea.initiator_role }}</p>
+      <p><strong>Дата создания:</strong> {{ idea.created_at }}</p>
+      <button
+        @click="closeModal"
+        class="bg-red-500 text-white py-2 px-4 rounded-md mt-4 hover:bg-red-600"
+      >
+        Закрыть
+      </button>
     </div>
   </div>
-  <!--<div class="text-white" v-else>
-    <p>Загрузка...</p>
-  </div>-->
 </template>
 
 <script>
-import axios from "axios";
-import Header from "@/components/header.vue";
+import axios from 'axios';
 
 export default {
-  components: { Header },
+  props: {
+    ideaId: {
+      type: String,
+      required: true,
+    }
+  },
   data() {
     return {
-      idea: null, // Здесь будем хранить данные о выбранной идее
+      idea: {},
     };
   },
-  async created() {
-    // Получаем id из URL
-    const ideaId = this.$route.params.id;
-    await this.fetchIdeaDetail(ideaId); // Загружаем информацию о идее по id
+  watch: {
+    ideaId(newId) {
+      if (newId) {
+        this.fetchIdeaDetails(newId);
+      }
+    }
   },
   methods: {
-    async fetchIdeaDetail(id) {
+    async fetchIdeaDetails(id) {
       try {
-        const response = await axios.get(
-          `http://localhost:8000/api/ideas/${id}/`
-        );
-        this.idea = response.data; // Сохраняем данные о идее в переменную idea
+        const response = await axios.get(`http://localhost:8000/api/ideas/${id}/`);
+        this.idea = response.data;
       } catch (error) {
-        console.error("Ошибка при загрузке информации о идее:", error);
+        console.error('Ошибка при получении информации об идее:', error);
       }
     },
+    closeModal() {
+      this.$emit('close');
+    }
   },
+  created() {
+    if (this.ideaId) {
+      this.fetchIdeaDetails(this.ideaId);
+    }
+  }
 };
 </script>
+
+<style scoped>
+@keyframes slideInFromRight {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutToRight {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 50%;
+  height: 100%;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  transform: translateX(100%); /* Начальная позиция */
+  transition: transform 0.5s ease-in-out; /* Плавный переход */
+}
+</style>
