@@ -199,6 +199,7 @@
 
 <script>
 import axios from "axios";
+import { getAccessToken } from "@/utils/auth.js"; // Импортируем утилиту для получения актуального токена
 
 export default {
   data() {
@@ -246,11 +247,15 @@ export default {
           },
         });
 
+        let token = await getAccessToken(); // Получаем актуальный токен
+
+        if (!token) return; // Если токен не обновился, не отправляем запрос
+
         const newIdea = {
           name: this.ideaTitle,
           description: this.ideaDescription,
           short_description: this.ideaShortDescription,
-          technologies_info: Array.from(this.selectedStacks), // Преобразуем в обычный массив
+          technologies_info: Array.from(this.selectedStacks),
           initiator_info: {
             id: userData.id,
             role: userData.role,
@@ -263,7 +268,7 @@ export default {
 
         await axios.post("http://localhost:8000/api/ideas/create/", newIdea, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("access")}`, // Передаём токен
+            Authorization: `Bearer ${token}`, // Используем актуальный токен
             "Content-Type": "application/json",
           },
         });

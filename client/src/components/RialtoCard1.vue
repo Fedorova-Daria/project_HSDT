@@ -6,9 +6,9 @@
     <div class="flex justify-between items-center mb-3">
       <h1 class="text-2xl font-semibold text-white">{{ idea.name }}</h1>
       <img
-        :src="liked ? '/liked1.svg' : '/like.svg'"
+        :src="liked ? '/liked.svg' : '/like.svg'"
         alt="Like"
-        class="w-6 h-6 mr-4 mb-5 duration-300 cursor-pointer"
+        class="w-6 h-6 mr-2 duration-300 cursor-pointer"
         :class="{ 'animate-like': isAnimating }"
         @click.stop="toggleLike"
         @animationend="isAnimating = false"
@@ -24,17 +24,24 @@
         Инициатор: {{ idea.initiator_info.name || "Неизвестный автор" }}
       </h3>
 
-      <div class="flex flex-wrap gap-1 mb-5">
+      <div class="flex flex-wrap gap-2">
+        <!-- Проверяем, сколько стека технологий -->
         <span
-          v-for="tech in technologies"
-          :key="tech"
-          class="text-m font-medium me-2 px-2.5 py-0.5 rounded-sm border-1"
-          :class="getTechStyle(tech)"
+          v-for="(tech, index) in idea.technologies_info.slice(0, 3)"
+          :key="index"
+          class="px-2 py-1 bg-purple-600 text-white rounded"
         >
-          {{ tech }}
+          {{ tech.name }}
+        </span>
+
+        <!-- Если стека технологий больше 3, показываем "+X" -->
+        <span
+          v-if="idea.technologies_info.length > 3"
+          class="text-xs text-white"
+        >
+          +{{ item.technologies_info.length - 3 }}
         </span>
       </div>
-
       <div class="flex justify-between">
         <span
           class="px-4 py-2 rounded-3xl text-white text-sm border-2 bg-zinc-700"
@@ -81,15 +88,6 @@ export default {
       event.stopPropagation();
       this.liked = !this.liked;
       this.isAnimating = true;
-    },
-    getTechStyle(tech) {
-      return (
-        this.stackStyles[tech] || {
-          bg: "bg-gray-100",
-          text: "text-gray-800",
-          border: "border-gray-400",
-        }
-      );
     },
   },
 };
