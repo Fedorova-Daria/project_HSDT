@@ -40,8 +40,8 @@
     <!-- Основной контент -->
     <div class="relative z-20 h-full overflow-y-auto">
       <div class="relative w-4/5 mx-auto pt-15 pb-10">
-        <h1 class="text-white text-8xl text-center font-display">
-          Регистрация
+        <h1 class="btn text-white text-8xl text-center font-display">
+          Регистрация Заказчика
         </h1>
         <div class="w-110 mx-auto mt-10">
           <div class="flex flex-col items-center p-10">
@@ -78,51 +78,13 @@
               }}</span>
             </div>
             <div class="w-full mb-4 flex flex-col">
-              <h2 class="text-white mb-1">Группа</h2>
-              <div
-                class="relative m-auto w-90 bg-white text-grey rounded-lg border-2 border-solid border-fiol duration-500 ease-linear transition-colors hover:border-purple-500 focus:border-purple-600 outline-none"
-              >
-                <!-- Кнопка для открытия списка -->
-                <div
-                  class="w-full border border-fiol rounded-md py-2 px-3 bg-white text-black cursor-pointer flex justify-between items-center transition-colors hover:border-purple-500 focus:border-purple-600"
-                  @click="dropdownOpen = !dropdownOpen"
-                >
-                  <span>{{
-                    selectedGroup ? selectedGroup.name : "Выберите группу"
-                  }}</span>
-                  <span
-                    :class="{ 'rotate-180': dropdownOpen }"
-                    class="transition-transform"
-                  >
-                    &#9660;
-                  </span>
-                </div>
-
-                <!-- Выпадающий список -->
-                <div
-                  v-if="dropdownOpen"
-                  class="flex flex-col absolute left-0 w-full bg-white border-3 border-solid border-fiol rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto z-50 transition-colors hover:border-purple-500"
-                >
-                  <!-- Поле поиска -->
-                  <input
-                    v-model="searchQuery"
-                    type="text"
-                    placeholder="Поиск..."
-                    class="w-full px-3 py-2 border-b border-fiol outline-none transition-colors hover:border-purple-500 focus:border-purple-600"
-                    @input="filterGroups"
-                  />
-
-                  <!-- Список групп -->
-                  <div
-                    v-for="group in filteredGroups"
-                    :key="group.id"
-                    @click="selectGroup(group)"
-                    class="p-2 cursor-pointer hover:bg-gray-200 transition-colors duration-300"
-                  >
-                    {{ group.name }}
-                  </div>
-                </div>
-              </div>
+              <h2 class="text-white mb-1">Юридическое имя(ИП/ООО)</h2>
+              <input
+                v-model="Company"
+                @input="validateForm"
+                class="m-auto w-90 bg-white text-grey px-2 py-2 rounded-lg border-3 border-solid border-fiol duration-500 ease-linear transition-colors hover:border-purple-500 focus:border-purple-600 outline-none"
+                placeholder="Введите юридическое имя..."
+              />
             </div>
             <!-- Поле Пароля -->
             <div class="w-full mb-4 relative">
@@ -459,5 +421,17 @@ button[aria-label="Вернуться назад"]:hover svg {
 
 .hover\:bg-gray-200:hover {
   background-color: #edf2f7;
+}
+.btn {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn:active {
+  transform: scale(0.95);
 }
 </style>
