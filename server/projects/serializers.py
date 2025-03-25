@@ -1,56 +1,33 @@
 from rest_framework import serializers
-from .models import Idea
+from .models import Project
 from users.models import Account
-from core.models import Technology
 
-class IdeaSerializer(serializers.ModelSerializer):
-    likes_count = serializers.IntegerField(source="likes.count", read_only=True)
-    confirmed = serializers.SerializerMethodField()
-    initiator_info = serializers.SerializerMethodField()
-    experts_voted_info = serializers.SerializerMethodField()
-    technologies_info = serializers.SerializerMethodField()
+# Сериализатор для заказчика
+class CustomerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Account
+        fields = ['id', 'first_name', 'last_name', 'avatar']
+
+# Сериализатор для пользователя
+class AccountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Account
+        fields = ['id', 'first_name', 'last_name', 'avatar']
+
+# Сериализатор для проекта в листе
+class ProjectListSerializer(serializers.ModelSerializer):
+    initiator = serializers.StringRelatedField()  # Покажет имя инициатора
+    customer = CustomerSerializer(allow_null=True)  # Добавляем информацию о заказчике
+    likes_count = serializers.IntegerField(source="likes.count", read_only=True)  # Количество лайков
+    applicants_count = serializers.IntegerField(source="applicants.count", read_only=True)  # Количество откликнувшихся
+    workers = AccountSerializer(many=True, read_only=True)  # Проголосовавшие эксперты (или работающие пользователи)
 
     class Meta:
-        model = Idea
-        fields = [
-            "id", "name", "description", "short_description", "likes_count",
-            "confirmed", "initiator_info", "experts_voted_info", "technologies_info",
-            "created_at"
-        ]
+        model = Project
+        fields = "__all__"  # Включаем все поля из модели + добавленные через сериализаторы
 
-    def get_confirmed(self, obj):
-        return obj.experts_voted.count() >= obj.votes_to_approve
-
-    def get_initiator_info(self, obj):
-        if not obj.initiator:
-            return None
-        owner = obj.initiator
-        return {
-            "id": owner.id,
-            "role": owner.role,
-            "name": owner.company_name if owner.role == Account.Role.CUSTOMER else f"{owner.first_name} {owner.last_name}"
-        }
-
-    def get_experts_voted_info(self, obj):
-        return [{"id": expert.id, "name": f"{expert.first_name} {expert.last_name}"} for expert in obj.experts_voted.all()]
-
-    def get_technologies_info(self, obj):
-        return [{"id": tech.id, "name": tech.name} for tech in obj.technologies.all()]
-
-
-
-class IdeaShortSerializer(serializers.ModelSerializer):
-    likes_count = serializers.IntegerField(source="likes.count", read_only=True)
-    experts_voted_ids = serializers.PrimaryKeyRelatedField(
-        many=True, source="experts_voted", read_only=True
-    )
-
+# Сериализатор для создания проекта
+class ProjectCreateSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Idea
-        fields = ["id", "title", "likes_count", "experts_voted_ids"]
-
-class IdeaCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Idea
-        exclude = ["likes", "experts_voted"]  # Эти поля нельзя передавать при создании
-
+        model = Project
+        fields = ["name", "description", "status", "is_hiring"]  # Только редактируемые поля
