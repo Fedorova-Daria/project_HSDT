@@ -1,13 +1,20 @@
 <template>
-  <div>
+  <div v-if="!isLoggedIn" class="relative h-screen overflow-hidden">
+    <!-- Размытый фон с параллакс-эффектом -->
     <img
+      ref="backgroundImage"
       aria-hidden="true"
-      class="absolute top-0 h-screen w-screen bg-cover bg-center bg-fixed"
+      class="absolute top-0 left-0 h-full w-full object-cover filter blur-md transform-gpu scale-105"
       src="/bg.jpg"
+      :style="{
+        transform: `translate(${offsetX}px, ${offsetY}px) scale(1.05)`,
+        transition: 'transform 0.5s cubic-bezier(0.13, 0.62, 0.23, 0.99)',
+      }"
     />
-    <div class="relative">
-      <h1 class="mt-20 text-white text-9xl text-center font-display">
-        Портал ВШЦТ
+
+    <div class="relative h-full overflow-y-auto">
+      <h1 class="pt-20 text-white text-9xl text-center font-display">
+        ИДЕИ ТИУ
       </h1>
       <div class="w-110 m-auto mt-15">
         <div class="flex flex-col items-center p-10">
@@ -73,6 +80,7 @@
         </div>
         <div class="w-110 m-auto pl-25 mt-8">
           <button
+            @click="goToRegisterZ"
             class="bg-sky-500 text-white font-medium w-60 p-2 rounded-lg hover:bg-sky-600 duration-500"
           >
             Я заказчик
@@ -82,7 +90,7 @@
           <h2 class="text-white text-ms">Нет аккаунта?</h2>
           <button
             @click="goToRegister"
-            class="text-blue-300 text-ms hover:text-blue-400 duration-500"
+            class="text-blue-300 text-ms hover:text-blue-400 duration-500 cursor-pointer"
           >
             Зарегистрироваться
           </button>
@@ -101,7 +109,7 @@ import {
   saveUserData,
   saveTokens,
   clearStorage,
-} from "@/utils/localStorage.js"; // Предположим, что функции находятся в отдельном файле
+} from "@/utils/localStorage.js";
 
 const API_BASE_URL = "http://127.0.0.1:8000/api";
 const LOGIN_URL = `${API_BASE_URL}/users/login/`;
@@ -114,17 +122,74 @@ export default {
       password: "",
       emailError: "",
       passwordError: "",
+      isLoggedIn: false,
+      // Параллакс-эффект
+      offsetX: 0,
+      offsetY: 0,
+      targetX: 0,
+      targetY: 0,
+      mouseX: 0,
+      mouseY: 0,
+      windowWidth: 0,
+      windowHeight: 0,
+      animationFrame: null,
     };
   },
 
   methods: {
-    // Очистка ошибок
+    // Параллакс-эффект
+    initParallax() {
+      this.windowWidth = window.innerWidth;
+      this.windowHeight = window.innerHeight;
+      window.addEventListener("mousemove", this.handleMouseMove);
+      window.addEventListener("resize", this.handleResize);
+      this.animate();
+    },
+    handleMouseMove(e) {
+      this.mouseX = e.clientX;
+      this.mouseY = e.clientY;
+
+      // Вычисляем смещение относительно центра экрана (от -1 до 1)
+      const x = (e.clientX / this.windowWidth - 0.5) * 2;
+      const y = (e.clientY / this.windowHeight - 0.5) * 2;
+
+      // Устанавливаем целевые координаты с коэффициентом
+      const coefficient = 30;
+      this.targetX = x * coefficient;
+      this.targetY = y * coefficient;
+    },
+    handleResize() {
+      this.windowWidth = window.innerWidth;
+      this.windowHeight = window.innerHeight;
+    },
+    animate() {
+      // Интерполяция с коэффициентом плавности
+      const smoothness = 0.08;
+      this.offsetX += (this.targetX - this.offsetX) * smoothness;
+      this.offsetY += (this.targetY - this.offsetY) * smoothness;
+
+      this.animationFrame = requestAnimationFrame(this.animate);
+    },
+    cleanupParallax() {
+      window.removeEventListener("mousemove", this.handleMouseMove);
+      window.removeEventListener("resize", this.handleResize);
+      if (this.animationFrame) {
+        cancelAnimationFrame(this.animationFrame);
+      }
+    },
+
+    // Остальные методы
     clearErrors() {
       this.emailError = "";
       this.passwordError = "";
     },
-
-    // НЕ ТРОГАТЬ, здесь написаны ошибки которые выводятся на сайт
+    checkToken() {
+      const token = localStorage.getItem("access");
+      if (token) {
+        this.isLoggedIn = true;
+        this.$router.push({ name: "rialto" });
+      }
+    },
     validateForm() {
       let isValid = true;
 
@@ -143,72 +208,50 @@ export default {
 
       return isValid;
     },
-
-    // НЕ ТРОГАТЬ Валидация email, а точнее проверка вида почты
     validateEmail(email) {
       const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return re.test(email);
     },
-
-    // Основной метод для входа
     async login() {
       this.clearErrors();
 
       if (!this.validateForm()) return;
 
       try {
-        // Очищаем localStorage перед входом
         clearStorage();
-
-        // Аутентификация пользователя
         const tokens = await this.authenticateUser(this.email, this.password);
-
-        // Получаем и сохраняем данные пользователя
         await this.fetchAndSaveUserData(tokens.access_token);
-
-        // Перенаправляем пользователя на главную страницу
         this.redirectToHome();
       } catch (error) {
-        // Обрабатываем ошибки
         this.handleError(error);
       }
     },
-
-    // Метод для аутентификации пользователя
     async authenticateUser(email, password) {
       try {
         const response = await axios.post(LOGIN_URL, { email, password });
-        console.log("Ответ сервера:", response.data); // Логируем ответ
+        console.log("Ответ сервера:", response.data);
 
         if (!response.data.access_token || !response.data.refresh_token) {
           throw new Error("Токены не получены");
         }
 
-        // Используем вашу функцию для сохранения токенов
         saveTokens(response.data.access_token, response.data.refresh_token);
-
         return response.data;
       } catch (error) {
-        console.error("Ошибка при аутентификации:", error.response || error); // Логируем ошибку
+        console.error("Ошибка при аутентификации:", error.response || error);
         throw error;
       }
     },
-
-    // Метод для получения и сохранения данных пользователя
     async fetchAndSaveUserData(accessToken) {
       try {
         const userData = await this.fetchUserData(accessToken);
-        console.log("Данные пользователя:", userData); // Логируем данные пользователя
-
-        // Используем вашу функцию для сохранения данных пользователя
+        console.log("Данные пользователя:", userData);
         saveUserData(userData);
       } catch (error) {
-        console.error("Ошибка при получении данных пользователя:", error); // Логируем ошибку
+        console.error("Ошибка при получении данных пользователя:", error);
         throw error;
       }
     },
-
-    // Метод для получения данных пользователя
     async fetchUserData(accessToken) {
       const response = await axios.get(USER_DATA_URL, {
         headers: {
@@ -216,11 +259,8 @@ export default {
           "Content-Type": "application/json",
         },
       });
-
       return response.data;
     },
-
-    // НЕ ТРОГАТЬ Метод для обработки ошибок
     handleError(error) {
       if (error.response) {
         switch (error.response.data?.message) {
@@ -240,16 +280,59 @@ export default {
         this.passwordError = "Произошла непредвиденная ошибка";
       }
     },
-
-    // НЕ ТРОГАТЬ Метод для перенаправления на главную страницу
     redirectToHome() {
       this.$router.push("/rialto");
     },
-
-    // НЕ ТРОГАТЬ Метод для перехода на страницу регистрации
     goToRegister() {
       this.$router.push("/register");
     },
+    goToRegisterZ() {
+      this.$router.push("/registerZ");
+    },
+    clearError(field) {
+      this[`${field}Error`] = "";
+    },
+  },
+  mounted() {
+    this.checkToken();
+    this.initParallax();
+  },
+  beforeDestroy() {
+    this.cleanupParallax();
   },
 };
 </script>
+
+<style scoped>
+/* Стили для параллакс-эффекта */
+.transform-gpu {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+.filter {
+  filter: blur(8px);
+}
+
+.h-screen {
+  height: 100vh;
+}
+
+/* Остальные стили */
+.max-h-48 {
+  max-height: 12rem;
+}
+
+.overflow-y-auto {
+  overflow-y: auto;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.hover\:bg-gray-200:hover {
+  background-color: #edf2f7;
+}
+</style>

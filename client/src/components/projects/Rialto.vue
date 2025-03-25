@@ -61,7 +61,7 @@
 <script>
 import axios from "axios";
 import IdeaCard from "@/components/RialtoCard1.vue"; // Проверьте правильность пути
-import IdeaModal from "@/components/IdeaModal.vue"; // Импортируем модальное окно
+import IdeaModal from "@/components/projects/IdeaModal.vue"; // Импортируем модальное окно
 import Header from "@/components/header.vue";
 export default {
   components: { IdeaCard, IdeaModal, Header },
@@ -72,19 +72,21 @@ export default {
     };
   },
   async created() {
-    await this.fetchIdeas();
+    await this.fetchCustomerIdeas();
   },
   methods: {
-    async fetchIdeas() {
+    async fetchCustomerIdeas() {
       try {
-        const response = await axios.get("http://localhost:8000/api/ideas/");
+        const response = await axios.get("http://localhost:8000/api/ideas/", {
+          params: { role: "CU" }, // Фильтрация по роли заказчика
+        });
         this.ideas = response.data;
       } catch (error) {
-        console.error("Ошибка при получении идей:", error);
+        console.error("Ошибка при загрузке идей заказчиков:", error);
       }
     },
     goToIdea(id) {
-      this.$router.push(`/idea/${id}`);
+      this.$router.push(`/ideas/${id}`);
     },
     openModal() {
       this.isModalOpen = true;

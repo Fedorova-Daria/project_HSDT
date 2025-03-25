@@ -1,0 +1,42 @@
+<svg width="2617" height="1528" viewBox="0 0 2617 1528" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_170_6)">
+<rect width="2617" height="1528" fill="#121212"/>
+<g filter="url(#filter0_f_170_6)">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M2279.83 421.499C2355.56 410.992 2442.18 433.301 2488.03 494.474C2531.31 552.207 2492.99 630.563 2490.59 702.676C2488.34 770.369 2511.69 840.785 2474.64 897.481C2430.48 965.043 2359.82 1014.36 2279.83 1025.16C2189.1 1037.41 2084.49 1027.21 2024.21 958.296C1965.58 891.269 1977.15 789.315 1997.74 702.676C2013.83 634.974 2073.08 594.336 2122.37 545.211C2171.51 496.224 2211.1 431.036 2279.83 421.499Z" fill="#A66ACE"/>
+</g>
+<g filter="url(#filter1_f_170_6)">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M396.806 832.593C446.732 843.209 500.739 788.288 545.518 812.786C589.906 837.07 582.213 904.156 607.605 947.918C636.87 998.355 710.625 1030.49 705.539 1088.58C700.519 1145.91 627.275 1168.22 584.908 1207.18C548.008 1241.11 521.173 1289.88 472.703 1302.67C424.583 1315.36 378.411 1281.64 329.142 1274.63C268.941 1266.06 197.237 1296.76 151.292 1256.93C105.964 1217.63 114.571 1145.18 110.781 1085.31C107.254 1029.6 116.02 976.401 130.115 922.393C146.963 857.828 137.778 760.824 201.016 739.531C270.914 715.995 324.665 817.253 396.806 832.593Z" fill="#A66ACE"/>
+</g>
+<g filter="url(#filter2_f_170_6)">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M964.19 145.249C1019.46 157.397 1058.4 201.77 1109.19 226.73C1168.74 255.999 1254.25 247.352 1288.09 304.437C1321.51 360.832 1283.42 432.24 1268.88 496.163C1255.48 555.062 1247.87 618.297 1206.64 662.439C1165.99 705.956 1105.68 724.633 1046.85 733.863C992.913 742.324 941.352 723.158 887.817 712.456C828.484 700.596 761.539 707.169 715.704 667.669C668.053 626.605 642.253 561.823 640.071 498.956C637.978 438.657 682.707 389.993 704.107 333.579C727.42 272.121 718.25 191.06 771.49 152.509C824.629 114.03 900.112 131.166 964.19 145.249Z" fill="#A66ACE"/>
+</g>
+<g filter="url(#filter3_f_170_6)">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M1455.18 914.738C1551.89 886.009 1668.82 835.835 1742.67 904.568C1820.06 976.591 1817.92 1112.33 1767.08 1205.02C1724.69 1282.32 1611.74 1255.91 1530.81 1290.87C1458.13 1322.27 1404.64 1420.13 1329.94 1393.89C1253.39 1367.01 1231.39 1266.35 1230.02 1185.23C1228.93 1121.35 1282.87 1078.12 1323.75 1029.02C1362.83 982.075 1396.63 932.133 1455.18 914.738Z" fill="#A66ACE"/>
+</g>
+</g>
+<defs>
+<filter id="filter0_f_170_6" x="1804.3" y="242.3" width="880.93" height="964.009" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="88.35" result="effect1_foregroundBlur_170_6"/>
+</filter>
+<filter id="filter1_f_170_6" x="-66.7" y="559.3" width="949.189" height="922.896" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="88.35" result="effect1_foregroundBlur_170_6"/>
+</filter>
+<filter id="filter2_f_170_6" x="463.3" y="-47.7" width="1014.84" height="960.36" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="88.35" result="effect1_foregroundBlur_170_6"/>
+</filter>
+<filter id="filter3_f_170_6" x="1053.3" y="693.3" width="926.726" height="881.712" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="88.35" result="effect1_foregroundBlur_170_6"/>
+</filter>
+<clipPath id="clip0_170_6">
+<rect width="2617" height="1528" fill="white"/>
+</clipPath>
+</defs>
+</svg>

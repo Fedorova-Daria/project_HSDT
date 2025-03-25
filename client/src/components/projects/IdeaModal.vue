@@ -5,10 +5,10 @@
     <!-- Main modal -->
     <div class="relative p-4 w-full max-w-md max-h-full">
       <!-- Modal content -->
-      <div class="relative bg-white rounded-lg shadow-sm dark:bg-cards">
+      <div class="relative rounded-lg shadow-sm bg-card">
         <!-- Modal header -->
         <div
-          class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-zinc-600 border-gray-200"
+          class="flex items-center justify-between p-4 md:p-5 border-b rounded-t border-zinc-600"
         >
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
             Создать новый проект
@@ -156,11 +156,19 @@
                 >Расскажите о том, что нужно сделать</label
               >
               <textarea
+                v-model="ideaShortDescription"
+                id="description"
+                rows="2"
+                class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                placeholder="Напишите краткое описание проекта здесь, чтобы его могли видеть все"
+                required
+              ></textarea>
+              <textarea
                 v-model="ideaDescription"
                 id="description"
                 rows="4"
-                class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                placeholder="Напишите описание проекта здесь"
+                class="block mt-3 p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                placeholder="Напишите подробное описание проекта здесь"
                 required
               ></textarea>
             </div>
@@ -190,12 +198,16 @@
 </template>
 
 <script>
+import axios from "axios";
+import { getAccessToken } from "@/utils/auth.js"; // Импортируем утилиту для получения актуального токена
+
 export default {
   data() {
     return {
       isDropdownOpen: false, // Флаг для управления состоянием выпадающего списка
       selectedStacks: [], // Массив для выбранных технологий
       ideaTitle: "", // Название проекта
+      ideaShortDescription: "", // Краткое описание проекта
       ideaDescription: "", // Описание проекта
       participantsCount: 1, // Количество участников
       stacks: [
@@ -217,17 +229,50 @@ export default {
       this.isDropdownOpen = !this.isDropdownOpen;
     },
     async submitIdea() {
-      const ideaData = {
-        name: this.ideaTitle,
-        description: this.ideaDescription,
-        technologies: this.selectedStacks,
-      };
-
       try {
-        const response = await axios.post(
-          "http://localhost:8000/api/ideas/",
-          ideaData
-        );
+        const userData = JSON.parse(localStorage.getItem("userData")); // Данные о пользователе из LocalStorage
+        console.log("Отправляем токен:", localStorage.getItem("access"));
+        console.log("Данные новой идеи:", {
+          name: this.ideaTitle,
+          description: this.ideaDescription,
+          short_description: this.ideaShortDescription,
+          technologies_info: Array.from(this.selectedStacks), // Преобразуем в обычный массив
+          initiator_info: {
+            id: userData.id,
+            role: userData.role,
+            name:
+              `${userData.first_name || ""} ${
+                userData.last_name || ""
+              }`.trim() || "Неизвестный пользователь",
+          },
+        });
+
+        let token = await getAccessToken(); // Получаем актуальный токен
+
+        if (!token) return; // Если токен не обновился, не отправляем запрос
+
+        const newIdea = {
+          name: this.ideaTitle,
+          description: this.ideaDescription,
+          short_description: this.ideaShortDescription,
+          technologies_info: Array.from(this.selectedStacks),
+          initiator_info: {
+            id: userData.id,
+            role: userData.role,
+            name:
+              `${userData.first_name || ""} ${
+                userData.last_name || ""
+              }`.trim() || "Неизвестный пользователь",
+          },
+        };
+
+        await axios.post("http://localhost:8000/api/ideas/create/", newIdea, {
+          headers: {
+            Authorization: `Bearer ${token}`, // Используем актуальный токен
+            "Content-Type": "application/json",
+          },
+        });
+
         alert("Идея успешно создана!");
         this.closeModal();
       } catch (error) {
