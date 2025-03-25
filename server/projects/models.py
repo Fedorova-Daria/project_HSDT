@@ -16,7 +16,7 @@ class Project(models.Model):
 
     initiator = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="initiated_projects")
     customer = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, blank=True, related_name="client_projects")
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="owned_projects")
+    owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="owned_projects")
 
     likes = models.ManyToManyField(Account, related_name="liked_projects", blank=True)  # Лайки проекта
     favorites = models.ManyToManyField(Account, related_name="favorite_projects", blank=True)  # Добавившие в избранное
