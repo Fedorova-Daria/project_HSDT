@@ -22,6 +22,7 @@ class Project(models.Model):
     favorites = models.ManyToManyField(Account, related_name="favorite_projects", blank=True)  # Добавившие в избранное
     applicants = models.ManyToManyField(Account, related_name="applied_projects", blank=True)  # Откликнувшиеся на проект
     workers = models.ManyToManyField(Account, related_name="working_projects", blank=True)  # Выбранные заказчиком
+    experts_voted = models.ManyToManyField(Account, related_name="voted_projects", blank=True)
     technologies = models.ManyToManyField(Technology, related_name="projects", blank=True)  # Технологии проекта
 
     # Статусы
