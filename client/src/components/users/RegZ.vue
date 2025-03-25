@@ -40,7 +40,7 @@
     <!-- Основной контент -->
     <div class="relative z-20 h-full overflow-y-auto">
       <div class="relative w-4/5 mx-auto pt-15 pb-10">
-        <h1 class="btn text-white text-8xl text-center font-display">
+        <h1 class="text-white text-8xl text-center font-display">
           Регистрация Заказчика
         </h1>
         <div class="w-110 mx-auto mt-10">
