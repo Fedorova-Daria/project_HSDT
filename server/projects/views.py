@@ -9,6 +9,13 @@ from .serializers import ProjectListSerializer, ProjectCreateSerializer
 from users.models import Account
 from rest_framework import generics, permissions
 from django.shortcuts import get_object_or_404
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from core.perms import IsStudent, IsCustomer  # Импорт из правильного места
+from .models import Project
+from users.models import Account  # Для проверки ролей
 
 
 class ProjectListView(generics.ListAPIView):
@@ -134,3 +141,111 @@ class ProjectClaimView(APIView):
         project.save()
 
         return Response({"detail": "Вы успешно забрали проект."})
+
+
+class ProjectApplicationView(APIView):
+    permission_classes = [IsAuthenticated, IsStudent]
+
+    def post(self, request, project_id):
+        try:
+            project = Project.objects.get(id=project_id)
+            user = request.user
+
+            if not project.is_hiring:
+                return Response(
+                    {'status': 'error', 'message': 'Проект не принимает заявки'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if user in project.workers.all():
+                return Response(
+                    {'status': 'error', 'message': 'Вы уже работаете над этим проектом'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if user in project.applicants.all():
+                project.applicants.remove(user)
+                message = 'Заявка отозвана'
+                applied = False
+            else:
+                project.applicants.add(user)
+                message = 'Заявка подана'
+                applied = True
+
+            return Response({
+                'status': 'success',
+                'message': message,
+                'applied': applied,
+                'applicants_count': project.applicants.count()
+            }, status=status.HTTP_200_OK)
+
+        except Project.DoesNotExist:
+            return Response(
+                {'status': 'error', 'message': 'Проект не найден'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+
+class ProjectSelectWorkersView(APIView):
+    permission_classes = [IsAuthenticated, IsCustomer]
+
+    def post(self, request, project_id):
+        try:
+            project = Project.objects.get(id=project_id)
+            user_ids = request.data.get('user_ids', [])
+
+            # Проверяем что прислан список ID
+            if not isinstance(user_ids, list):
+                return Response(
+                    {'error': 'user_ids должен быть списком'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Получаем всех applicants проекта
+            current_applicants = project.applicants.all()
+            errors = []
+            added_users = []
+
+            for user_id in user_ids:
+                try:
+                    user = Account.objects.get(id=user_id)
+
+                    # Проверяем что пользователь в applicants
+                    if user not in current_applicants:
+                        errors.append(f'Пользователь {user_id} не подавал заявку')
+                        continue
+
+                    # Добавляем в workers если еще не там
+                    if user not in project.workers.all():
+                        project.workers.add(user)
+                        added_users.append(user_id)
+
+                except Account.DoesNotExist:
+                    errors.append(f'Пользователь {user_id} не найден')
+
+            if errors:
+                return Response(
+                    {
+                        'status': 'partial_success',
+                        'added': added_users,
+                        'errors': errors
+                    },
+                    status=status.HTTP_207_MULTI_STATUS
+                )
+
+            return Response({
+                'status': 'success',
+                'message': 'Работники успешно добавлены',
+                'added_users': added_users,
+                'total_workers': project.workers.count()
+            }, status=status.HTTP_200_OK)
+
+        except Project.DoesNotExist:
+            return Response(
+                {'error': 'Проект не найден'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    def get_object(self):
+        """Получаем проект для permission проверки"""
+        return Project.objects.get(id=self.kwargs['project_id'])
