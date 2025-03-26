@@ -13,6 +13,7 @@ class Project(models.Model):
 
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
+    max_members = models.IntegerField(default=5)
 
     initiator = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="initiated_projects")
     customer = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, blank=True, related_name="client_projects")

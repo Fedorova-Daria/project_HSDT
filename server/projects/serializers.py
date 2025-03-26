@@ -1,6 +1,8 @@
-from rest_framework import serializers
 from .models import Project
 from users.models import Account
+from rest_framework import serializers, viewsets, permissions
+from rest_framework.response import Response
+from rest_framework.decorators import action
 
 # Сериализатор для заказчика
 class CustomerSerializer(serializers.ModelSerializer):
@@ -8,11 +10,13 @@ class CustomerSerializer(serializers.ModelSerializer):
         model = Account
         fields = ['id', 'first_name', 'last_name', 'avatar']
 
+
 # Сериализатор для пользователя
 class AccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
         fields = ['id', 'first_name', 'last_name', 'avatar']
+
 
 # Сериализатор для проекта в листе
 class ProjectListSerializer(serializers.ModelSerializer):
@@ -42,9 +46,17 @@ class ProjectListSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         return user.is_authenticated and hasattr(user, 'is_expert') and user.is_expert and obj.experts_voted.filter(id=user.id).exists()
 
-
-# Сериализатор для создания проекта
+# Сериалайзер для создания проекта
 class ProjectCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
-        fields = ["name", "description", "status", "is_hiring"]  # Только редактируемые поля
+        fields = ["id", "name", "description", "technologies", "is_hiring", "status", "owner", "initiator", "customer"]
+        read_only_fields = ["id", "owner", "initiator", "customer"]
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+        validated_data["owner"] = user
+        validated_data["initiator"] = user
+        if hasattr(user, "company_name") and user.company_name:
+            validated_data["customer"] = user
+        return super().create(validated_data)
