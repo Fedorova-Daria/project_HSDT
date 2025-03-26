@@ -30,12 +30,20 @@ const routes = [
     path: "/ideas/:id", // Параметр id в URL
     name: "IdeaDetail",
     component: IdeaDetail,
+    props: route => ({ ideaId: route.params.id }) // Передача id в props
   },
 ];
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition; // Вернёт пользователя на прежнее место
+    } else {
+      return { top: 0 }; // По умолчанию - вверх страницы
+    }
+  }
 });
 
 export default router;

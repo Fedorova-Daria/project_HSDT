@@ -229,57 +229,56 @@ export default {
       this.isDropdownOpen = !this.isDropdownOpen;
     },
     async submitIdea() {
-      try {
-        const userData = JSON.parse(localStorage.getItem("userData")); // Данные о пользователе из LocalStorage
-        console.log("Отправляем токен:", localStorage.getItem("access"));
-        console.log("Данные новой идеи:", {
-          name: this.ideaTitle,
-          description: this.ideaDescription,
-          short_description: this.ideaShortDescription,
-          technologies_info: Array.from(this.selectedStacks), // Преобразуем в обычный массив
-          initiator_info: {
-            id: userData.id,
-            role: userData.role,
-            name:
-              `${userData.first_name || ""} ${
-                userData.last_name || ""
-              }`.trim() || "Неизвестный пользователь",
-          },
-        });
+  try {
+    // Загружаем userData заново перед отправкой идеи
+    let userData = JSON.parse(localStorage.getItem("userData"));
 
-        let token = await getAccessToken(); // Получаем актуальный токен
+    console.log("Отправляем токен:", localStorage.getItem("access"));
+    console.log("Данные новой идеи:", {
+      name: this.ideaTitle,
+      description: this.ideaDescription,
+      short_description: this.ideaShortDescription,
+      technologies_info: Array.from(this.selectedStacks),
+      initiator_info: {
+        id: userData?.id || "Неизвестный",
+        role: userData?.role || "Неизвестная роль",
+        name: `${userData?.first_name || ""} ${userData?.last_name || ""}`.trim() || "Неизвестный пользователь",
+      },
+    });
 
-        if (!token) return; // Если токен не обновился, не отправляем запрос
+    let token = await getAccessToken(); // Получаем актуальный токен
 
-        const newIdea = {
-          name: this.ideaTitle,
-          description: this.ideaDescription,
-          short_description: this.ideaShortDescription,
-          technologies_info: Array.from(this.selectedStacks),
-          initiator_info: {
-            id: userData.id,
-            role: userData.role,
-            name:
-              `${userData.first_name || ""} ${
-                userData.last_name || ""
-              }`.trim() || "Неизвестный пользователь",
-          },
-        };
+    if (!token) return; // Если токен не обновился, не отправляем запрос
 
-        await axios.post("http://localhost:8000/api/ideas/create/", newIdea, {
-          headers: {
-            Authorization: `Bearer ${token}`, // Используем актуальный токен
-            "Content-Type": "application/json",
-          },
-        });
+    // После рефреша токена снова загружаем userData
+    userData = JSON.parse(localStorage.getItem("userData"));
 
-        alert("Идея успешно создана!");
-        this.closeModal();
-      } catch (error) {
-        console.error("Ошибка при создании идеи:", error);
-        alert("Ошибка при создании идеи!");
-      }
-    },
+    const newIdea = {
+      name: this.ideaTitle,
+      description: this.ideaDescription,
+      short_description: this.ideaShortDescription,
+      technologies_info: Array.from(this.selectedStacks),
+      initiator_info: {
+        id: userData?.id || "Неизвестный",
+        role: userData?.role || "Неизвестная роль",
+        name: `${userData?.first_name || ""} ${userData?.last_name || ""}`.trim() || "Неизвестный пользователь",
+      },
+    };
+
+    await axios.post("http://localhost:8000/api/ideas/create/", newIdea, {
+      headers: {
+        Authorization: `Bearer ${token}`, // Используем актуальный токен
+        "Content-Type": "application/json",
+      },
+    });
+
+    alert("Идея успешно создана!");
+    this.closeModal();
+  } catch (error) {
+    console.error("Ошибка при создании идеи:", error);
+    alert("Ошибка при создании идеи!");
+  }
+},
   },
 };
 </script>

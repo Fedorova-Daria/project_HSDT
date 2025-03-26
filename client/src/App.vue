@@ -13,6 +13,8 @@ export default {
 
 <template>
   <div>
-    <router-view></router-view>
+    <keep-alive>
+    <router-view />
+  </keep-alive>
   </div>
 </template>
