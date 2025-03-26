@@ -1,7 +1,7 @@
 <template>
   <div>
     <Header/>
-    <div class="w-4/5 mt-5 m-auto p-6 overflow-auto flex gap-3 items-start">
+    <div class="w-4/5 mt-5 m-auto p-6 overflow-auto flex gap-3 items-start z-10">
       <button   @click="goBack"
     class="ml-auto bg-buttonoff hover:bg-buttonon text-white font-medium rounded-lg text-sm px-4 py-2 mt-5 duration-300 h-10"
   >

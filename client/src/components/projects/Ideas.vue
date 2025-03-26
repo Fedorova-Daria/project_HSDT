@@ -16,45 +16,46 @@
 
     <Header />
 
-    <div class="w-4/5 m-auto mt-6 text-white relative z-10">
+    <div class="w-4/5 m-auto mt-6 text-white relative z-0">
       <div class="flex m-auto mt-5 text-zinc-700">
-        <div class="relative">
-          <img class="absolute left-2 top-2" src="/search.svg" />
-          <input
-            class="w-full max-w-md border bg-white rounded-md py-2 pl-10 pr-4 outline-none focus:border-purple-400 duration-500"
-            type="text"
-            placeholder="Поиск..."
-          />
-        </div>
-        <select
-          class="ml-5 h-10 py-2 px-3 border bg-white rounded-md focus:border-fiol duration-500"
-        >
-          <option value="" disabled selected class="text-gray-500">
+      <div class="relative">
+        <img class="absolute left-2 top-2" src="/search.svg" />
+        <input
+          class="w-full max-w-md border bg-white rounded-md py-2 pl-10 pr-4 outline-none focus:border-purple-400 duration-500"
+          type="text"
+          placeholder="Поиск..."
+        />
+      </div>
+      <select
+  class="ml-5 h-10 py-2 px-3 border bg-white rounded-md focus:border-fiol duration-500"
+>
+<option value="" disabled selected class="text-gray-500">
             Выберите институт
           </option>
-          <option>ВШЦТ</option>
-          <option>ИПТИ</option>
-          <option>СТРОИН</option>
-          <option>АРХИД</option>
-        </select>
+  <option>ВШЦТ</option>
+  <option>ИПТИ</option>
+  <option>СТРОИН</option>
+  <option>АРХИД</option>
+</select>
 
-        <select
-          class="ml-5 h-10 py-2 px-3 border bg-white rounded-md focus:border-fiol duration-500"
-        >
-          <option value="" disabled selected class="text-gray-500">
+<select
+  class="ml-5 h-10 py-2 px-3 border bg-white rounded-md focus:border-fiol duration-500"
+>
+<option value="" disabled selected class="text-gray-500">
             Сортировать по
           </option>
-          <option>По новизне</option>
-          <option>По популярности</option>
-        </select>
+  <option>По новизне</option>
+  <option>По популярности</option>
+</select>
 
-        <button
-          @click="openModal"
-          class="bg-purple-600 text-white rounded-md px-4 py-2 hover:bg-purple-700 transition ml-5 h-10"
-        >
-          Создать идею
-        </button>
-      </div>
+
+      <button
+        @click="openModal"
+        class="bg-purple-600 text-white rounded-md px-4 py-2 hover:bg-purple-700 transition ml-5 h-10"
+      >
+        Создать идею
+      </button>
+    </div>
 
       <table
         class="w-full mt-5 border-collapse shadow-lg rounded-lg overflow-hidden bg-card table-auto"
@@ -79,6 +80,7 @@
             <td class="px-6 py-4 font-medium">{{ item.name }}</td>
             <td class="px-6 py-4">
               <div class="flex flex-wrap gap-2">
+                <!-- Проверяем, сколько стека технологий -->
                 <span
                   v-for="(tech, techIndex) in item.technologies_info.slice(
                     0,
@@ -89,6 +91,7 @@
                 >
                   {{ tech.name }}
                 </span>
+                <!-- Если стека технологий больше 3, показываем "+X" -->
                 <span
                   v-if="item.technologies_info.length > 3"
                   class="text-xs text-white"
@@ -102,28 +105,26 @@
 
             <td class="px-6 py-4 flex justify-end gap-2">
               <button
-                @click="openIdeaDetail(item.id)"
+                 @click="openIdea(item)"
                 class="px-4 py-2 text-sm font-medium bg-buttonoff hover:bg-buttonon rounded transition"
               >
                 Посмотреть
               </button>
               <div class="flex items-center gap-2 min-w-[80px] justify-end">
-                <h1 class="text-white font-semibold">{{ likeCount }}</h1>
+                <h1 class="text-white font-semibold">{{ item.likeCount || 0 }}</h1>
                 <img
-                  :src="likedItems[item.id] ? '/liked.svg' : '/like.svg'"
-                  alt="Like"
-                  class="w-6 h-6 mt-1.5 duration-300 cursor-pointer"
-                  :class="{ 'animate-like': isAnimating }"
-                  @click.stop="toggleLike(item)"
-                  @animationend="isAnimating = false"
-                />
+  :src="likedItems[item.id] ? '/liked.svg' : '/like.svg'"
+  :class="{ 'animate-like': item.isAnimating }"
+  @click.stop="toggleLike(item)"
+  @animationend="item.isAnimating = false"
+/>
               </div>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
-
+    <!-- Всплывающее окно -->
     <IdeaModal v-if="isModalOpen" @close="closeModal" @submit="addNewIdea" />
     <transition
       name="slide"
@@ -138,23 +139,20 @@
         @close="closeIdeaDetail"
       />
     </transition>
-  </div>
+      </div>
 </template>
 
 <script>
 import Header from "@/components/header.vue";
-import IdeaModal from "@/components/projects/IdeaModal.vue";
-import IdeaDetail from "@/components/projects/IdeaDetail.vue";
-
+import IdeaModal from "@/components/projects/IdeaModal.vue"; // Импортируем модальное окно
 export default {
-  components: { IdeaDetail, IdeaModal, Header },
+  components: { IdeaModal, Header },
   data() {
     return {
       isAnimating: false,
-      items: [],
+      items: [], // Список идей
       isModalOpen: false,
-      likedItems: {},
-      selectedIdeaId: null,
+      likedItems: {}, // Объект для хранения лайков по каждому элементу
       // Данные для параллакс-эффекта
       offsetX: 0,
       offsetY: 0,
@@ -222,34 +220,22 @@ export default {
         console.error("Ошибка при загрузке идей:", error);
       }
     },
-
-    openIdeaDetail(id) {
-      this.selectedIdeaId = id;
-    },
-
-    closeIdeaDetail() {
-      this.selectedIdeaId = null;
-    },
-
+    openIdea(item) {
+  this.$router.push({ path: `/ideas/${item.id}` });
+},
     openModal() {
       this.isModalOpen = true;
     },
-
     closeModal() {
       this.isModalOpen = false;
     },
-
     toggleLike(item) {
-      this.likedItems = {
-        ...this.likedItems,
-        [item.id]: !this.likedItems[item.id],
-      };
-      this.isAnimating = true;
-    },
+  this.$set(this.likedItems, item.id, !this.likedItems[item.id]);
+  this.$set(item, "isAnimating", true);
+},
   },
-
   mounted() {
-    this.fetchIdeas();
+    this.fetchIdeas(); // Загружаем идеи при монтировании
     this.initParallax();
   },
 
