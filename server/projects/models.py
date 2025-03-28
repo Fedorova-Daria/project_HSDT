@@ -28,6 +28,7 @@ class Project(models.Model):
 
     # Статусы
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
+    approved = models.BooleanField(default=False)
     is_hiring = models.BooleanField(default=True)  # Можно ли ещё записаться
 
     created_at = models.DateTimeField(auto_now_add=True)

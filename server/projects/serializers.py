@@ -19,7 +19,7 @@ class AccountSerializer(serializers.ModelSerializer):
 
 
 # Сериализатор для проекта в листе
-class ProjectListSerializer(serializers.ModelSerializer):
+class ProjectSerializer(serializers.ModelSerializer):
     initiator = serializers.StringRelatedField()  # Покажет имя инициатора
     customer = AccountSerializer(allow_null=True)  # Добавляем информацию о заказчике
     applicants = AccountSerializer(allow_null=True)

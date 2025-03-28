@@ -5,7 +5,7 @@ from rest_framework import status, serializers, viewsets, permissions, generics
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from .models import Project
-from .serializers import ProjectListSerializer, ProjectCreateSerializer
+from .serializers import ProjectSerializer, ProjectCreateSerializer
 from users.models import Account
 from rest_framework import generics, permissions
 from django.shortcuts import get_object_or_404
@@ -14,10 +14,10 @@ from django.shortcuts import get_object_or_404
 class ProjectListView(generics.ListAPIView):
     """
     API endpoint для отображения списка всех проектов.
-    Использует ProjectListSerializer для сериализации данных.
+    Использует ProjectSerializer для сериализации данных.
     """
     queryset = Project.objects.all()
-    serializer_class = ProjectListSerializer
+    serializer_class = ProjectSerializer
 
     def get_serializer_context(self):
         # Передаем request в контекст сериализатора для проверки is_liked
@@ -29,8 +29,9 @@ class ProjectLikeView(APIView):
     API endpoint для добавления/удаления лайков проектов.
     - Только для авторизованных пользователей
     - Добавляет пользователя в likes при запросе
-    - Удаляет лайк если пользователь уже лайкнул
+    - Удаляет лайк, если пользователь уже лайкнул
     - Для экспертов также добавляет/удаляет голос в experts_voted
+    - Автоматически обновляет поле approved, если собрано достаточное количество голосов
     """
     permission_classes = [IsAuthenticated]
 
@@ -38,43 +39,50 @@ class ProjectLikeView(APIView):
         try:
             project = Project.objects.get(id=project_id)
             user = request.user
-            response_data = {
-                'status': 'success',
-                'likes_count': project.likes.count(),
-                'experts_voted_count': project.experts_voted.count(),
-                'user_role': user.get_role_display()
-            }
 
             if user in project.likes.all():
                 # Удаление лайка
                 project.likes.remove(user)
-                response_data['message'] = 'Лайк удален'
-                response_data['liked'] = False
+                message = "Лайк удален"
+                liked = False
 
                 # Для экспертов также удаляем голос
                 if user.role == Account.Role.EXPERT and user in project.experts_voted.all():
                     project.experts_voted.remove(user)
-                    response_data['expert_voted'] = False
+
             else:
                 # Добавление лайка
                 project.likes.add(user)
-                response_data['message'] = 'Лайк добавлен'
-                response_data['liked'] = True
+                message = "Лайк добавлен"
+                liked = True
 
                 # Для экспертов также добавляем голос
                 if user.role == Account.Role.EXPERT:
                     project.experts_voted.add(user)
-                    response_data['expert_voted'] = True
-                else:
-                    response_data['expert_voted'] = False
 
-            return Response(response_data, status=status.HTTP_200_OK)
+            # Проверяем, достаточно ли голосов для одобрения
+            project.approved = project.experts_voted.count() >= project.votes_to_approve
+            project.save()
+
+            return Response(
+                {
+                    "status": "success",
+                    "message": message,
+                    "likes_count": project.likes.count(),
+                    "experts_voted_count": project.experts_voted.count(),
+                    "approved": project.approved,
+                    "liked": liked,
+                    "expert_voted": user in project.experts_voted.all(),
+                },
+                status=status.HTTP_200_OK,
+            )
 
         except Project.DoesNotExist:
             return Response(
-                {'status': 'error', 'message': 'Проект не найден'},
-                status=status.HTTP_404_NOT_FOUND
+                {"status": "error", "message": "Проект не найден"},
+                status=status.HTTP_404_NOT_FOUND,
             )
+
 
 class ProjectCreateView(generics.CreateAPIView):
     """
@@ -123,6 +131,10 @@ class ProjectClaimView(APIView):
         # Проверяем, что у пользователя есть company_name
         if not getattr(user, "company_name", None):
             raise PermissionDenied("Только заказчики могут забирать проекты.")
+
+        # Проверяем, что проект подтвержден (approved)
+        if not project.approved:
+            raise PermissionDenied("Проект еще не подтвержден экспертами.")
 
         # Если у проекта уже есть заказчик
         if project.customer:
