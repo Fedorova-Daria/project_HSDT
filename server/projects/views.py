@@ -5,7 +5,7 @@ from rest_framework import status, serializers, viewsets, permissions, generics
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from .models import Project
-from .serializers import ProjectSerializer, ProjectCreateSerializer
+from .serializers import ProjectCreateSerializer, ProjectListSerializer
 from users.models import Account
 from rest_framework import generics, permissions
 from django.shortcuts import get_object_or_404
@@ -16,6 +16,7 @@ from rest_framework.permissions import IsAuthenticated
 from core.perms import IsStudent, IsCustomer  # Импорт из правильного места
 from .models import Project
 from users.models import Account  # Для проверки ролей
+from rest_framework.generics import RetrieveAPIView
 
 
 class ProjectListView(generics.ListAPIView):
@@ -24,11 +25,16 @@ class ProjectListView(generics.ListAPIView):
     Использует ProjectSerializer для сериализации данных.
     """
     queryset = Project.objects.all()
-    serializer_class = ProjectSerializer
+    serializer_class = ProjectListSerializer
 
     def get_serializer_context(self):
         # Передаем request в контекст сериализатора для проверки is_liked
         return {'request': self.request}
+
+
+class ProjectDetailView(RetrieveAPIView):
+    queryset = Project.objects.all()
+    serializer_class = ProjectListSerializer
 
 
 class ProjectLikeView(APIView):

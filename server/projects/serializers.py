@@ -18,7 +18,7 @@ class AccountSerializer(serializers.ModelSerializer):
         fields = ['id', 'first_name', 'last_name', 'avatar']
 
 
-# Сериализатор для проекта в листе
+# Сериализатор для проекта
 class ProjectListSerializer(serializers.ModelSerializer):
     initiator = serializers.StringRelatedField()  # Покажет имя инициатора
     customer = AccountSerializer(allow_null=True)  # Добавляем информацию о заказчике
@@ -29,7 +29,7 @@ class ProjectListSerializer(serializers.ModelSerializer):
     is_liked = serializers.SerializerMethodField()
     is_expert_voted = serializers.SerializerMethodField()
     experts_voted_count = serializers.IntegerField(source="experts_voted.count", read_only=True)
-
+    has_customer = serializers.SerializerMethodField()  # Новое поле
 
     class Meta:
         model = Project
@@ -45,6 +45,9 @@ class ProjectListSerializer(serializers.ModelSerializer):
     def get_is_expert_voted(self, obj):
         user = self.context['request'].user
         return user.is_authenticated and hasattr(user, 'is_expert') and user.is_expert and obj.experts_voted.filter(id=user.id).exists()
+
+    def get_has_customer(self, obj):
+        return obj.customer is not None  # Возвращает True, если у проекта есть заказчик
 
 # Сериалайзер для создания проекта
 class ProjectCreateSerializer(serializers.ModelSerializer):
