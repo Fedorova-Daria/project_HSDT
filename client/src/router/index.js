@@ -10,8 +10,6 @@ import TeamDetails from "@/components/teams/TeamDetails.vue";
 import Ideas from "@/components/projects/Ideas.vue";
 import IdeaDetail from "@/components/projects/IdeaDetail.vue";
 import AboutTYIU from "../components/university/AboutTYIU.vue"; // Страница About только для TYIU
-import editProject from "@/components/projects/editProject.vue";
-import EditProject from "@/components/projects/editProject.vue";
 
 const routes = [
   {
@@ -49,7 +47,7 @@ const routes = [
     component: Ideas,
   },
   {
-    path: "/ideas/:id",
+    path: "/:institute/ideas/:id",
     name: "ideaDetail",
     component: IdeaDetail,
     props: route => ({ ideaId: route.params.id, institute: route.params.institute })  // Передаем параметры как пропсы
@@ -58,12 +56,6 @@ const routes = [
     path: "/TYIU/about",
     name: "aboutTYIU",
     component: AboutTYIU,
-  },
-  {
-    path: "/projects/:id/edit",
-    name: "EditProject",
-    component:EditProject,
-    
   },
 ];
 

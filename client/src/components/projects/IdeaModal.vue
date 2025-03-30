@@ -156,24 +156,29 @@
               ></textarea>
             </div>
           </div>
-          <button @click="submitIdea"
-            type="submit"
-            class="text-white inline-flex items-center bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:outline-none focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-800"
-          >
-            <svg
-              class="me-1 -ms-1 w-5 h-5"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-                clip-rule="evenodd"
-              ></path>
-            </svg>
-            Добавить новый проект
-          </button>
+          <div class="flex justify-between gap-4">
+  <button
+    @click="submitIdea('open')"
+    type="button"
+    class="text-white inline-flex items-center bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:outline-none focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-800"
+  >
+    <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+      <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path>
+    </svg>
+    Добавить новый проект
+  </button>
+
+  <button
+    @click="submitIdea('draft')"
+    type="button"
+    class="text-white inline-flex items-center bg-gray-500 hover:bg-gray-600 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+  >
+    <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+      <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path>
+    </svg>
+    Отложить проект
+  </button>
+</div>
         </form>
       </div>
     </div>
@@ -210,43 +215,48 @@ export default {
     toggleDropdown() {
       this.isDropdownOpen = !this.isDropdownOpen;
     },
-    async submitIdea() {
-    try {
-      // Получаем токен, обновляя его при необходимости
-      const token = await fetchAccessToken();
+    async submitIdea(status) {
+  try {
+    // Получаем токен, обновляя его при необходимости
+    const token = await fetchAccessToken();
 
-      if (!token) {
-        console.error("Ошибка: токен отсутствует.");
-        return;
-      }
+    if (!token) {
+      console.error("Ошибка: токен отсутствует.");
+      return;
+    }
 
-      // Преобразуем выбранные технологии в ID (здесь предполагаем, что у тебя есть маппинг)
-      const technologyIds = this.selectedStacks.map(stack => {
-        return this.stacks.findIndex(item => item === stack) + 1; // Здесь предполагается, что ID = индексу + 1
-      });
+    // Преобразуем выбранные технологии в ID
+    const technologyIds = this.selectedStacks.map(stack => {
+      return this.stacks.findIndex(item => item === stack) + 1; // Здесь предполагается, что ID = индексу + 1
+    });
 
-      // Формируем данные
-      const ideaData = {
-        name: this.ideaTitle,
-        description: this.description,
-        technologies: technologyIds, // Передаем ID технологий
-      };
+    // Формируем данные
+    const ideaData = {
+      name: this.ideaTitle,
+      description: this.description,
+      technologies: technologyIds, // Технологии
+      status: status, // Указываем переданный статус ("open" или "draft")
+    };
 
-      // Отправляем запрос
-      const response = await axios.post("http://127.0.0.1:8000/api/projects/create/", ideaData, {
+    // Отправляем запрос
+    const response = await axios.post(
+      "http://127.0.0.1:8000/api/projects/create/", 
+      ideaData, 
+      {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
         }
-      });
+      }
+    );
 
-      console.log("Идея создана успешно:", response.data);
-      this.closeModal(); // Закрываем модальное окно после успешного создания
+    console.log(`Идея со статусом "${status}" создана успешно:`, response.data);
+    this.closeModal(); // Закрываем модальное окно после успешного создания
 
-    } catch (error) {
-      console.error("Ошибка при создании идеи:", error.response?.data || error.message);
-    }
+  } catch (error) {
+    console.error("Ошибка при создании идеи:", error.response?.data || error.message);
   }
+}
   },
     };
 </script>

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { saveTokens, getAccessToken, getRefreshToken, getUserData, clearStorage } from "./localStorage.js"; // Убедись, что путь правильный
+import { saveTokens, getAccessToken, getRefreshToken, clearStorage } from "./localStorage.js"; 
 
 // Обновление токена
 export async function refreshToken() {
@@ -13,45 +13,42 @@ export async function refreshToken() {
     );
 
     const newAccessToken = response.data.access;
-    saveTokens(newAccessToken, refreshToken); // Сохраняем новый access-токен
+    saveTokens(newAccessToken, refreshToken); // Сохраняем новый токен
 
-    console.log("Токен обновлен:", newAccessToken);
-
-    // 🔹 **Обновляем данные пользователя после рефреша токена**
-    await getUserData();
-
+    console.log("Access token успешно обновлен:", newAccessToken);
     return newAccessToken;
   } catch (error) {
     console.error("Ошибка обновления токена:", error);
-
-    // Просто очищаем storage, но НЕ редиректим на /login
-    clearStorage();
-
-    return null; // Возвращаем null, чтобы обработка шла дальше
+    clearStorage(); // Чистим токены, чтобы избежать ошибок в будущем
+    return null;
   }
 }
 
-// Функция для получения актуального access-токена
+// Получаем актуальный access-токен
 export async function fetchAccessToken() {
   let token = getAccessToken();
 
   if (!token) {
-    console.warn("Access token отсутствует, требуется авторизация.");
-    return null;
+    console.warn("Access token отсутствует. Пытаемся обновить...");
+    token = await refreshToken(); // Обновляем токен
+    if (!token) {
+      console.error("Обновление токена не удалось. Требуется авторизация.");
+      return null; // Возвращаем null, если обновление токена не удалось
+    }
   }
 
   try {
-    // Разбираем токен безопасно
+    // Проверяем истечение токена
     const tokenPayload = JSON.parse(atob(token.split(".")[1]));
     const tokenExp = tokenPayload.exp; // Время истечения токена
-    const currentTime = Math.floor(Date.now() / 1000); // Текущее время
+    const currentTime = Math.floor(Date.now() / 1000);
 
     if (currentTime >= tokenExp) {
-      console.log("Access token истёк, обновляем...");
-      token = await refreshToken(); // Обновляем токен
+      console.log("Access token истёк. Обновляем...");
+      token = await refreshToken(); // Попытка обновить токен
     }
   } catch (error) {
-    console.error("Ошибка обработки access token:", error);
+    console.error("Ошибка обработки токена:", error);
     return null;
   }
 
