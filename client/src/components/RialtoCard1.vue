@@ -5,14 +5,17 @@
   >
     <div class="flex justify-between items-center mb-3">
       <h1 class="text-2xl font-semibold text-white">{{ idea.name }}</h1>
-      <img
-        :src="liked ? '/liked.svg' : '/like.svg'"
-        alt="Like"
-        class="w-6 h-6 mr-2 duration-300 cursor-pointer"
-        :class="{ 'animate-like': isAnimating }"
-        @click.stop="toggleLike"
-        @animationend="isAnimating = false"
-      />
+      <div class="flex items-center">
+        <img
+          :src="liked ? '/liked.svg' : '/like.svg'" 
+          alt="Like"
+          class="w-6 h-6 mr-2 duration-300 cursor-pointer"
+          :class="{ 'animate-like': isAnimating }"
+          @click.stop="toggleLike"
+          @animationend="isAnimating = false"
+        />
+        <span class="text-white">{{ idea.likes_count }}</span> 
+      </div>
     </div>
 
     <p class="text-gray-300 mb-3">
@@ -21,50 +24,19 @@
 
     <div class="mt-auto">
       <h3 class="text-xl text-white mb-3">
-        Инициатор: {{ idea.initiator_info.name || "Неизвестный автор" }}
+        Инициатор: {{ idea.initiator || "Неизвестный автор" }}
       </h3>
+    </div>
 
-      <div class="flex flex-wrap gap-2">
-        <!-- Проверяем, сколько стека технологий -->
-        <span
-          v-for="(tech, index) in idea.technologies_info.slice(0, 3)"
-          :key="index"
-          class="px-2 py-1 bg-purple-600 text-white rounded"
-        >
-          {{ tech.name }}
-        </span>
-
-        <!-- Если стека технологий больше 3, показываем "+X" -->
-        <span
-          v-if="idea.technologies_info.length > 3"
-          class="text-xs text-white"
-        >
-          +{{ item.technologies_info.length - 3 }}
-        </span>
-      </div>
-      <div class="flex justify-between">
-        <span
-          class="px-4 py-2 rounded-3xl text-white text-sm border-2 bg-zinc-700"
-          :class="
-            idea.status === 'Набор открыт'
-              ? 'border-blue-500'
-              : 'border-red-500'
-          "
-        >
-          {{ status || 0 }}
-        </span>
-        <h3
-          class="px-4 py-2 rounded-3xl text-white text-sm border-2 bg-zinc-700"
-        >
-          Команда из {{ participantsCount || 0 }} человек
-        </h3>
-      </div>
+    <div v-if="userRole === 'EX'" class="text-white mt-2">
+      Голосов экспертов: {{ idea.experts_voted_count }}
     </div>
   </div>
 </template>
 
 <script>
-import { stackStyles } from "@/utils/stackStyles";
+import axios from "axios";
+import { fetchAccessToken } from "@/utils/auth.js";
 
 export default {
   props: {
@@ -75,31 +47,102 @@ export default {
   },
   data() {
     return {
-      stackStyles,
-      liked: false,
-      isAnimating: false,
+      isAnimating: false, // Для анимации лайка
+      userRole: localStorage.getItem("role") || "ST",
+      ownerName: "", // Сюда сохраним имя инициатора
     };
   },
+  computed: {
+    liked() {
+      if (!this.idea || !this.idea.likes) return false; // Проверяем, есть ли данные
+      let userData = JSON.parse(localStorage.getItem("userData")) || {}; 
+      return this.idea.likes.includes(userData.id);  // Проверка на наличие ID пользователя в массиве лайков
+    }
+  },
+  mounted() {
+    this.fetchOwnerName(this.idea.owner);  // передаем ID владельца
+  },
   methods: {
+    async fetchOwnerName(ownerId) {
+      try {
+        const response = await axios.get(`http://localhost:8000/api/users/${ownerId}/`);
+        // Проверяем данные пользователя, и если они есть, формируем имя
+        if (response.data.first_name && response.data.last_name) {
+          this.idea.initiator = `${response.data.first_name} ${response.data.last_name}`;
+        } else {
+          this.idea.initiator = "Неизвестный автор";
+        }
+      } catch (error) {
+        console.error("Ошибка при загрузке инициатора:", error);
+        this.idea.initiator = "Неизвестный автор";  // Если не удается получить данные
+      }
+    },
     openIdea() {
       this.$router.push(`/ideas/${this.idea.id}`);
     },
-    toggleLike(event) {
+    async toggleLike(event, retry = false) {
       event.stopPropagation();
-      this.liked = !this.liked;
-      this.isAnimating = true;
+      this.isAnimating = true;  // Запускаем анимацию лайка
+
+      try {
+        let accessToken = localStorage.getItem("access");
+
+        if (!accessToken) {
+          accessToken = await fetchAccessToken();
+          if (!accessToken) {
+            console.error("Не удалось обновить токен. Авторизация требуется.");
+            return;
+          }
+        }
+
+        const response = await axios.post(
+          `http://localhost:8000/api/projects/${this.idea.id}/like/`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        // Обновляем состояние лайка и количество лайков
+        if (this.liked) {
+          this.idea.likes = this.idea.likes.filter(id => id !== this.getUserId());
+        } else {
+          this.idea.likes.push(this.getUserId());
+        }
+        this.idea.likes_count = response.data.likes_count;
+
+      } catch (error) {
+        console.error("Ошибка при обновлении лайка:", error);
+
+        if (error.response?.status === 403 && !retry) {
+          console.log("Попытка обновления токена...");
+          const newToken = await fetchAccessToken();
+          if (newToken) {
+            localStorage.setItem("access", newToken);
+            this.toggleLike(event, true);
+          } else {
+            console.error("Не удалось обновить токен, требуется повторный вход.");
+          }
+        }
+      } finally {
+        setTimeout(() => {
+          this.isAnimating = false;  // Завершаем анимацию через 300 мс
+        }, 300);
+      }
     },
+    getUserId() {
+      let userData = JSON.parse(localStorage.getItem("userData")) || {}; 
+      return userData.id;
+    }
   },
 };
 </script>
 
 <style scoped>
-.idea-card {
-  transition: transform 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  height: 100%; /* Чтобы карточка была одинаковой высоты */
-}
+/* Анимация лайка */
 @keyframes likeJump {
   0% {
     transform: scale(1);

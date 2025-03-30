@@ -184,11 +184,21 @@ export default {
       this.passwordError = "";
     },
     checkToken() {
-      const token = localStorage.getItem("access");
-      if (token) {
-        this.isLoggedIn = true;
-        this.$router.push({ name: "rialto" });
-      }
+  const token = localStorage.getItem("access");
+  const selectedInstitute = localStorage.getItem("institute");
+
+  // Если токен существует
+  if (token) {
+    this.isLoggedIn = true;
+
+    // Если выбран институт TYIU, перенаправляем на TYIU/about
+    if (selectedInstitute === "TYIU") {
+      this.$router.push({ path: "/TYIU/about" });
+    } else {
+      // Иначе перенаправляем на страницу выбранного института /rialto
+      this.$router.push({ path: `/${selectedInstitute}/rialto` });
+    }
+  }
     },
     validateForm() {
       let isValid = true;

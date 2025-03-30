@@ -18,48 +18,37 @@
 
     <div class="w-4/5 m-auto mt-6 text-white relative z-0">
       <div class="flex m-auto mt-5 text-zinc-700">
-      <div class="relative">
-        <img class="absolute left-2 top-2" src="/search.svg" />
-        <input
-          class="w-full max-w-md border bg-white rounded-md py-2 pl-10 pr-4 outline-none focus:border-purple-400 duration-500"
-          type="text"
-          placeholder="Поиск..."
-        />
+        <div class="relative">
+          <img class="absolute left-2 top-2" src="/search.svg" />
+          <input
+            class="w-full max-w-md border bg-white rounded-md py-2 pl-10 pr-4 outline-none focus:border-purple-400 duration-500"
+            type="text"
+            placeholder="Поиск..."
+          />
+        </div>
+        <select class="ml-5 h-10 py-2 px-3 border bg-white rounded-md focus:border-fiol duration-500">
+          <option value="" disabled selected class="text-gray-500">Выберите институт</option>
+          <option>ВШЦТ</option>
+          <option>ИПТИ</option>
+          <option>СТРОИН</option>
+          <option>АРХИД</option>
+        </select>
+
+        <select class="ml-5 h-10 py-2 px-3 border bg-white rounded-md focus:border-fiol duration-500">
+          <option value="" disabled selected class="text-gray-500">Сортировать по</option>
+          <option>По новизне</option>
+          <option>По популярности</option>
+        </select>
+
+        <button
+          @click="openModal"
+          class="bg-purple-600 text-white rounded-md px-4 py-2 hover:bg-purple-700 transition ml-5 h-10"
+        >
+          Создать идею
+        </button>
       </div>
-      <select
-  class="ml-5 h-10 py-2 px-3 border bg-white rounded-md focus:border-fiol duration-500"
->
-<option value="" disabled selected class="text-gray-500">
-            Выберите институт
-          </option>
-  <option>ВШЦТ</option>
-  <option>ИПТИ</option>
-  <option>СТРОИН</option>
-  <option>АРХИД</option>
-</select>
 
-<select
-  class="ml-5 h-10 py-2 px-3 border bg-white rounded-md focus:border-fiol duration-500"
->
-<option value="" disabled selected class="text-gray-500">
-            Сортировать по
-          </option>
-  <option>По новизне</option>
-  <option>По популярности</option>
-</select>
-
-
-      <button
-        @click="openModal"
-        class="bg-purple-600 text-white rounded-md px-4 py-2 hover:bg-purple-700 transition ml-5 h-10"
-      >
-        Создать идею
-      </button>
-    </div>
-
-      <table
-        class="w-full mt-5 border-collapse shadow-lg rounded-lg overflow-hidden bg-card table-auto"
-      >
+      <table class="w-full mt-5 border-collapse shadow-lg rounded-lg overflow-hidden bg-card table-auto">
         <thead>
           <tr class="bg-card text-left">
             <th class="px-6 py-3 w-10">#</th>
@@ -72,79 +61,64 @@
         </thead>
         <tbody>
           <tr
-            v-for="item in items"
-            :key="item.id"
+            v-for="idea in items"
+            :key="idea.id"
             class="border-b border-zinc-700 hover:bg-card transition duration-200"
           >
-            <td class="px-6 py-4">{{ item.id }}</td>
-            <td class="px-6 py-4 font-medium">{{ item.name }}</td>
+            <td class="px-6 py-4">{{ idea.id }}</td>
+            <td class="px-6 py-4 font-medium">{{ idea.name }}</td>
             <td class="px-6 py-4">
               <div class="flex flex-wrap gap-2">
                 <!-- Проверяем, сколько стека технологий -->
                 <span
-                  v-for="(tech, techIndex) in item.technologies_info.slice(
-                    0,
-                    3
-                  )"
+                  v-for="(tech, techIndex) in idea.technologies_info?.slice(0, 3)"
                   :key="techIndex"
                   class="px-2 py-1 bg-purple-600 text-white rounded"
                 >
                   {{ tech.name }}
                 </span>
                 <!-- Если стека технологий больше 3, показываем "+X" -->
-                <span
-                  v-if="item.technologies_info.length > 3"
-                  class="text-xs text-white"
-                >
-                  +{{ item.technologies_info.length - 3 }}
+                <span v-if="idea.technologies_info?.length > 3" class="text-xs text-white">
+                  +{{ idea.technologies_info.length - 3 }}
                 </span>
               </div>
             </td>
-            <td class="px-6 py-4">{{ item.created_at }}</td>
+            <td class="px-6 py-4">{{ idea.created_at }}</td>
             <td class="px-6 py-4"></td>
 
             <td class="px-6 py-4 flex justify-end gap-2">
               <button
-                 @click="openIdea(item)"
+                @click="openIdea(idea)"
                 class="px-4 py-2 text-sm font-medium bg-buttonoff hover:bg-buttonon rounded transition"
               >
                 Посмотреть
               </button>
               <div class="flex items-center gap-2 min-w-[80px] justify-end">
-                <h1 class="text-white font-semibold">{{ item.likeCount || 0 }}</h1>
+                <h1 class="text-white font-semibold">{{ idea.likes_count || 0 }}</h1>
                 <img
-  :src="likedItems[item.id] ? '/liked.svg' : '/like.svg'"
-  :class="{ 'animate-like': item.isAnimating }"
-  @click.stop="toggleLike(item)"
-  @animationend="item.isAnimating = false"
-/>
+                  :src="likedItems[idea.id] ? '/liked.svg' : '/like.svg'" 
+                  alt="like"
+                  @click="toggleLike($event, idea)"
+                />
               </div>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
+
     <!-- Всплывающее окно -->
     <IdeaModal v-if="isModalOpen" @close="closeModal" @submit="addNewIdea" />
-    <transition
-      name="slide"
-      @before-enter="beforeEnter"
-      @after-enter="afterEnter"
-      @before-leave="beforeLeave"
-      @after-leave="afterLeave"
-    >
-      <IdeaDetail
-        v-show="selectedIdeaId"
-        :ideaId="selectedIdeaId"
-        @close="closeIdeaDetail"
-      />
-    </transition>
-      </div>
+  </div>
 </template>
 
 <script>
+import { mapState, mapActions } from 'vuex'; // Для маппинга состояния и действий
 import Header from "@/components/header.vue";
+import { fetchAccessToken } from "@/utils/auth.js";
 import IdeaModal from "@/components/projects/IdeaModal.vue"; // Импортируем модальное окно
+import axios from 'axios';
+
 export default {
   components: { IdeaModal, Header },
   data() {
@@ -164,6 +138,11 @@ export default {
       windowHeight: 0,
       animationFrame: null,
     };
+  },
+  computed: {
+    ...mapState({
+    likedItems: state => state.likedItems
+  })
   },
   methods: {
     // Инициализация параллакс-эффекта
@@ -213,28 +192,36 @@ export default {
 
     async fetchIdeas() {
       try {
-        const response = await fetch("http://localhost:8000/api/ideas/");
+        const response = await fetch("http://localhost:8000/api/projects/");
         if (!response.ok) throw new Error("Ошибка загрузки идей");
         this.items = await response.json();
       } catch (error) {
         console.error("Ошибка при загрузке идей:", error);
       }
     },
-    openIdea(item) {
-  this.$router.push({ path: `/ideas/${item.id}` });
-},
+
+    openIdea(idea) {
+      this.$router.push({ path: `/ideas/${idea.id}` });
+    },
+
     openModal() {
       this.isModalOpen = true;
     },
+
     closeModal() {
       this.isModalOpen = false;
     },
-    toggleLike(item) {
-  this.$set(this.likedItems, item.id, !this.likedItems[item.id]);
-  this.$set(item, "isAnimating", true);
-},
+
+    toggleLike(event, idea) {
+    console.log("toggleLike called with:", event, idea);
+    this.$store.dispatch('toggleLike', { event, idea });
   },
-  mounted() {
+    getUserId() {
+      let userData = JSON.parse(localStorage.getItem("userData")) || {}; 
+      return userData.id;
+    }
+  },
+  mounted() {  
     this.fetchIdeas(); // Загружаем идеи при монтировании
     this.initParallax();
   },
