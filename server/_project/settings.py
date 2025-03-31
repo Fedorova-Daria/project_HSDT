@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',  # Подключаем JWT
     'corsheaders',
     'rest_framework_simplejwt.token_blacklist',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -64,6 +65,7 @@ MIDDLEWARE = [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',  # Подключаем JWT-авторизацию
     ),
 }

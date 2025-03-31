@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
-import Login from "../components/users/Login.vue"; // Импортируйте компонент Login
-import Register from "../components/users/Register.vue"; // Импортируйте компонент Register
-import RegisterZ from "../components/users/RegZ.vue";
+import Login from "../components/users/Login.vue";
+import Register from "../components/users/Register.vue";
+import RegZ from "../components/users/RegZ.vue";
 import Rialto from "../components/projects/Rialto.vue";
 import Profile from "../components/users/Profile.vue";
 import Teams from "../components/teams/Teams.vue";
@@ -9,33 +9,62 @@ import ChangeProfile from "../components/users/ChangeProfile.vue";
 import TeamDetails from "@/components/teams/TeamDetails.vue";
 import Ideas from "@/components/projects/Ideas.vue";
 import IdeaDetail from "@/components/projects/IdeaDetail.vue";
-import RegZ from "../components/users/RegZ.vue";
+import AboutTYIU from "../components/university/AboutTYIU.vue"; // Страница About только для TYIU
 
 const routes = [
-  { path: "/", redirect: "/login" }, // Перенаправление с корневого маршрута на страницу входа
-  { path: "/login", component: Login }, // Маршрут для страницы входа
-  { path: "/register", component: Register }, // Маршрут для страницы регистрации
-  { path: "/registerZ", component: RegZ },
-  { path: "/rialto", name: "rialto", component: Rialto },
-  { path: "/profile", component: Profile },
-  { path: "/ChangeProfile", component: ChangeProfile },
-  { path: "/teams", component: Teams },
-  { path: "/ideas", component: Ideas },
   {
-    path: "/team/:name",
-    name: "TeamDetails",
+    path: "/",
+    redirect: () => {
+      const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+      return userData.institute ? `/${userData.institute}/rialto` : "/login";
+    },
+  },
+  { path: "/login", component: Login },
+  { path: "/register", component: Register },
+  { path: "/registerZ", component: RegZ },
+  { path: "/:institute/profile", name: "profile", component: Profile },
+  { path: "/change-profile", component: ChangeProfile },
+
+  // Динамические маршруты для всех институтов
+  {
+    path: "/:institute/rialto",
+    name: "rialto",
+    component: Rialto,
+  },
+  {
+    path: "/:institute/teams",
+    name: "teams",
+    component: Teams,
+  },
+  {
+    path: "/:institute/team/:name",
+    name: "teamDetails",
     component: TeamDetails,
   },
   {
-    path: "/ideas/:id", // Параметр id в URL
-    name: "IdeaDetail",
+    path: "/:institute/ideas/",
+    name: "Ideas",
+    component: Ideas,
+  },
+  {
+    path: "/:institute/ideas/:id",
+    name: "ideaDetail",
     component: IdeaDetail,
+    props: route => ({ ideaId: route.params.id, institute: route.params.institute })  // Передаем параметры как пропсы
+  },
+  {
+    path: "/TYIU/about",
+    name: "aboutTYIU",
+    component: AboutTYIU,
   },
 ];
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
+  scrollBehavior(to, from, savedPosition) {
+    return savedPosition || { top: 0 };
+  },
 });
 
 export default router;

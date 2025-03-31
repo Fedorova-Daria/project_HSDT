@@ -1,60 +1,40 @@
 from django.db import models
-from django.contrib.auth import get_user_model
-from core.models import Technology
 from users.models import Account
-
-
-class Idea(models.Model):
-    votes_to_approve = 1
-
-    name = models.CharField(max_length=255, unique=True)
-    description = models.TextField()
-    short_description = models.TextField(blank=True)
-    initiator = models.ForeignKey(Account, related_name="ideas_initiated", on_delete=models.CASCADE, null=True)
-    experts_voted = models.ManyToManyField(Account, related_name="voted_for", blank=True)
-    technologies = models.ManyToManyField(Technology, related_name="ideas", blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    likes = models.ManyToManyField(Account, related_name='liked_ideas', blank=True)
-
-    @property
-    def approved(self):
-        return self.experts_voted.count() >= self.votes_to_approve
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = "Идея"
-        verbose_name_plural = "Идеи"
-
-
-class Team(models.Model):
-    name = models.CharField(max_length=255, unique=True)
-    description = models.TextField()
-
-    owner = models.ForeignKey(Account, related_name="teams_owned", on_delete=models.CASCADE, null=True)
-    members = models.ManyToManyField(Account, related_name="teams")
-
-    is_private = models.BooleanField(default=True)
-    max_members = models.PositiveSmallIntegerField(default=5)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.name
-
+from core.models import Technology
 
 class Project(models.Model):
-    name = models.CharField(max_length=255, unique=True)
-    description = models.TextField()
+    votes_to_approve = 3
 
-    customer = models.CharField(max_length=255, unique=True)
-    initiator = models.ForeignKey(Account, related_name="projects_initiated", on_delete=models.CASCADE, null=True)
-    team = models.ForeignKey(Team, related_name="projects_initiated", on_delete=models.CASCADE, null=True)
+    STATUS_CHOICES = [
+        ("draft", "Черновик"),  # Создан, но ещё не опубликован
+        ("open", "Открыт"),  # Заказчика нет, можно предлагать себя
+        ("cancelled", "Отменён"),  # Отменён по разным причинам
+    ]
 
-    technologies = models.ManyToManyField(Technology, related_name="projects")
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    max_members = models.IntegerField(default=5)
+
+    initiator = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="initiated_projects")
+    customer = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, blank=True, related_name="client_projects")
+    owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="owned_projects")
+
+    likes = models.ManyToManyField(Account, related_name="liked_projects", blank=True)  # Лайки проекта
+    favorites = models.ManyToManyField(Account, related_name="favorite_projects", blank=True)  # Добавившие в избранное
+    applicants = models.ManyToManyField(Account, related_name="applied_projects", blank=True)  # Откликнувшиеся на проект
+    workers = models.ManyToManyField(Account, related_name="working_projects", blank=True)  # Выбранные заказчиком
+    experts_voted = models.ManyToManyField(Account, related_name="voted_projects", blank=True)
+    technologies = models.ManyToManyField(Technology, related_name="projects", blank=True)  # Технологии проекта
+
+    # Статусы
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
+    approved = models.BooleanField(default=False)
+    is_hiring = models.BooleanField(default=True)  # Можно ли ещё записаться
 
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.get_status_display()})"
+
+
