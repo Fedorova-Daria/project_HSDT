@@ -268,7 +268,7 @@ button span {
 
 /* Затемнение фона (увеличено до opacity-50) */
 .bg-black {
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 /* Анимация лайка */
