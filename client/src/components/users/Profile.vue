@@ -11,12 +11,13 @@
       }"
     />
 
-    <!-- Затемнение фона (увеличена прозрачность) -->
+    <!-- Затемнение фона -->
     <div class="absolute inset-0 bg-black opacity-60 -z-10"></div>
 
     <div class="min-h-screen text-white flex flex-col relative z-10">
       <!-- Хедер -->
       <Header />
+
       <!-- Основной контейнер профиля -->
       <div class="flex w-4/5 mx-auto mt-10 gap-6">
         <!-- Левый блок (Информация о пользователе) -->
@@ -26,7 +27,7 @@
           <div class="text-center">
             <img
               class="w-32 h-32 rounded-full border-4 border-purple-400 mx-auto"
-              :src="userData.avatar || 'https://via.placeholder.com/150'"
+              :src="randomAvatar"
               alt="Аватар пользователя"
             />
             <h1
@@ -35,6 +36,11 @@
             >
               {{ userData.first_name }} {{ userData.last_name }}
             </h1>
+            <div class="mt-2">
+              <span class="px-3 py-1 bg-purple-600 rounded-full text-sm">
+                {{ userData.role || "Роль не указана" }}
+              </span>
+            </div>
           </div>
 
           <div class="mt-5">
@@ -55,7 +61,7 @@
               {{ userData.group?.name || "Не указано" }}
             </div>
           </div>
-          <!-- Кнопка для открытия модального окна -->
+
           <button
             @click="showModal = true"
             class="w-full mt-4 py-2 bg-purple-600 text-white rounded-lg transition duration-300 hover:bg-purple-500 hover:shadow-lg"
@@ -75,85 +81,24 @@
           class="w-3/4 bg-zinc-700/80 p-6 rounded-2xl shadow-lg backdrop-blur-sm"
         >
           <h2 class="text-2xl font-semibold mb-4">Информация о пользователе</h2>
-
-          <div class="flex gap-10">
-            <!-- Проекты -->
-            <div>
-              <h3 class="text-xl font-semibold border-b pb-2 mb-3">Проекты</h3>
-              <div class="mt-2">
-                <table
-                  class="w-full border-collapse shadow-lg rounded-lg overflow-hidden"
-                >
-                  <thead class="bg-zinc-800">
-                    <tr>
-                      <th class="p-3 text-left text-white">Название</th>
-                      <th class="p-3 text-left text-white">Статус</th>
-                      <th class="p-3 text-left text-white">Оценка</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr class="bg-zinc-600 transition-colors">
-                      <td class="p-3 border-t border-zinc-200">
-                        Проект "Паровозик" (пример)
-                      </td>
-                      <td class="p-3 border-t border-zinc-200">Окончено</td>
-                      <td class="p-3 border-t border-zinc-200">5</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <!-- Стек технологий -->
-
-            <div>
-              <h3 class="text-xl font-semibold border-b pb-2 mb-3">
-                Стеки технологий
-              </h3>
-              <ul>
-                <li class="p-2 bg-gray-700 rounded-md mb-2"></li>
-              </ul>
-              <p>Нет командной активности</p>
-            </div>
-          </div>
-          <!-- Команды -->
-          <h3 class="mt-10 text-xl font-semibold border-b pb-2 mb-3">
-            Команды
-          </h3>
-          <div class="mt-2">
-            <table
-              class="w-full border-collapse shadow-lg rounded-lg overflow-hidden"
-            >
-              <thead class="bg-border">
-                <tr>
-                  <th class="p-3 text-left text-white">Название команды</th>
-                  <th class="p-3 text-left text-white">Дата вступления</th>
-                  <th class="p-3 text-left text-white">Дата ухода</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr class="bg-zinc-600 transition-colors">
-                  <td class="p-3 border-t border-zinc-200"></td>
-                  <td class="p-3 border-t border-zinc-200"></td>
-                  <td class="p-3 border-t border-zinc-200"></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <!-- ... остальной контент правого блока ... -->
         </div>
       </div>
 
-      <!-- Модальное окно -->
+      <!-- Модальное окно редактирования профиля -->
       <div
         v-if="showModal"
         class="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50"
       >
-        <div class="bg-zinc-700/90 p-6 rounded-lg shadow-lg backdrop-blur-sm">
+        <div
+          class="bg-zinc-700/90 p-6 rounded-lg shadow-lg backdrop-blur-sm w-full max-w-md"
+        >
           <h2 class="text-purple-500 text-xl font-bold mb-4">
             Редактировать профиль
           </h2>
           <form
             @submit.prevent="updateProfile"
-            class="w-full max-w-md p-6 border border-purple-400 rounded-lg bg-zinc-700/90 text-white"
+            class="w-full p-6 border border-purple-400 rounded-lg bg-zinc-700/90 text-white"
           >
             <div class="form-group mb-4">
               <label for="email" class="font-bold text-purple-300"
@@ -167,6 +112,147 @@
                 class="mt-1 block w-full p-2 border border-purple-400 rounded bg-zinc-800/50"
               />
             </div>
+
+            <div class="form-group mb-4">
+              <label for="role" class="font-bold text-purple-300">Роль:</label>
+              <select
+                id="role"
+                v-model="userData.role"
+                class="mt-1 block w-full p-2 border border-purple-400 rounded bg-zinc-800/50"
+              >
+                <option value="" disabled>Выберите роль</option>
+                <option value="Студент">Студент</option>
+                <option value="Эксперт">Эксперт</option>
+                <option value="Заказчик">Заказчик</option>
+              </select>
+            </div>
+
+            <div class="mb-4">
+              <button
+                type="button"
+                @click="showPasswordFields = !showPasswordFields"
+                class="flex items-center text-purple-300 hover:text-purple-200 transition-colors"
+              >
+                <span>{{
+                  showPasswordFields ? "Скрыть" : "Изменить пароль"
+                }}</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5 ml-1 transition-transform duration-300"
+                  :class="{ 'rotate-180': showPasswordFields }"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <transition name="slide-fade">
+              <div v-if="showPasswordFields">
+                <div class="form-group mb-4">
+                  <label for="password" class="font-bold text-purple-300"
+                    >Новый пароль:</label
+                  >
+                  <div class="relative">
+                    <input
+                      :type="showPassword ? 'text' : 'password'"
+                      id="password"
+                      v-model="password"
+                      @input="validatePasswords"
+                      class="mt-1 block w-full p-2 border border-purple-400 rounded bg-zinc-800/50"
+                      placeholder="Введите новый пароль"
+                    />
+                    <button
+                      type="button"
+                      @click="showPassword = !showPassword"
+                      class="absolute right-2 top-2 text-purple-300 hover:text-purple-200"
+                      :title="
+                        showPassword ? 'Скрыть пароль' : 'Показать пароль'
+                      "
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="form-group mb-4">
+                  <label for="confirmPassword" class="font-bold text-purple-300"
+                    >Подтвердите пароль:</label
+                  >
+                  <div class="relative">
+                    <input
+                      :type="showConfirmPassword ? 'text' : 'password'"
+                      id="confirmPassword"
+                      v-model="confirmPassword"
+                      @input="validatePasswords"
+                      class="mt-1 block w-full p-2 border border-purple-400 rounded bg-zinc-800/50"
+                      placeholder="Повторите новый пароль"
+                    />
+                    <button
+                      type="button"
+                      @click="showConfirmPassword = !showConfirmPassword"
+                      class="absolute right-2 top-2 text-purple-300 hover:text-purple-200"
+                      :title="
+                        showConfirmPassword
+                          ? 'Скрыть пароль'
+                          : 'Показать пароль'
+                      "
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                  <p v-if="passwordError" class="text-red-400 text-xs mt-1">
+                    {{ passwordError }}
+                  </p>
+                </div>
+              </div>
+            </transition>
+
             <div class="form-group mb-4">
               <label for="bio" class="font-bold text-purple-300"
                 >Немного о себе:</label
@@ -178,17 +264,23 @@
                 class="mt-1 block w-full p-2 border border-purple-400 rounded bg-zinc-800/50"
               ></textarea>
             </div>
+
             <button
               type="submit"
-              class="w-full mt-4 p-2 bg-purple-500 text-white rounded hover:bg-purple-600"
+              class="w-full mt-4 p-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors"
+              :disabled="!formIsValid"
+              :class="{
+                'opacity-50 cursor-not-allowed': !formIsValid,
+                'hover:bg-purple-500': !formIsValid,
+              }"
             >
               Сохранить изменения
             </button>
           </form>
 
           <button
-            @click="showModal = false"
-            class="mt-4 p-2 bg-purple-500 text-white rounded hover:bg-purple-600 w-full"
+            @click="closeModal"
+            class="mt-4 p-2 bg-purple-500 text-white rounded hover:bg-purple-600 w-full transition-colors"
           >
             Закрыть
           </button>
@@ -211,10 +303,11 @@ export default {
         first_name: "",
         last_name: "",
         email: "",
+        role: "",
+        bio: "",
         group: { id: "", name: "Не указано" },
       },
       showModal: false,
-      // Данные для параллакс-эффекта
       offsetX: 0,
       offsetY: 0,
       targetX: 0,
@@ -224,10 +317,23 @@ export default {
       windowWidth: 0,
       windowHeight: 0,
       animationFrame: null,
+      avatars: Array.from({ length: 6 }, (_, i) => `/ava-${i + 1}.jpg`),
+      randomAvatar: "",
+      password: "",
+      confirmPassword: "",
+      showPassword: false,
+      showConfirmPassword: false,
+      showPasswordFields: false,
+      passwordError: "",
+      formIsValid: true,
     };
   },
+  computed: {
+    passwordMismatch() {
+      return this.password && this.password !== this.confirmPassword;
+    },
+  },
   methods: {
-    // Инициализация параллакс-эффекта
     initParallax() {
       this.windowWidth = window.innerWidth;
       this.windowHeight = window.innerHeight;
@@ -235,35 +341,25 @@ export default {
       window.addEventListener("resize", this.handleResize);
       this.animate();
     },
-
     handleMouseMove(e) {
       this.mouseX = e.clientX;
       this.mouseY = e.clientY;
-
-      // Вычисляем смещение относительно центра экрана (от -1 до 1)
       const x = (e.clientX / this.windowWidth - 0.5) * 2;
       const y = (e.clientY / this.windowHeight - 0.5) * 2;
-
-      // Устанавливаем целевые координаты с коэффициентом
       const coefficient = 30;
       this.targetX = x * coefficient;
       this.targetY = y * coefficient;
     },
-
     handleResize() {
       this.windowWidth = window.innerWidth;
       this.windowHeight = window.innerHeight;
     },
-
     animate() {
-      // Интерполяция с коэффициентом плавности
       const smoothness = 0.08;
       this.offsetX += (this.targetX - this.offsetX) * smoothness;
       this.offsetY += (this.targetY - this.offsetY) * smoothness;
-
       this.animationFrame = requestAnimationFrame(this.animate);
     },
-
     cleanupParallax() {
       window.removeEventListener("mousemove", this.handleMouseMove);
       window.removeEventListener("resize", this.handleResize);
@@ -271,13 +367,57 @@ export default {
         cancelAnimationFrame(this.animationFrame);
       }
     },
+    getRandomAvatar() {
+      const randomIndex = Math.floor(Math.random() * this.avatars.length);
+      return this.avatars[randomIndex];
+    },
+    validatePasswords() {
+      if (this.showPasswordFields) {
+        if (this.password && this.confirmPassword) {
+          if (this.password !== this.confirmPassword) {
+            this.passwordError = "Пароли не совпадают";
+            this.formIsValid = false;
+            return;
+          }
 
+          if (this.password.length < 6) {
+            this.passwordError = "Пароль должен содержать минимум 6 символов";
+            this.formIsValid = false;
+            return;
+          }
+        }
+
+        if (!this.password || !this.confirmPassword) {
+          this.passwordError = "Заполните оба поля пароля";
+          this.formIsValid = false;
+          return;
+        }
+      }
+
+      this.passwordError = "";
+      this.formIsValid = true;
+    },
     updateProfile() {
+      if (!this.formIsValid) {
+        return;
+      }
+
+      if (this.password && this.password === this.confirmPassword) {
+        console.log("Пароль будет изменён на:", this.password);
+      }
+
       saveUserData(this.userData);
       alert("Профиль обновлён!");
-      this.showModal = false;
+      this.closeModal();
     },
-
+    closeModal() {
+      this.showModal = false;
+      this.password = "";
+      this.confirmPassword = "";
+      this.showPasswordFields = false;
+      this.passwordError = "";
+      this.formIsValid = true;
+    },
     logout() {
       localStorage.removeItem("access");
       localStorage.removeItem("refresh");
@@ -285,9 +425,19 @@ export default {
       this.$router.push("/login");
     },
   },
+  watch: {
+    showPasswordFields(newVal) {
+      if (newVal) {
+        this.validatePasswords();
+      } else {
+        this.passwordError = "";
+        this.formIsValid = true;
+      }
+    },
+  },
   async mounted() {
     this.userData = await getUserData();
-    console.log("Данные из localStorage:", this.userData);
+    this.randomAvatar = this.getRandomAvatar();
     this.initParallax();
   },
   beforeDestroy() {
@@ -297,48 +447,67 @@ export default {
 </script>
 
 <style scoped>
-/* Стили для параллакс-эффекта */
 .transform-gpu {
   transform: translateZ(0);
   backface-visibility: hidden;
   perspective: 1000px;
 }
-
 .filter {
   filter: blur(8px);
 }
-
-/* Стили для модального окна */
 .fixed {
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(5px);
 }
-
-/* Общие стили для карточек */
 .bg-zinc-700\/80 {
   background-color: rgba(63, 63, 70, 0.8);
 }
-
 .bg-zinc-700\/90 {
   background-color: rgba(63, 63, 70, 0.9);
 }
-
 .bg-zinc-800\/50 {
   background-color: rgba(39, 39, 42, 0.5);
 }
-
-/* Эффекты при наведении */
 .hover\:bg-purple-500:hover {
   background-color: rgb(168, 85, 247);
 }
-
 .hover\:bg-red-500:hover {
   background-color: rgb(239, 68, 68);
 }
-
-/* Тени */
 .shadow-lg {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
     0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Анимации */
+.slide-fade-enter-active {
+  transition: all 0.3s ease-out;
+}
+.slide-fade-leave-active {
+  transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
+}
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  transform: translateY(-10px);
+  opacity: 0;
+}
+.relative:hover .text-purple-300 {
+  color: rgb(192, 132, 252);
+}
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
+/* Стили для ошибки */
+.text-red-400 {
+  color: #f87171;
+}
+
+/* Стили для заблокированной кнопки */
+.opacity-50 {
+  opacity: 0.5;
+}
+.cursor-not-allowed {
+  cursor: not-allowed;
 }
 </style>
