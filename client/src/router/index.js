@@ -54,7 +54,7 @@ const routes = [
   },
   {
     path: "/TYIU/about",
-    name: "aboutTYIU",
+    name: "AboutTYIU",
     component: AboutTYIU,
   },
 ];

@@ -3,14 +3,14 @@
     <header class="flex items-center justify-between px-8 py-4 border border-border">
       <!-- Логотип слева -->
       <div class="flex items-center">
-        <h1 :style="{ color: instituteStyle?.textColor }" class="font-display text-3xl">
-          <select @change="changeInstitute" v-model="selectedInstitute">
-            <option v-for="inst in institutes" :key="inst" :value="inst">
-              {{ inst }}
-            </option>
-          </select>
-        </h1>
-      </div>
+  <h1 :style="{ color: instituteStyle?.textColor }" class="font-display text-3xl">
+    <select @change="changeInstitute" v-model="selectedInstitute">
+      <option v-for="inst in institutes" :key="inst" :value="inst">
+        {{ inst }}
+      </option>
+    </select>
+  </h1>
+</div>
 
       <!-- Навигация -->
       <nav class="flex items-center gap-10">
@@ -18,7 +18,7 @@
         <router-link
   v-for="item in menuItems"
   :key="item.name"
-  :to="`/${instituteMap[selectedInstitute]}${item.link}`"
+  :to="`/${instituteMap[selectedInstitute] || selectedInstitute}${item.link}`"
   class="relative text-lg font-medium transition-colors duration-300 group text-white"
   :style="{ '--hover-color': instituteStyle?.textColor }"
 >
@@ -26,7 +26,7 @@
   <span
     class="absolute left-1/2 bottom-[-5px] h-[3px] rounded-full transition-all duration-300 w-0 group-hover:w-full group-hover:left-0"
     :style="{ backgroundColor: instituteStyle?.textColor }"
-    :class="{ 'w-2/3 left-1/6': $route.path === `/${instituteMap[selectedInstitute]}${item.link}` }"
+    :class="{ 'w-2/3 left-1/6': $route.path === `/${instituteMap[selectedInstitute] || selectedInstitute}${item.link}` }"
   ></span>
 </router-link>
 
@@ -104,20 +104,25 @@ export default {
   },
   computed: {
     menuItems() {
-      const latinInstitute = this.instituteMap[this.selectedInstitute] || this.selectedInstitute; 
-      if (latinInstitute === "TYIU") {
-        return [
-          { name: "О нас", link: "/about" },
-          { name: "Идеи", link: "/ideas" },
-        ];
-      } else {
-        return [
-          { name: "Биржа", link: "/rialto" },
-          { name: "Команды", link: "/teams" },
-          { name: "Идеи", link: "/ideas" },
-        ];
-      }
-    },
+  const latinInstitute = this.instituteMap[this.selectedInstitute] || this.selectedInstitute; 
+  if (!latinInstitute) {
+    console.error(`Ошибка: Латинское название для "${this.selectedInstitute}" не найдено.`);
+    return [];
+  }
+
+  if (latinInstitute === "TYIU") {
+    return [
+      { name: "О нас", link: "/about" },
+      { name: "Идеи", link: "/ideas" },
+    ];
+  } else {
+    return [
+      { name: "Биржа", link: "/rialto" },
+      { name: "Команды", link: "/teams" },
+      { name: "Идеи", link: "/ideas" },
+    ];
+  }
+},
     unreadNotificationsCount() {
       return this.notifications.filter((n) => !n.read).length;
     },
@@ -143,30 +148,59 @@ export default {
   },
   },
   methods: {
-    changeInstitute(event) {
-    const newInstituteRus = event.target.value;
-    const newInstituteLat = this.instituteMap[newInstituteRus]; // Используем латинское название
-    localStorage.setItem("institute", newInstituteLat); // Сохраняем латинское название
-    this.selectedInstitute = newInstituteLat; // Устанавливаем выбранный институт
-    this.$router.push(`/${newInstituteLat}/rialto`); // Переход с латинским названием
-  },
-  updateInstituteFromRoute() {
-    const institute = this.reverseInstituteMap[this.$route.params.institute];
-    if (institute) {
-      this.selectedInstitute = institute;
-    }
-  },
+    checkInstitute() {
+  const userData = JSON.parse(localStorage.getItem("userData")) || {};
+  const institute = userData.institute || "TYIU"; // Получаем институт, если он указан, иначе используем TYIU
+
+  if (institute === "TYIU") {
+    this.$router.push("/TYIU/about"); // Перенаправление на страницу TYIU/about
+  }
+},
+changeInstitute(event) {
+  const newInstituteRus = event.target.value; // Получаем русское название
+  const newInstituteLat = this.instituteMap[newInstituteRus]; // Преобразуем в латинское название
+
+  if (!newInstituteLat) {
+    console.error("Ошибка: Латинское название института не найдено.");
+    return; // Останавливаем выполнение, если институт не найден
+  }
+
+  let userData = JSON.parse(localStorage.getItem("userData")) || {};
+  userData.institute = newInstituteLat; // Обновляем институт в данных пользователя
+  localStorage.setItem("userData", JSON.stringify(userData)); // Сохраняем обновлённые данные
+
+  this.selectedInstitute = newInstituteLat; // Устанавливаем выбранный институт
+
+  // Перенаправляем пользователя в зависимости от выбранного института
+  if (newInstituteLat === "TYIU") {
+    this.$router.push("/TYIU/about");
+  } else {
+    this.$router.push(`/${newInstituteLat}/rialto`);
+  }
+},
+updateInstituteFromRoute() {
+  const institute = this.reverseInstituteMap[this.$route.params.institute];
+  if (institute) {
+    this.selectedInstitute = institute;
+  } else {
+    this.selectedInstitute = "ТИУ"; // Дефолтный логотип
+  }
+},
   goToProfile() {
     const latinInstitute = this.instituteMap[this.selectedInstitute] || this.selectedInstitute;
     this.$router.push(`/${latinInstitute}/profile`);
-}
+  }
   },
   watch: {
   "$route.fullPath": "updateInstituteFromRoute", // Теперь следим за полным путём
 },
 created() {
-    this.updateInstituteFromRoute();
-  },
+  const userData = JSON.parse(localStorage.getItem("userData")) || {};
+  const institute = userData.institute || "TYIU";
+
+  this.selectedInstitute = this.reverseInstituteMap[institute] || institute;
+  this.updateInstituteFromRoute(); // Синхронизация с маршрутом
+},
 };
 </script>
 

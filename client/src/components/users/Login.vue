@@ -27,7 +27,7 @@
                 @input="clearError('email')"
                 class="m-auto w-90 bg-white text-grey px-2 py-2 rounded-lg border-3 border-solid duration-500 ease-linear transition-colors outline-none"
                 :class="{
-                  'border-fiol hover:border-purple-500 focus:border-purple-600':
+                  'border-fiolText hover:border-purple-500 focus:border-purple-600':
                     !emailError,
                   'border-red-500': emailError,
                 }"
@@ -291,8 +291,15 @@ export default {
       }
     },
     redirectToHome() {
-      this.$router.push("/rialto");
-    },
+      const institute = localStorage.getItem("institute") || "TYIU"; // Берем институт из localStorage
+      if (institute === "TYIU") {
+    // Если TYIU, отправляем на страницу "О нас"
+    this.$router.push(`/TYIU/about`);
+  } else {
+    // Иначе отправляем на rialto соответствующего института
+    this.$router.push(`/${institute}/rialto`);
+  }
+},
     goToRegister() {
       this.$router.push("/register");
     },
