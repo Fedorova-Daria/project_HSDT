@@ -105,12 +105,7 @@
 
 <script>
 import axios from "axios";
-import {
-  saveUserData,
-  saveTokens,
-  clearStorage,
-} from "@/utils/localStorage.js";
-
+import { getUserData, getAccessToken, clearStorage, saveTokens, saveUserData, updateInstitute } from "@/utils/storage.js";
 const API_BASE_URL = "http://127.0.0.1:8000/api";
 const LOGIN_URL = `${API_BASE_URL}/users/login/`;
 const USER_DATA_URL = `${API_BASE_URL}/users/me/`;
@@ -137,7 +132,6 @@ export default {
   },
 
   methods: {
-    // Параллакс-эффект
     initParallax() {
       this.windowWidth = window.innerWidth;
       this.windowHeight = window.innerHeight;
@@ -148,12 +142,8 @@ export default {
     handleMouseMove(e) {
       this.mouseX = e.clientX;
       this.mouseY = e.clientY;
-
-      // Вычисляем смещение относительно центра экрана (от -1 до 1)
       const x = (e.clientX / this.windowWidth - 0.5) * 2;
       const y = (e.clientY / this.windowHeight - 0.5) * 2;
-
-      // Устанавливаем целевые координаты с коэффициентом
       const coefficient = 30;
       this.targetX = x * coefficient;
       this.targetY = y * coefficient;
@@ -163,11 +153,9 @@ export default {
       this.windowHeight = window.innerHeight;
     },
     animate() {
-      // Интерполяция с коэффициентом плавности
       const smoothness = 0.08;
       this.offsetX += (this.targetX - this.offsetX) * smoothness;
       this.offsetY += (this.targetY - this.offsetY) * smoothness;
-
       this.animationFrame = requestAnimationFrame(this.animate);
     },
     cleanupParallax() {
@@ -178,31 +166,23 @@ export default {
       }
     },
 
-    // Остальные методы
     clearErrors() {
       this.emailError = "";
       this.passwordError = "";
     },
+
     checkToken() {
-  const token = localStorage.getItem("access");
-  const selectedInstitute = localStorage.getItem("institute");
+      const accessToken = getAccessToken();
+      const selectedInstitute = updateInstitute() || "TYIU";
 
-  // Если токен существует
-  if (token) {
-    this.isLoggedIn = true;
-
-    // Если выбран институт TYIU, перенаправляем на TYIU/about
-    if (selectedInstitute === "TYIU") {
-      this.$router.push({ path: "/TYIU/about" });
-    } else {
-      // Иначе перенаправляем на страницу выбранного института /rialto
-      this.$router.push({ path: `/${selectedInstitute}/rialto` });
-    }
-  }
+      if (accessToken) {
+        this.isLoggedIn = true;
+        this.$router.push(`/${selectedInstitute}/rialto`);
+      }
     },
+
     validateForm() {
       let isValid = true;
-
       if (!this.email) {
         this.emailError = "Поле почты обязательно для заполнения";
         isValid = false;
@@ -210,21 +190,20 @@ export default {
         this.emailError = "Некорректный формат почты";
         isValid = false;
       }
-
       if (!this.password) {
         this.passwordError = "Поле пароля обязательно для заполнения";
         isValid = false;
       }
-
       return isValid;
     },
+
     validateEmail(email) {
       const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return re.test(email);
     },
+
     async login() {
       this.clearErrors();
-
       if (!this.validateForm()) return;
 
       try {
@@ -236,15 +215,13 @@ export default {
         this.handleError(error);
       }
     },
+
     async authenticateUser(email, password) {
       try {
         const response = await axios.post(LOGIN_URL, { email, password });
-        console.log("Ответ сервера:", response.data);
-
         if (!response.data.access_token || !response.data.refresh_token) {
           throw new Error("Токены не получены");
         }
-
         saveTokens(response.data.access_token, response.data.refresh_token);
         return response.data;
       } catch (error) {
@@ -252,16 +229,17 @@ export default {
         throw error;
       }
     },
+
     async fetchAndSaveUserData(accessToken) {
       try {
         const userData = await this.fetchUserData(accessToken);
-        console.log("Данные пользователя:", userData);
         saveUserData(userData);
       } catch (error) {
         console.error("Ошибка при получении данных пользователя:", error);
         throw error;
       }
     },
+
     async fetchUserData(accessToken) {
       const response = await axios.get(USER_DATA_URL, {
         headers: {
@@ -271,6 +249,7 @@ export default {
       });
       return response.data;
     },
+
     handleError(error) {
       if (error.response) {
         switch (error.response.data?.message) {
@@ -281,8 +260,7 @@ export default {
             this.emailError = "Данная почта не зарегистрирована";
             break;
           default:
-            this.passwordError =
-              error.response.data.message || "Произошла ошибка при входе";
+            this.passwordError = error.response.data.message || "Ошибка при входе";
         }
       } else if (error.request) {
         this.passwordError = "Ошибка соединения с сервером";
@@ -290,35 +268,32 @@ export default {
         this.passwordError = "Произошла непредвиденная ошибка";
       }
     },
+
     redirectToHome() {
-      const institute = localStorage.getItem("institute") || "TYIU"; // Берем институт из localStorage
-      if (institute === "TYIU") {
-    // Если TYIU, отправляем на страницу "О нас"
-    this.$router.push(`/TYIU/about`);
-  } else {
-    // Иначе отправляем на rialto соответствующего института
-    this.$router.push(`/${institute}/rialto`);
-  }
-},
+      const institute = getInstitute() || "TYIU";
+      this.$router.push(`/${institute}/rialto`);
+    },
+
     goToRegister() {
       this.$router.push("/register");
     },
+
     goToRegisterZ() {
       this.$router.push("/registerZ");
     },
-    clearError(field) {
-      this[`${field}Error`] = "";
-    },
   },
+
   mounted() {
     this.checkToken();
     this.initParallax();
   },
+
   beforeDestroy() {
     this.cleanupParallax();
   },
 };
 </script>
+
 
 <style scoped>
 /* Стили для параллакс-эффекта */

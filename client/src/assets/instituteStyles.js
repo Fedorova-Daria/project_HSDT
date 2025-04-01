@@ -15,7 +15,7 @@ export const instituteStyles = {
       textColor: "#3EC4F9", 
     },
     HSDT: {
-        buttonColor: "#8200DB",
+        buttonOnColor: "#8200db",
         buttonOffColor: "#9810FA",  
         textColor: "#C07CF9", 
       },

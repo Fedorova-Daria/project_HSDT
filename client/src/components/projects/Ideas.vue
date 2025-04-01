@@ -87,13 +87,15 @@ import Header from "@/components/header.vue";
 import IdeaModal from "@/components/projects/IdeaModal.vue"; // Импортируем модальное окно
 import { fetchOwnerName, toggleLike } from "@/utils/ideaHelpers.js";
 import api from "@/utils/axiosInstance.js";
+import { instituteStyles } from "@/assets/instituteStyles.js";
+import Cookies from "js-cookie";
 
 export default {
+  inject: ["globalState"], // Подключаем глобальное состояние
   components: { IdeaModal, Header, IdeasTable },
   data() {
     return {
-      userData: JSON.parse(localStorage.getItem("userData")) || {}, // Загружаем пользователя
-      selectedInstitute: localStorage.getItem("institute") || "TYIU",
+      userData: {}, // Изначально пустой объект
       isAnimating: false,
       items: [], // Список идей
       filteredItems: [], // Отфильтрованные идеи
@@ -121,67 +123,74 @@ export default {
   computed: {
     liked() {
       return (idea) => {
-        const userData = JSON.parse(localStorage.getItem("userData")) || {};
+        const userData = this.userData; // Используем загруженные userData
         return idea.likes.includes(userData.id);
       };
+    },
+    selectedInstitute() {
+      return this.globalState.institute; // Глобальное состояние для чтения
+    },
+    instituteStyle() {
+      const style = instituteStyles[this.selectedInstitute]; // Используем глобальное состояние
+      return style || { buttonOffColor: "#ccc" }; // Дефолтный стиль
     },
   },
   methods: {
     // Устанавливаем активный фильтр
     setFilter(filter) {
-  this.activeFilter = filter;
-  this.filterItems(); // Заменили applyFilter на filterItems
-},
+      this.activeFilter = filter;
+      this.filterItems(); // Заменили applyFilter на filterItems
+    },
     // Применяем фильтрацию
     filterItems() {
-  // Используем activeFilter, а не filter, так как filter - это параметр метода setFilter
-  if (this.activeFilter === "all") {
-    this.filteredItems = this.items;
-  } else if (this.activeFilter === "my") {
-    this.filteredItems = this.items.filter(idea => idea.owner === this.userData.id);
-  } else if (this.activeFilter === "favorites") {
-    this.filteredItems = this.items.filter(idea => idea.likes.includes(this.userData.id));
-  } else if (this.activeFilter === "drafts") {
-    this.filteredItems = this.items.filter(idea => idea.status === 'draft');
-  }
-},
+      // Используем activeFilter, а не filter, так как filter - это параметр метода setFilter
+      if (this.activeFilter === "all") {
+        this.filteredItems = this.items;
+      } else if (this.activeFilter === "my") {
+        this.filteredItems = this.items.filter(idea => idea.owner === this.userData.id);
+      } else if (this.activeFilter === "favorites") {
+        this.filteredItems = this.items.filter(idea => idea.likes.includes(this.userData.id));
+      } else if (this.activeFilter === "drafts") {
+        this.filteredItems = this.items.filter(idea => idea.status === 'draft');
+      }
+    },
     async fetchIdeas() {
       try {
         const response = await api.get("/projects/");
         this.items = response.data;
         this.filterItems(); // Применяем фильтрацию сразу после загрузки идей
-          // Загружаем инициаторов для каждой идеи
-          for (const idea of this.items) {
-            if (idea.owner) {
-              await fetchOwnerName(idea, idea.owner);
-            }
+        // Загружаем инициаторов для каждой идеи
+        for (const idea of this.items) {
+          if (idea.owner) {
+            await fetchOwnerName(idea, idea.owner);
+          }
         }
       } catch (error) {
         console.error("Ошибка при загрузке идей:", error);
       }
     },
     async updateLike(idea, event) {
-  try {
-    // Передаем все необходимые параметры в утилиту
-    await toggleLike(
-      idea, // текущая идея
-      event, // событие клика
-      this.liked(idea), // текущее состояние лайка
-      (state) => (this.isAnimating = state), // установка анимации
-      () => JSON.parse(localStorage.getItem("userData"))?.id // получение userId
-    );
-  } catch (error) {
-    console.error("Ошибка при обновлении лайка:", error);
-  }
-},
-openIdea(idea) {
-    const institute = this.selectedInstitute; // Получаем выбранный институт из состояния
-    if (institute) {
-      this.$router.push({ path: `/${institute}/ideas/${idea.id}` });
-    } else {
-      console.error("Институт не выбран");
-    }
-  },
+      try {
+        // Передаем все необходимые параметры в утилиту
+        await toggleLike(
+          idea, // текущая идея
+          event, // событие клика
+          this.liked(idea), // текущее состояние лайка
+          (state) => (this.isAnimating = state), // установка анимации
+          () => this.userData.id // получение userId из загруженных данных
+        );
+      } catch (error) {
+        console.error("Ошибка при обновлении лайка:", error);
+      }
+    },
+    openIdea(idea) {
+      const institute = this.selectedInstitute; // Используем selectedInstitute из data()
+      if (institute) {
+        this.$router.push({ path: `/${institute}/ideas/${idea.id}` });
+      } else {
+        console.error("Институт не выбран");
+      }
+    },
     openModal() {
       this.isModalOpen = true;
     },
@@ -232,16 +241,22 @@ openIdea(idea) {
         cancelAnimationFrame(this.animationFrame);
       }
     },
-
   },
-  mounted() {  
+  mounted() {
     this.fetchIdeas(); // Загружаем идеи при монтировании
-     // Если данных о пользователе нет, обновляем их
-  const storedUser = JSON.parse(localStorage.getItem("userData"));
+
+  // Загружаем данные пользователя, если они есть в cookies
+  const storedUser = Cookies.get("userData");
   if (storedUser) {
-    this.userData = storedUser;
+    try {
+      this.userData = JSON.parse(storedUser); // Пробуем распарсить userData
+    } catch (error) {
+      console.error("Ошибка при парсинге userData:", error);
+      this.userData = {}; // Если ошибка, устанавливаем пустой объект
+    }
   } else {
-    console.warn("User data not found in localStorage.");
+    console.warn("User data not found in cookies.");
+    this.userData = {}; // Если данных нет, устанавливаем пустой объект
   }
   },
 
@@ -250,6 +265,7 @@ openIdea(idea) {
   },
 };
 </script>
+
 
 <style scoped>
 button span {

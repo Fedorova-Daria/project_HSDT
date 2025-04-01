@@ -64,7 +64,7 @@ const store = createStore({
           console.log("Попытка обновления токена...");
           const newToken = await fetchAccessToken();
           if (newToken) {
-            localStorage.setItem("access", newToken);
+            Cookies.set("access", newToken);
             await commit('toggleLike', { event, idea, retry: true });
           } else {
             console.error("Не удалось обновить токен, требуется повторный вход.");

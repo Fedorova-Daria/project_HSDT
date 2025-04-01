@@ -172,6 +172,7 @@
 
 <script>
 import axios from "axios";
+import Cookies from "js-cookie";
 
 export default {
   data() {
@@ -351,7 +352,7 @@ export default {
             role: this.role,
           };
 
-          localStorage.setItem("userData", JSON.stringify(userData));
+          Cookies.set("userData", JSON.stringify(userData));
           this.$router.push("/login");
         }
       } catch (error) {

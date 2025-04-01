@@ -1,5 +1,5 @@
 import axios from "axios";
-import { saveTokens, getAccessToken, getRefreshToken, clearStorage } from "./localStorage.js"; 
+import { saveTokens, getAccessToken, getRefreshToken, clearStorage } from "./storage.js";
 
 // Обновление токена
 export async function refreshToken() {

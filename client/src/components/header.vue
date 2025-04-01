@@ -74,13 +74,16 @@
 <script>
 import { instituteStyles } from '@/assets/instituteStyles.js'; // Импортируем карту стилей
 import Notifications from "@/components/notific.vue";
-console.log("Selected Institute from localStorage:", localStorage.getItem("institute"));
+import Cookies from "js-cookie";
+
 export default {
+  name: "Header",
+  inject: ["globalState"], 
   components: { Notifications },
   name: "Header",
   data() {
     return {
-      selectedInstitute: localStorage.getItem("institute") || "TYIU",
+      localSelectedInstitute: Cookies.get("institute") || "TYIU",
       showNotifications: false,
       notifications: [],
       userName: "Иван Иванов",
@@ -104,25 +107,19 @@ export default {
   },
   computed: {
     menuItems() {
-  const latinInstitute = this.instituteMap[this.selectedInstitute] || this.selectedInstitute; 
-  if (!latinInstitute) {
-    console.error(`Ошибка: Латинское название для "${this.selectedInstitute}" не найдено.`);
-    return [];
-  }
-
-  if (latinInstitute === "TYIU") {
-    return [
-      { name: "О нас", link: "/about" },
-      { name: "Идеи", link: "/ideas" },
-    ];
-  } else {
-    return [
-      { name: "Биржа", link: "/rialto" },
-      { name: "Команды", link: "/teams" },
-      { name: "Идеи", link: "/ideas" },
-    ];
-  }
-},
+    const latinInstitute = this.instituteMap[this.localSelectedInstitute] || this.localSelectedInstitute;
+    if (!latinInstitute) {
+      console.error(`Ошибка: Латинское название для "${this.localSelectedInstitute}" не найдено.`);
+      return [];
+    }
+    return latinInstitute === "TYIU"
+      ? [{ name: "О нас", link: "/about" }, { name: "Идеи", link: "/ideas" }]
+      : [{ name: "Биржа", link: "/rialto" }, { name: "Команды", link: "/teams" }, { name: "Идеи", link: "/ideas" }];
+  },
+  instituteStyle() {
+    const latinInstitute = this.instituteMap[this.localSelectedInstitute] || this.localSelectedInstitute;
+    return instituteStyles[latinInstitute] || instituteStyles["TYIU"];
+  },
     unreadNotificationsCount() {
       return this.notifications.filter((n) => !n.read).length;
     },
@@ -138,18 +135,10 @@ export default {
   const colorIndex = this.userName.length % colors.length;
   return { backgroundColor: colors[colorIndex] };
 },
-    instituteStyle() {
-    // Переводим русское название в латинское, если нужно
-    const latinInstitute = this.instituteMap[this.selectedInstitute] || this.selectedInstitute; 
-    console.log("Selected Institute:", latinInstitute); // Логируем латинскую версию
-    const style = instituteStyles[latinInstitute]; // Получаем стиль для латинского названия
-    console.log("Selected Institute Style:", style); // Логируем стиль
-    return style || instituteStyles["TYIU"]; // Если стиль не найден, возвращаем дефолтный для TYIU
-  },
   },
   methods: {
     checkInstitute() {
-  const userData = JSON.parse(localStorage.getItem("userData")) || {};
+      const userData = JSON.parse(Cookies.get("userData") || "{}");
   const institute = userData.institute || "TYIU"; // Получаем институт, если он указан, иначе используем TYIU
 
   if (institute === "TYIU") {
@@ -157,33 +146,41 @@ export default {
   }
 },
 changeInstitute(event) {
-  const newInstituteRus = event.target.value; // Получаем русское название
-  const newInstituteLat = this.instituteMap[newInstituteRus]; // Преобразуем в латинское название
+  const newInstituteRus = event.target.value;
+  const newInstituteLat = this.instituteMap[newInstituteRus];
 
   if (!newInstituteLat) {
-    console.error("Ошибка: Латинское название института не найдено.");
-    return; // Останавливаем выполнение, если институт не найден
+    console.error(`Ошибка: Латинское название для "${newInstituteRus}" не найдено.`);
+    return;
   }
 
-  let userData = JSON.parse(localStorage.getItem("userData")) || {};
-  userData.institute = newInstituteLat; // Обновляем институт в данных пользователя
-  localStorage.setItem("userData", JSON.stringify(userData)); // Сохраняем обновлённые данные
+  // Синхронизируем глобальное состояние
+  this.globalState.institute = newInstituteLat; // Обновляем глобальное состояние
 
-  this.selectedInstitute = newInstituteLat; // Устанавливаем выбранный институт
+  // Сохраняем локальное состояние
+  this.localSelectedInstitute = newInstituteLat; 
 
-  // Перенаправляем пользователя в зависимости от выбранного института
-  if (newInstituteLat === "TYIU") {
-    this.$router.push("/TYIU/about");
-  } else {
-    this.$router.push(`/${newInstituteLat}/rialto`);
-  }
+  // Сохраняем в localStorage
+  let userData = JSON.parse(Cookies.get("userData") || "{}");
+  userData.institute = newInstituteLat;
+  Cookies.set("userData", JSON.stringify(userData));
+
+  console.log("Глобальное состояние обновлено:", this.globalState.institute);
+
+  // Перенаправляем пользователя
+  const routePath = newInstituteLat === "TYIU" ? "/TYIU/about" : `/${newInstituteLat}/rialto`;
+  this.$router.push(routePath);
 },
 updateInstituteFromRoute() {
-  const institute = this.reverseInstituteMap[this.$route.params.institute];
+  const instituteFromRoute = this.$route.params.institute;
+  const institute = this.reverseInstituteMap[instituteFromRoute] || instituteFromRoute;
+
   if (institute) {
-    this.selectedInstitute = institute;
+    console.log("Обновление из маршрута:", institute);
+    this.localSelectedInstitute = this.instituteMap[institute] || institute; // Локальное состояние
+    this.globalState.institute = this.instituteMap[institute] || institute; // Глобальное состояние
   } else {
-    this.selectedInstitute = "ТИУ"; // Дефолтный логотип
+    console.error("Не удалось определить институт из маршрута.");
   }
 },
   goToProfile() {
@@ -195,11 +192,17 @@ updateInstituteFromRoute() {
   "$route.fullPath": "updateInstituteFromRoute", // Теперь следим за полным путём
 },
 created() {
-  const userData = JSON.parse(localStorage.getItem("userData")) || {};
+  const userData = JSON.parse(Cookies.get("userData") || "{}");
   const institute = userData.institute || "TYIU";
 
+  console.log("Институт из localStorage:", institute);
+
+  // Синхронизируем глобальное состояние
+  this.globalState.institute = institute;
+
+  // Устанавливаем `selectedInstitute` для локального отображения
   this.selectedInstitute = this.reverseInstituteMap[institute] || institute;
-  this.updateInstituteFromRoute(); // Синхронизация с маршрутом
+  this.updateInstituteFromRoute();
 },
 };
 </script>

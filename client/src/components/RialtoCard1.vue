@@ -35,8 +35,10 @@
 
 <script>
 import { fetchOwnerName, toggleLike } from "@/utils/ideaHelpers.js";
+import Cookies from "js-cookie";
 
 export default {
+  inject: ["globalState"], // Подключаем глобальное состояние
   props: {
     idea: {
       type: Object,
@@ -45,16 +47,18 @@ export default {
   },
   data() {
     return {
-      selectedInstitute: localStorage.getItem("institute") || "TYIU",
       isAnimating: false, // Для анимации лайка
-      userRole: localStorage.getItem("role") || "ST",
+      userRole: Cookies.get("role") || "ST",
     };
   },
   computed: {
     liked() {
     if (!this.idea || !this.idea.likes) return false;
-    const userData = JSON.parse(localStorage.getItem("userData")) || {};
+    const userData = JSON.parse(Cookies.get("userData") || "{}");
     return this.idea.likes.includes(userData.id);
+    },
+    selectedInstitute() {
+      return this.globalState.institute; // Глобальное состояние для чтения
     },
   },
   mounted() {
@@ -62,12 +66,12 @@ export default {
   },
   methods: {
     openIdea(idea) {
-    const institute = this.selectedInstitute; // Получаем выбранный институт из состояния
-    if (institute) {
-      this.$router.push({ path: `/${institute}/ideas/${idea.id}` });
-    } else {
-      console.error("Институт не выбран");
-    }
+  const institute = this.selectedInstitute; // Используем selectedInstitute из data()
+  if (institute) {
+    this.$router.push({ path: `/${institute}/ideas/${idea.id}` });
+  } else {
+    console.error("Институт не выбран");
+  }
   },
     async loadOwnerName() {
       try {
@@ -85,7 +89,7 @@ export default {
         event, // событие клика
         this.liked, // текущее состояние лайка
         (state) => (this.isAnimating = state), // установка анимации
-        () => JSON.parse(localStorage.getItem("userData"))?.id // получение userId
+        () => JSON.parse(Cookies.get("userData") || "{}")?.id
       );
     } catch (error) {
       console.error("Ошибка при обновлении лайка:", error);

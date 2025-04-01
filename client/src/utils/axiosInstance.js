@@ -1,6 +1,6 @@
 import axios from "axios";
 import { fetchAccessToken} from "./auth.js";
-import { clearStorage } from "./localStorage.js";
+import { clearStorage } from "./storage.js";
 
 const api = axios.create({
   baseURL: "http://127.0.0.1:8000/api",
