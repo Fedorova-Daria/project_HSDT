@@ -1,5 +1,6 @@
 import axios from "axios";
 
+// Все функции для работы с localStorage
 export async function getUserData() {
   let userData = JSON.parse(localStorage.getItem("userData")) || {
     id: "",
@@ -10,8 +11,10 @@ export async function getUserData() {
     role: "",
     avatar: "https://via.placeholder.com/150",
     group: { id: "", name: "Не указано" },
+    institute: "TYIU", // По умолчанию TYIU
   };
-  // Проверяем, есть ли в LocalStorage данные по ID
+
+  // Проверяем, есть ли ID в LocalStorage
   if (!userData.id) {
     try {
       const response = await axios.get("http://127.0.0.1:8000/api/users/me/", {
@@ -19,13 +22,18 @@ export async function getUserData() {
       });
 
       if (response.status === 200) {
-        userData = { ...userData, id: response.data.id };
+        userData = {
+          ...userData,
+          id: response.data.id,
+          institute: response.data.institute || "TYIU", // Берём институт из API
+        };
         localStorage.setItem("userData", JSON.stringify(userData));
       }
     } catch (error) {
       console.error("Ошибка при получении данных о пользователе:", error);
     }
   }
+
   // Если group — это ID (число), загружаем название группы
   if (typeof userData.group === "number") {
     try {
@@ -48,6 +56,13 @@ export async function getUserData() {
   }
 
   return userData;
+}
+
+// Функция обновления института в LocalStorage
+export function updateInstitute(institute) {
+  let userData = JSON.parse(localStorage.getItem("userData")) || {};
+  userData.institute = institute;
+  localStorage.setItem("userData", JSON.stringify(userData));
 }
 
 export function getAccessToken() {

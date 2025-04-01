@@ -18,139 +18,92 @@
 
     <div class="w-4/5 m-auto mt-6 text-white relative z-0">
       <div class="flex m-auto mt-5 text-zinc-700">
-      <div class="relative">
-        <img class="absolute left-2 top-2" src="/search.svg" />
-        <input
-          class="w-full max-w-md border bg-white rounded-md py-2 pl-10 pr-4 outline-none focus:border-purple-400 duration-500"
-          type="text"
-          placeholder="Поиск..."
-        />
+        <div class="relative">
+          <img class="absolute left-2 top-2" src="/search.svg" />
+          <input
+            class="w-full max-w-md border bg-white rounded-md py-2 pl-10 pr-4 outline-none focus:border-purple-400 duration-500"
+            type="text"
+            placeholder="Поиск..."
+          />
+        </div>
+        <select class="ml-5 h-10 py-2 px-3 border bg-white rounded-md focus:border-fiol duration-500">
+          <option value="" disabled selected class="text-gray-500">Выберите институт</option>
+          <option>ВШЦТ</option>
+          <option>ИПТИ</option>
+          <option>СТРОИН</option>
+          <option>АРХИД</option>
+        </select>
+
+        <select class="ml-5 h-10 py-2 px-3 border bg-white rounded-md focus:border-fiol duration-500">
+          <option value="" disabled selected class="text-gray-500">Сортировать по</option>
+          <option>По новизне</option>
+          <option>По популярности</option>
+        </select>
+
+        <button
+          @click="openModal"
+          class="bg-purple-600 text-white rounded-md px-4 py-2 hover:bg-purple-700 transition ml-5 h-10"
+        >
+          Создать идею
+        </button>
       </div>
-      <select
-  class="ml-5 h-10 py-2 px-3 border bg-white rounded-md focus:border-fiol duration-500"
->
-<option value="" disabled selected class="text-gray-500">
-            Выберите институт
-          </option>
-  <option>ВШЦТ</option>
-  <option>ИПТИ</option>
-  <option>СТРОИН</option>
-  <option>АРХИД</option>
-</select>
-
-<select
-  class="ml-5 h-10 py-2 px-3 border bg-white rounded-md focus:border-fiol duration-500"
->
-<option value="" disabled selected class="text-gray-500">
-            Сортировать по
-          </option>
-  <option>По новизне</option>
-  <option>По популярности</option>
-</select>
-
-
+      <!-- Фильтры с анимацией -->
+    <div class="flex justify-center space-x-6 relative mt-3">
       <button
-        @click="openModal"
-        class="bg-purple-600 text-white rounded-md px-4 py-2 hover:bg-purple-700 transition ml-5 h-10"
+        v-for="(filter, index) in filters"
+        :key="index"
+        @click="setFilter(filter.value)"
+        class="relative pb-1 text-lg font-medium transition-colors duration-300"
+        :class="{
+          'text-white': activeFilter === filter.value,
+          'text-zinc-200 opacity-70 hover:text-white': activeFilter !== filter.value
+        }"
       >
-        Создать идею
+        {{ filter.label }}
+        <!-- Анимированная полоска -->
+        <span 
+          class="absolute left-1/2 bottom-0 h-0.5 bg-zinc-200 transition-all duration-300 rounded-lg"
+          :class="{ 'w-full left-0': activeFilter === filter.value, 'w-0': activeFilter !== filter.value }">
+        </span>
       </button>
     </div>
 
-      <table
-        class="w-full mt-5 border-collapse shadow-lg rounded-lg overflow-hidden bg-card table-auto"
-      >
-        <thead>
-          <tr class="bg-card text-left">
-            <th class="px-6 py-3 w-10">#</th>
-            <th class="px-6 py-3 w-1/4">Название</th>
-            <th class="px-6 py-3 w-1/4">Стеки технологий</th>
-            <th class="px-6 py-3 w-1/4">Дата создания</th>
-            <th class="px-6 py-3 w-1/8">Статус</th>
-            <th class="px-6 py-3 w-1/6"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="item in items"
-            :key="item.id"
-            class="border-b border-zinc-700 hover:bg-card transition duration-200"
-          >
-            <td class="px-6 py-4">{{ item.id }}</td>
-            <td class="px-6 py-4 font-medium">{{ item.name }}</td>
-            <td class="px-6 py-4">
-              <div class="flex flex-wrap gap-2">
-                <!-- Проверяем, сколько стека технологий -->
-                <span
-                  v-for="(tech, techIndex) in item.technologies_info.slice(
-                    0,
-                    3
-                  )"
-                  :key="techIndex"
-                  class="px-2 py-1 bg-purple-600 text-white rounded"
-                >
-                  {{ tech.name }}
-                </span>
-                <!-- Если стека технологий больше 3, показываем "+X" -->
-                <span
-                  v-if="item.technologies_info.length > 3"
-                  class="text-xs text-white"
-                >
-                  +{{ item.technologies_info.length - 3 }}
-                </span>
-              </div>
-            </td>
-            <td class="px-6 py-4">{{ item.created_at }}</td>
-            <td class="px-6 py-4"></td>
-
-            <td class="px-6 py-4 flex justify-end gap-2">
-              <button
-                 @click="openIdea(item)"
-                class="px-4 py-2 text-sm font-medium bg-buttonoff hover:bg-buttonon rounded transition"
-              >
-                Посмотреть
-              </button>
-              <div class="flex items-center gap-2 min-w-[80px] justify-end">
-                <h1 class="text-white font-semibold">{{ item.likeCount || 0 }}</h1>
-                <img
-  :src="likedItems[item.id] ? '/liked.svg' : '/like.svg'"
-  :class="{ 'animate-like': item.isAnimating }"
-  @click.stop="toggleLike(item)"
-  @animationend="item.isAnimating = false"
-/>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <IdeasTable 
+        :items="filteredItems" 
+        :userId="userData.id"
+        @toggle-like="updateLike" 
+        @open-idea="openIdea" 
+      />
     </div>
+
     <!-- Всплывающее окно -->
     <IdeaModal v-if="isModalOpen" @close="closeModal" @submit="addNewIdea" />
-    <transition
-      name="slide"
-      @before-enter="beforeEnter"
-      @after-enter="afterEnter"
-      @before-leave="beforeLeave"
-      @after-leave="afterLeave"
-    >
-      <IdeaDetail
-        v-show="selectedIdeaId"
-        :ideaId="selectedIdeaId"
-        @close="closeIdeaDetail"
-      />
-    </transition>
-      </div>
+  </div>
 </template>
 
 <script>
+import IdeasTable from "@/components/projects/IdeasTable.vue";
 import Header from "@/components/header.vue";
 import IdeaModal from "@/components/projects/IdeaModal.vue"; // Импортируем модальное окно
+import { fetchOwnerName, toggleLike } from "@/utils/ideaHelpers.js";
+import api from "@/utils/axiosInstance.js";
+
 export default {
-  components: { IdeaModal, Header },
+  components: { IdeaModal, Header, IdeasTable },
   data() {
     return {
+      userData: JSON.parse(localStorage.getItem("userData")) || {}, // Загружаем пользователя
+      selectedInstitute: localStorage.getItem("institute") || "TYIU",
       isAnimating: false,
       items: [], // Список идей
+      filteredItems: [], // Отфильтрованные идеи
+      filters: [
+        { label: "Все", value: "all" },
+        { label: "Мои", value: "my" },
+        { label: "Любимые", value: "favorites" },
+        { label: "Черновики", value: "drafts" },
+      ],
+      activeFilter: "all", // Начальный фильтр
       isModalOpen: false,
       likedItems: {}, // Объект для хранения лайков по каждому элементу
       // Данные для параллакс-эффекта
@@ -165,7 +118,76 @@ export default {
       animationFrame: null,
     };
   },
+  computed: {
+    liked() {
+      return (idea) => {
+        const userData = JSON.parse(localStorage.getItem("userData")) || {};
+        return idea.likes.includes(userData.id);
+      };
+    },
+  },
   methods: {
+    // Устанавливаем активный фильтр
+    setFilter(filter) {
+  this.activeFilter = filter;
+  this.filterItems(); // Заменили applyFilter на filterItems
+},
+    // Применяем фильтрацию
+    filterItems() {
+  // Используем activeFilter, а не filter, так как filter - это параметр метода setFilter
+  if (this.activeFilter === "all") {
+    this.filteredItems = this.items;
+  } else if (this.activeFilter === "my") {
+    this.filteredItems = this.items.filter(idea => idea.owner === this.userData.id);
+  } else if (this.activeFilter === "favorites") {
+    this.filteredItems = this.items.filter(idea => idea.likes.includes(this.userData.id));
+  } else if (this.activeFilter === "drafts") {
+    this.filteredItems = this.items.filter(idea => idea.status === 'draft');
+  }
+},
+    async fetchIdeas() {
+      try {
+        const response = await api.get("/projects/");
+        this.items = response.data;
+        this.filterItems(); // Применяем фильтрацию сразу после загрузки идей
+          // Загружаем инициаторов для каждой идеи
+          for (const idea of this.items) {
+            if (idea.owner) {
+              await fetchOwnerName(idea, idea.owner);
+            }
+        }
+      } catch (error) {
+        console.error("Ошибка при загрузке идей:", error);
+      }
+    },
+    async updateLike(idea, event) {
+  try {
+    // Передаем все необходимые параметры в утилиту
+    await toggleLike(
+      idea, // текущая идея
+      event, // событие клика
+      this.liked(idea), // текущее состояние лайка
+      (state) => (this.isAnimating = state), // установка анимации
+      () => JSON.parse(localStorage.getItem("userData"))?.id // получение userId
+    );
+  } catch (error) {
+    console.error("Ошибка при обновлении лайка:", error);
+  }
+},
+openIdea(idea) {
+    const institute = this.selectedInstitute; // Получаем выбранный институт из состояния
+    if (institute) {
+      this.$router.push({ path: `/${institute}/ideas/${idea.id}` });
+    } else {
+      console.error("Институт не выбран");
+    }
+  },
+    openModal() {
+      this.isModalOpen = true;
+    },
+    closeModal() {
+      this.isModalOpen = false;
+    },
     // Инициализация параллакс-эффекта
     initParallax() {
       this.windowWidth = window.innerWidth;
@@ -211,32 +233,16 @@ export default {
       }
     },
 
-    async fetchIdeas() {
-      try {
-        const response = await fetch("http://localhost:8000/api/ideas/");
-        if (!response.ok) throw new Error("Ошибка загрузки идей");
-        this.items = await response.json();
-      } catch (error) {
-        console.error("Ошибка при загрузке идей:", error);
-      }
-    },
-    openIdea(item) {
-  this.$router.push({ path: `/ideas/${item.id}` });
-},
-    openModal() {
-      this.isModalOpen = true;
-    },
-    closeModal() {
-      this.isModalOpen = false;
-    },
-    toggleLike(item) {
-  this.$set(this.likedItems, item.id, !this.likedItems[item.id]);
-  this.$set(item, "isAnimating", true);
-},
   },
-  mounted() {
+  mounted() {  
     this.fetchIdeas(); // Загружаем идеи при монтировании
-    this.initParallax();
+     // Если данных о пользователе нет, обновляем их
+  const storedUser = JSON.parse(localStorage.getItem("userData"));
+  if (storedUser) {
+    this.userData = storedUser;
+  } else {
+    console.warn("User data not found in localStorage.");
+  }
   },
 
   beforeDestroy() {
@@ -246,6 +252,9 @@ export default {
 </script>
 
 <style scoped>
+button span {
+  transform: translateX(-50%);
+}
 /* Стили для параллакс-эффекта */
 .transform-gpu {
   transform: translateZ(0);
@@ -259,7 +268,7 @@ export default {
 
 /* Затемнение фона (увеличено до opacity-50) */
 .bg-black {
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 /* Анимация лайка */

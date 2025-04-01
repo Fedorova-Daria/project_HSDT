@@ -90,7 +90,7 @@
         @click="openCreateModal"
       >
         <img
-          :src="liked ? 'Penis.svg' : 'pencil1.svg'"
+          :src="liked ? '/Penis.svg' : '/pencil1.svg'"
           alt="Like"
           class="w-6 h-6 mr-4 mb-5 duration-300 cursor-pointer"
         />
@@ -177,7 +177,7 @@ export default {
     // Стили для фона
     bgStyle() {
       return {
-        backgroundImage: "url('bob.svg')",
+        backgroundImage: "url('/bob.svg')",
         backgroundPosition: `${this.bgPosition.x}px ${this.bgPosition.y}px`,
       };
     },

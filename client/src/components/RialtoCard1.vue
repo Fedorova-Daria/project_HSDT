@@ -1,18 +1,20 @@
 <template>
   <div
     class="idea-card border border-zinc-700 bg-card rounded-xl p-5 shadow-lg cursor-pointer"
-    @click="openIdea"
+    @click="openIdea(idea)"
   >
     <div class="flex justify-between items-center mb-3">
       <h1 class="text-2xl font-semibold text-white">{{ idea.name }}</h1>
-      <img
-        :src="liked ? '/liked.svg' : '/like.svg'"
-        alt="Like"
-        class="w-6 h-6 mr-2 duration-300 cursor-pointer"
-        :class="{ 'animate-like': isAnimating }"
-        @click.stop="toggleLike"
-        @animationend="isAnimating = false"
-      />
+      <div class="flex items-center">
+        <img
+  :src="liked ? '/liked.svg' : '/like.svg'"
+  alt="Like"
+  class="w-6 h-6 mr-2 duration-300 cursor-pointer"
+  :class="{ 'animate-like': isAnimating }"
+  @click.stop="updateLike"
+/>
+        <span class="text-white">{{ idea.likes_count }}</span> 
+      </div>
     </div>
 
     <p class="text-gray-300 mb-3">
@@ -21,50 +23,18 @@
 
     <div class="mt-auto">
       <h3 class="text-xl text-white mb-3">
-        Инициатор: {{ idea.initiator_info.name || "Неизвестный автор" }}
+        Инициатор: {{ idea.initiator || "Неизвестный автор" }}
       </h3>
+    </div>
 
-      <div class="flex flex-wrap gap-2">
-        <!-- Проверяем, сколько стека технологий -->
-        <span
-          v-for="(tech, index) in idea.technologies_info.slice(0, 3)"
-          :key="index"
-          class="px-2 py-1 bg-purple-600 text-white rounded"
-        >
-          {{ tech.name }}
-        </span>
-
-        <!-- Если стека технологий больше 3, показываем "+X" -->
-        <span
-          v-if="idea.technologies_info.length > 3"
-          class="text-xs text-white"
-        >
-          +{{ item.technologies_info.length - 3 }}
-        </span>
-      </div>
-      <div class="flex justify-between">
-        <span
-          class="px-4 py-2 rounded-3xl text-white text-sm border-2 bg-zinc-700"
-          :class="
-            idea.status === 'Набор открыт'
-              ? 'border-blue-500'
-              : 'border-red-500'
-          "
-        >
-          {{ status || 0 }}
-        </span>
-        <h3
-          class="px-4 py-2 rounded-3xl text-white text-sm border-2 bg-zinc-700"
-        >
-          Команда из {{ participantsCount || 0 }} человек
-        </h3>
-      </div>
+    <div v-if="userRole === 'EX'" class="text-white mt-2">
+      Голосов экспертов: {{ idea.experts_voted_count }}
     </div>
   </div>
 </template>
 
 <script>
-import { stackStyles } from "@/utils/stackStyles";
+import { fetchOwnerName, toggleLike } from "@/utils/ideaHelpers.js";
 
 export default {
   props: {
@@ -75,31 +45,58 @@ export default {
   },
   data() {
     return {
-      stackStyles,
-      liked: false,
-      isAnimating: false,
+      selectedInstitute: localStorage.getItem("institute") || "TYIU",
+      isAnimating: false, // Для анимации лайка
+      userRole: localStorage.getItem("role") || "ST",
     };
   },
-  methods: {
-    openIdea() {
-      this.$router.push(`/ideas/${this.idea.id}`);
+  computed: {
+    liked() {
+    if (!this.idea || !this.idea.likes) return false;
+    const userData = JSON.parse(localStorage.getItem("userData")) || {};
+    return this.idea.likes.includes(userData.id);
     },
-    toggleLike(event) {
-      event.stopPropagation();
-      this.liked = !this.liked;
-      this.isAnimating = true;
+  },
+  mounted() {
+    this.loadOwnerName(); // Загружаем инициатора на этапе монтирования
+  },
+  methods: {
+    openIdea(idea) {
+    const institute = this.selectedInstitute; // Получаем выбранный институт из состояния
+    if (institute) {
+      this.$router.push({ path: `/${institute}/ideas/${idea.id}` });
+    } else {
+      console.error("Институт не выбран");
+    }
+  },
+    async loadOwnerName() {
+      try {
+        // Передаем текущую идею и ID владельца в функцию из утилит
+        await fetchOwnerName(this.idea, this.idea.owner);
+      } catch (error) {
+        console.error("Ошибка при загрузке имени владельца:", error);
+      }
+    },
+    async updateLike(event) {
+    try {
+      // Передаем все необходимые параметры в утилиту
+      await toggleLike(
+        this.idea, // текущая идея
+        event, // событие клика
+        this.liked, // текущее состояние лайка
+        (state) => (this.isAnimating = state), // установка анимации
+        () => JSON.parse(localStorage.getItem("userData"))?.id // получение userId
+      );
+    } catch (error) {
+      console.error("Ошибка при обновлении лайка:", error);
+    }
     },
   },
 };
 </script>
 
 <style scoped>
-.idea-card {
-  transition: transform 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  height: 100%; /* Чтобы карточка была одинаковой высоты */
-}
+/* Анимация лайка */
 @keyframes likeJump {
   0% {
     transform: scale(1);

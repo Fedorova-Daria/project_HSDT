@@ -1,29 +1,37 @@
 <template>
   <div>
-    <header
-      class="flex items-center justify-between px-8 py-4 border border-border"
-    >
+    <header class="flex items-center justify-between px-8 py-4 border border-border">
       <!-- Логотип слева -->
       <div class="flex items-center">
-        <h1 class="font-display text-fiolText text-3xl">ВШЦТ</h1>
-      </div>
+  <h1 :style="{ color: instituteStyle?.textColor }" class="font-display text-3xl">
+    <select @change="changeInstitute" v-model="selectedInstitute">
+      <option v-for="inst in institutes" :key="inst" :value="inst">
+        {{ inst }}
+      </option>
+    </select>
+  </h1>
+</div>
+
       <!-- Навигация -->
       <nav class="flex items-center gap-10">
+        
         <router-link
-          v-for="item in menuItems"
-          :key="item.name"
-          :to="item.link"
-          class="relative text-lg font-medium transition-colors duration-300 group text-white hover:text-fiolText"
-          :class="{ 'text-fiolText': $route.path === item.link }"
-        >
-          {{ item.name }}
-          <span
-            class="absolute left-1/2 bottom-[-5px] h-[3px] bg-fiolText rounded-full transition-all duration-300 w-0 group-hover:w-full group-hover:left-0"
-            :class="{ 'w-2/3 left-1/6': $route.path === item.link }"
-          ></span>
-        </router-link>
+  v-for="item in menuItems"
+  :key="item.name"
+  :to="`/${instituteMap[selectedInstitute] || selectedInstitute}${item.link}`"
+  class="relative text-lg font-medium transition-colors duration-300 group text-white"
+  :style="{ '--hover-color': instituteStyle?.textColor }"
+>
+  {{ item.name }}
+  <span
+    class="absolute left-1/2 bottom-[-5px] h-[3px] rounded-full transition-all duration-300 w-0 group-hover:w-full group-hover:left-0"
+    :style="{ backgroundColor: instituteStyle?.textColor }"
+    :class="{ 'w-2/3 left-1/6': $route.path === `/${instituteMap[selectedInstitute] || selectedInstitute}${item.link}` }"
+  ></span>
+</router-link>
 
-        <!-- Улучшенная кнопка уведомлений -->
+
+        <!-- Кнопка уведомлений -->
         <div class="relative">
           <button class="relative p-1" @click="toggleNotifications">
             <img src="/notificate.svg" alt="notification" class="w-6" />
@@ -38,171 +46,86 @@
           </button>
 
           <!-- Выпадающее меню уведомлений -->
-          <div
+          <Notifications
             v-if="showNotifications"
-            class="absolute right-0 mt-2 w-72 bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-700 max-h-96 overflow-y-auto"
-            v-click-outside="closeNotifications"
-          >
-            <div
-              class="px-4 py-2 border-b border-gray-700 flex justify-between items-center"
-            >
-              <h3 class="font-medium text-white">Уведомления</h3>
-              <button
-                @click="markAllAsRead"
-                class="text-xs text-purple-400 hover:text-purple-300"
-                :disabled="unreadNotificationsCount === 0"
-              >
-                Прочитать все
-              </button>
-            </div>
-            <div v-if="notifications.length > 0">
-              <div
-                v-for="notification in notifications"
-                :key="notification.id"
-                class="px-4 py-3 hover:bg-gray-700 cursor-pointer border-b border-gray-700 last:border-b-0"
-                :class="{ 'bg-gray-700/50': !notification.read }"
-                @click="handleNotificationClick(notification)"
-              >
-                <div class="flex items-start">
-                  <div class="flex-shrink-0 mr-3">
-                    <div
-                      class="h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center text-white"
-                    >
-                      {{ getNotificationIcon(notification.type) }}
-                    </div>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-white truncate">
-                      {{ notification.title }}
-                    </p>
-                    <p class="text-xs text-gray-400 mt-1">
-                      {{ notification.message }}
-                    </p>
-                    <p class="text-xs text-gray-500 mt-1">
-                      {{ formatTime(notification.time) }}
-                    </p>
-                  </div>
-                  <div v-if="!notification.read" class="ml-2">
-                    <span
-                      class="h-2 w-2 rounded-full bg-purple-500 block"
-                    ></span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div v-else class="px-4 py-6 text-center">
-              <p class="text-gray-400 text-sm">Нет новых уведомлений</p>
-            </div>
-          </div>
+            :showNotifications="showNotifications"
+            :notifications="notifications"
+            @close="showNotifications = false"
+            @markAllRead="markAllAsRead"
+            @notificationClick="handleNotificationClick"
+          />
         </div>
 
-        <!-- Аватарка с заглушкой -->
+        <!-- Аватарка -->
         <div class="relative w-12 h-12">
-          <div
-            @click="goToProfile"
-            class="w-full h-full rounded-full border-2 border-zinc-700 hover:border-purple-400 transition-all duration-300 cursor-pointer flex items-center justify-center"
-            :style="avatarStyle"
-          >
-            <span class="text-white font-semibold text-xl">{{
-              userInitials
-            }}</span>
-          </div>
-        </div>
+  <div
+    @click="goToProfile"
+    class="w-full h-full rounded-full border-2 border-zinc-700 transition-all duration-300 cursor-pointer flex items-center justify-center hover:border-[var(--hover-color)]"
+    :style="{ ...avatarStyle, '--hover-color': instituteStyle?.textColor }"
+  >
+    <span class="text-white font-semibold text-xl">{{ userInitials }}</span>
+  </div>
+</div>
       </nav>
     </header>
   </div>
 </template>
 
 <script>
+import { instituteStyles } from '@/assets/instituteStyles.js'; // Импортируем карту стилей
+import Notifications from "@/components/notific.vue";
+console.log("Selected Institute from localStorage:", localStorage.getItem("institute"));
 export default {
+  components: { Notifications },
   name: "Header",
   data() {
     return {
-      menuItems: [
-        { name: "Биржа", link: "/rialto" },
-        { name: "Команды", link: "/teams" },
-        { name: "Идеи", link: "/ideas" },
-      ],
+      selectedInstitute: localStorage.getItem("institute") || "TYIU",
       showNotifications: false,
+      notifications: [],
       userName: "Иван Иванов",
-      notifications: [
-        {
-          id: 1,
-          type: "message",
-          title: "Новое сообщение",
-          message: "У вас новое сообщение от команды Ты - ЕБЛАН?",
-          time: new Date(Date.now() - 1000 * 60 * 5),
-          read: false,
-          link: "/messages/1",
-        },
-        {
-          id: 2,
-          type: "system",
-          title: "Обновление системы",
-          message: "Запланировано обновление на 15:00",
-          time: new Date(Date.now() - 1000 * 60 * 60 * 2),
-          read: true,
-          link: "/updates",
-        },
-        {
-          id: 3,
-          type: "event",
-          title: "Новое событие",
-          message: "Завтра в 18:00 собрание команды",
-          time: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 день назад
-          read: false,
-          link: "/events/3",
-        },
-        {
-          id: 3,
-          type: "event",
-          title: "Новое событие",
-          message: "Завтра в 18:00 собрание команды",
-          time: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 день назад
-          read: false,
-          link: "/events/3",
-        },
-        {
-          id: 3,
-          type: "event",
-          title: "Новое событие",
-          message: "Завтра в 18:00 собрание команды",
-          time: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 день назад
-          read: false,
-          link: "/events/3",
-        },
-        {
-          id: 3,
-          type: "event",
-          title: "Новое событие",
-          message: "Завтра в 18:00 собрание команды",
-          time: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 день назад
-          read: false,
-          link: "/events/3",
-        },
-        {
-          id: 3,
-          type: "event",
-          title: "Новое событие",
-          message: "Завтра в 18:00 собрание команды",
-          time: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 день назад
-          read: false,
-          link: "/events/3",
-        },
-        {
-          id: 3,
-          type: "event",
-          title: "Новое событие",
-          message: "Завтра в 18:00 собрание команды",
-          time: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 день назад
-          read: false,
-          link: "/events/3",
-        },
-      ],
-      colors: ["#FF6B6B", "#48BB78", "#4299E1", "#9F7AEA", "#ED8936"],
+      institutes: ["ВШЦТ", "АРХИД", "ИПТИ", "СТРОИН", "ТИУ"],
+      instituteMap: { 
+        "ВШЦТ": "HSDT",
+        "АРХИД": "ARCHID",
+        "ИПТИ": "IPTI",
+        "СТРОИН": "STROIN",
+        "ТИУ": "TYIU",
+      },
+      reverseInstituteMap: {
+        "HSDT": "ВШЦТ",
+        "ARCHID": "АРХИД",
+        "IPTI": "ИПТИ",
+        "STROIN": "СТРОИН",
+        "TYIU": "ТИУ",
+      },
+      
     };
   },
   computed: {
+    menuItems() {
+  const latinInstitute = this.instituteMap[this.selectedInstitute] || this.selectedInstitute; 
+  if (!latinInstitute) {
+    console.error(`Ошибка: Латинское название для "${this.selectedInstitute}" не найдено.`);
+    return [];
+  }
+
+  if (latinInstitute === "TYIU") {
+    return [
+      { name: "О нас", link: "/about" },
+      { name: "Идеи", link: "/ideas" },
+    ];
+  } else {
+    return [
+      { name: "Биржа", link: "/rialto" },
+      { name: "Команды", link: "/teams" },
+      { name: "Идеи", link: "/ideas" },
+    ];
+  }
+},
+    unreadNotificationsCount() {
+      return this.notifications.filter((n) => !n.read).length;
+    },
     userInitials() {
       return this.userName
         .split(" ")
@@ -210,105 +133,79 @@ export default {
         .join("")
         .toUpperCase();
     },
-    unreadNotificationsCount() {
-      return this.notifications.filter((n) => !n.read).length;
-    },
     avatarStyle() {
-      const colorIndex = this.userName.length % this.colors.length;
-      return {
-        backgroundColor: this.colors[colorIndex],
-      };
-    },
+  const colors = this.instituteStyle?.avatarColors || ["#ccc"]; // Дефолтный цвет
+  const colorIndex = this.userName.length % colors.length;
+  return { backgroundColor: colors[colorIndex] };
+},
+    instituteStyle() {
+    // Переводим русское название в латинское, если нужно
+    const latinInstitute = this.instituteMap[this.selectedInstitute] || this.selectedInstitute; 
+    console.log("Selected Institute:", latinInstitute); // Логируем латинскую версию
+    const style = instituteStyles[latinInstitute]; // Получаем стиль для латинского названия
+    console.log("Selected Institute Style:", style); // Логируем стиль
+    return style || instituteStyles["TYIU"]; // Если стиль не найден, возвращаем дефолтный для TYIU
+  },
   },
   methods: {
-    goToProfile() {
-      this.$router.push("/profile");
-    },
-    toggleNotifications() {
-      this.showNotifications = !this.showNotifications;
-    },
-    closeNotifications() {
-      this.showNotifications = false;
-    },
-    markAllAsRead() {
-      this.notifications = this.notifications.map((n) => ({
-        ...n,
-        read: true,
-      }));
-    },
-    handleNotificationClick(notification) {
-      if (!notification.read) {
-        notification.read = true;
-      }
-      this.$router.push(notification.link);
-      this.showNotifications = false;
-    },
-    getNotificationIcon(type) {
-      const icons = {
-        message: "✉️",
-        system: "⚙️",
-        event: "📅",
-        warning: "⚠️",
-        success: "✅",
-      };
-      return icons[type] || "🔔";
-    },
-    formatTime(date) {
-      const now = new Date();
-      const diffInSeconds = Math.floor((now - date) / 1000);
+    checkInstitute() {
+  const userData = JSON.parse(localStorage.getItem("userData")) || {};
+  const institute = userData.institute || "TYIU"; // Получаем институт, если он указан, иначе используем TYIU
 
-      if (diffInSeconds < 60) return "только что";
+  if (institute === "TYIU") {
+    this.$router.push("/TYIU/about"); // Перенаправление на страницу TYIU/about
+  }
+},
+changeInstitute(event) {
+  const newInstituteRus = event.target.value; // Получаем русское название
+  const newInstituteLat = this.instituteMap[newInstituteRus]; // Преобразуем в латинское название
 
-      const diffInMinutes = Math.floor(diffInSeconds / 60);
-      if (diffInMinutes < 60) return `${diffInMinutes} мин. назад`;
+  if (!newInstituteLat) {
+    console.error("Ошибка: Латинское название института не найдено.");
+    return; // Останавливаем выполнение, если институт не найден
+  }
 
-      const diffInHours = Math.floor(diffInMinutes / 60);
-      if (diffInHours < 24) return `${diffInHours} ч. назад`;
+  let userData = JSON.parse(localStorage.getItem("userData")) || {};
+  userData.institute = newInstituteLat; // Обновляем институт в данных пользователя
+  localStorage.setItem("userData", JSON.stringify(userData)); // Сохраняем обновлённые данные
 
-      const diffInDays = Math.floor(diffInHours / 24);
-      if (diffInDays === 1) return "вчера";
+  this.selectedInstitute = newInstituteLat; // Устанавливаем выбранный институт
 
-      return date.toLocaleDateString("ru-RU", {
-        day: "numeric",
-        month: "short",
-      });
-    },
+  // Перенаправляем пользователя в зависимости от выбранного института
+  if (newInstituteLat === "TYIU") {
+    this.$router.push("/TYIU/about");
+  } else {
+    this.$router.push(`/${newInstituteLat}/rialto`);
+  }
+},
+updateInstituteFromRoute() {
+  const institute = this.reverseInstituteMap[this.$route.params.institute];
+  if (institute) {
+    this.selectedInstitute = institute;
+  } else {
+    this.selectedInstitute = "ТИУ"; // Дефолтный логотип
+  }
+},
+  goToProfile() {
+    const latinInstitute = this.instituteMap[this.selectedInstitute] || this.selectedInstitute;
+    this.$router.push(`/${latinInstitute}/profile`);
+  }
   },
-  directives: {
-    "click-outside": {
-      bind(el, binding, vnode) {
-        el.clickOutsideEvent = function (event) {
-          if (!(el === event.target || el.contains(event.target))) {
-            vnode.context[binding.expression](event);
-          }
-        };
-        document.body.addEventListener("click", el.clickOutsideEvent);
-      },
-      unbind(el) {
-        document.body.removeEventListener("click", el.clickOutsideEvent);
-      },
-    },
-  },
+  watch: {
+  "$route.fullPath": "updateInstituteFromRoute", // Теперь следим за полным путём
+},
+created() {
+  const userData = JSON.parse(localStorage.getItem("userData")) || {};
+  const institute = userData.institute || "TYIU";
+
+  this.selectedInstitute = this.reverseInstituteMap[institute] || institute;
+  this.updateInstituteFromRoute(); // Синхронизация с маршрутом
+},
 };
 </script>
 
 <style scoped>
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #2d3748;
-}
-::-webkit-scrollbar-thumb {
-  background: #4a5568;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #718096;
-}
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+  .group:hover {
+    color: var(--hover-color);
+  }
 </style>
