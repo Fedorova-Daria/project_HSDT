@@ -24,7 +24,7 @@ urlpatterns = [
     path('api/users/', include('users.urls')),
     path('api/core/', include('core.urls')),
     path('api/projects/', include('projects.urls')),
-    path('api/teams/', include('teams.urls')),
+    #path('api/teams/', include('teams.urls')),
 ]
 
 if settings.DEBUG:
