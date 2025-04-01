@@ -40,10 +40,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'core',
-    'moderation',
     'projects',
     'requests',
     'users',
+    'teams',
     'rest_framework',
     'rest_framework_simplejwt',  # Подключаем JWT
     'corsheaders',

@@ -63,3 +63,4 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
         if hasattr(user, "company_name") and user.company_name:
             validated_data["customer"] = user
         return super().create(validated_data)
+
