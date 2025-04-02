@@ -14,7 +14,6 @@ class TeamMemberSerializer(serializers.ModelSerializer):
 # Вот это - вывод всей подробной инфы по командам
 class TeamDetailSerializer(serializers.ModelSerializer):
     members = TeamMemberSerializer(many=True, read_only=True)
-    projects = serializers.StringRelatedField(many=True)  # Можно заменить на сериализатор проектов, если надо
 
     class Meta:
         model = Team

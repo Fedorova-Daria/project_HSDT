@@ -27,6 +27,7 @@ class TeamCreateView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+        team.members.add(self.request.user)  # Добавляем создателя в участники. Да, я добавил только одну строчку и что?
 
 
 class TeamUpdateView(generics.UpdateAPIView):

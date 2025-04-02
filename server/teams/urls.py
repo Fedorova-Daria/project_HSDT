@@ -12,5 +12,4 @@ urlpatterns = [
     path('<int:id>/', TeamDetailView.as_view(), name='team-detail'),
     path('create/', TeamCreateView.as_view(), name='team-create'),
     path('<int:id>/edit/', TeamUpdateView.as_view(), name='team-edit'),
-    path('<int:id>/members/', TeamMembersView.as_view(), name='team-members'),
 ]

@@ -1,6 +1,7 @@
 from django.db import models
 from users.models import Account
 
+
 class Team(models.Model):
     STATUS_CHOICES = [
         ("open", "Открыта"),
