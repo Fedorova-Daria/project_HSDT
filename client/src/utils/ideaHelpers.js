@@ -1,6 +1,6 @@
 import axios from "axios";
 import { fetchAccessToken } from "@/utils/auth.js";
-
+import Cookies from "js-cookie";
 // Получение имени инициатора
 export async function fetchOwnerName(idea, ownerId) {
   try {
@@ -30,7 +30,7 @@ export async function toggleLike(
   isAnimatingSetter(true); // Запускаем анимацию лайка
 
   try {
-    let accessToken = localStorage.getItem("access");
+    let accessToken = Cookies.get("access");
 
     if (!accessToken) {
       accessToken = await fetchAccessToken();
@@ -65,7 +65,7 @@ export async function toggleLike(
       console.log("Попытка обновления токена...");
       const newToken = await fetchAccessToken();
       if (newToken) {
-        localStorage.setItem("access", newToken);
+        Cookies.set("access", newToken);
         await toggleLike(idea, event, liked, isAnimatingSetter, getUserId, true);
       } else {
         console.error("Не удалось обновить токен, требуется повторный вход.");

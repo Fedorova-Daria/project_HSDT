@@ -13,10 +13,11 @@ export default {
 
 <template>
   <div>
-    <router-view v-slot="{ Component }">
-  <keep-alive>
-    <component :is="Component" />
-  </keep-alive>
-</router-view>
+    <!-- Исправляем ключ -->
+    <router-view v-slot="{ Component }" :key="$route.params.institute">
+      <keep-alive>
+        <component :is="Component" />
+      </keep-alive>
+    </router-view>
   </div>
 </template>

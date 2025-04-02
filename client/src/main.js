@@ -1,12 +1,19 @@
 import "./assets/main.css";
-
-import { createApp } from "vue";
+import { createApp, reactive } from "vue";
 import App from "./App.vue";
 import router from "./router";
-import store from './store'; // Подключаем Vuex store
+import store from './store';
+import { getAccessToken, getUserData } from "@/utils/storage.js"; // Импортируем нужные функции
 
-// Сначала создаем экземпляр приложения
 const app = createApp(App);
+
+// Глобальное реактивное состояние
+const globalState = reactive({
+  institute: getUserData()?.institute || "TYIU", // Используем getUserData для получения института
+});
+
+// Передаём глобальное состояние в приложение
+app.provide("globalState", globalState);
 
 // Подключаем Vuex и роутер
 app.use(store);
