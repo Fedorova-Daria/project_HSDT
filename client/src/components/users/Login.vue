@@ -106,6 +106,7 @@
 <script>
 import axios from "axios";
 import { getUserData, getAccessToken, clearStorage, saveTokens, saveUserData, updateInstitute } from "@/utils/storage.js";
+import Cookies from "js-cookie";
 const API_BASE_URL = "http://127.0.0.1:8000/api";
 const LOGIN_URL = `${API_BASE_URL}/users/login/`;
 const USER_DATA_URL = `${API_BASE_URL}/users/me/`;
@@ -166,20 +167,24 @@ export default {
       }
     },
 
-    clearErrors() {
-      this.emailError = "";
-      this.passwordError = "";
-    },
+    clearError(field) {
+    if (field === "email") this.emailError = "";
+    if (field === "password") this.passwordError = "";
+  },
 
-    checkToken() {
-      const accessToken = getAccessToken();
-      const selectedInstitute = updateInstitute() || "TYIU";
-
-      if (accessToken) {
-        this.isLoggedIn = true;
-        this.$router.push(`/${selectedInstitute}/rialto`);
-      }
-    },
+  async checkToken() {
+  const accessToken = getAccessToken();
+  if (!accessToken) {
+  console.error("Ошибка: отсутствует токен.");
+  return;
+}
+  if (accessToken) {
+    const userData = await getUserData(); // Загружаем данные пользователя
+    const selectedInstitute = userData.institute || "TYIU"; // Берем институт
+    this.isLoggedIn = true;
+    this.$router.push(`/${selectedInstitute}/rialto`);
+  }
+},
 
     validateForm() {
       let isValid = true;
@@ -203,18 +208,26 @@ export default {
     },
 
     async login() {
-      this.clearErrors();
-      if (!this.validateForm()) return;
+  this.clearError("email");
+  this.clearError("password");
 
-      try {
-        clearStorage();
-        const tokens = await this.authenticateUser(this.email, this.password);
-        await this.fetchAndSaveUserData(tokens.access_token);
-        this.redirectToHome();
-      } catch (error) {
-        this.handleError(error);
-      }
-    },
+  if (!this.validateForm()) return;
+
+  try {
+    // Сначала очищаем старые данные
+    clearStorage();
+    // Пробуем аутентифицировать пользователя
+    const tokens = await this.authenticateUser(this.email, this.password);
+
+    // Если аутентификация успешна, получаем и сохраняем данные о пользователе
+    await this.fetchAndSaveUserData(tokens.access_token);
+
+    // Перенаправляем на страницу
+    this.redirectToHome();
+  } catch (error) {
+    this.handleError(error);
+  }
+},
 
     async authenticateUser(email, password) {
       try {
@@ -269,10 +282,11 @@ export default {
       }
     },
 
-    redirectToHome() {
-      const institute = getInstitute() || "TYIU";
-      this.$router.push(`/${institute}/rialto`);
-    },
+    async redirectToHome() {
+  const userData = await getUserData();
+  const institute = userData.institute || "TYIU";
+  this.$router.push(`/TYIU/about`);
+},
 
     goToRegister() {
       this.$router.push("/register");

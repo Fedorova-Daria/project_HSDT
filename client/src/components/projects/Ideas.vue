@@ -84,7 +84,7 @@
 <script>
 import IdeasTable from "@/components/projects/IdeasTable.vue";
 import Header from "@/components/header.vue";
-import IdeaModal from "@/components/projects/IdeaModal.vue"; // Импортируем модальное окно
+import IdeaModal from "@/components/projects/IdeaModal.vue";
 import { fetchOwnerName, toggleLike } from "@/utils/ideaHelpers.js";
 import api from "@/utils/axiosInstance.js";
 import { instituteStyles } from "@/assets/instituteStyles.js";

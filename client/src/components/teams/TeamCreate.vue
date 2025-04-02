@@ -81,8 +81,8 @@ export default {
       required: true,
     },
     availableTechStack: {
-      type: Array,
-      required: true,
+      type: Object,
+      required: true
     },
   },
   data() {

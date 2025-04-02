@@ -84,8 +84,10 @@ export default {
   components: {
     Header,
   },
+  props: ['institute', 'teamId'],
   data() {
     return {
+      team: null,
       isEditing: false, // Режим редактирования
       team: {
         name: "Команда 1",
