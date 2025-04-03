@@ -5,13 +5,12 @@
       >
         <thead class="bg-card text-white">
           <tr>
-            <th class="p-3 text-left">Избранное</th>
-            <th class="p-3 text-left"></th>
-            <th class="p-3 text-left">Название команды</th>
-            <th class="p-3 text-left">Количество человек</th>
-            <th class="p-3 text-left">Навыки</th>
-            <th class="p-3 text-left">Статус</th>
-            <th class="p-3 text-left"></th>
+            <th class="p-3 text-left w-10"></th>
+            <th class="p-3 text-left w-1/4">Название команды</th>
+            <th class="p-3 text-left w-1/4">Количество человек</th>
+            <th class="p-3 text-left w-1/8">Навыки</th>
+            <th class="p-3 text-left w-1/8">Статус</th>
+            <th class="p-3 text-left w-1/6"></th>
           </tr>
         </thead>
         <tbody>
@@ -34,7 +33,6 @@
                 {{ team.isFavorite ? "★" : "☆" }}
               </button> 
             </td>
-            <td class="p-3 border-t border-zinc-600">{{ team.status}}</td>
             <td class="p-3 border-t border-zinc-600">{{ team.name }}</td>
             <td class="p-3 border-t border-zinc-600">{{ team.members.length  }}</td>
             <td class="p-3 border-t border-zinc-600">
@@ -53,7 +51,7 @@
                 Подробнее
               </button>
               <button
-                class="px-4 py-2 rounded-md transition-all transform hover:scale-105 ml-2 cursor-pointer"
+                class="px-4 py-2 rounded-md transition-all transform hover:scale-105 ml- cursor-pointer"
                 @click="markTeamForDeletion(team)"
               >
                 ❌

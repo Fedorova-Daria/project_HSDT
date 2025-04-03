@@ -113,7 +113,7 @@
 import axios from "axios";
 import Header from "@/components/header.vue";
 import { fetchOwnerName, toggleLike } from "@/utils/ideaHelpers.js";
-import { fetchAccessToken, refreshToken } from "@/utils/auth.js";
+import { fetchAccessToken } from "@/utils/auth.js";
 import Cookies from "js-cookie"; // Импортируем Cookies
 
 export default {
