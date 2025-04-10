@@ -107,7 +107,7 @@
     </div>
     </div>
     <div class="w-4/5 m-auto">
-    <button
+    <button @click="handleJoinTeam"
             
             class="text-white ml-20 inline-flex items-center bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:outline-none focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-800"
           >
@@ -125,7 +125,20 @@
             </svg>
             Присоединиться
           </button>
+          <p v-if="joinSuccess">Заявка успешно отправлена!</p>
+          <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
         </div>
+        <div class="text-white">
+    <h2 v-if="isOwner" >Заявки на вступление</h2>
+    <ul v-if="requests.length && isOwner">
+      <li v-for="request in requests" :key="request.id">
+        {{ request.user.first_name }} {{ request.user.last_name }}
+        <button @click="acceptJoinRequest(request.id)">Принять</button>
+        <button @click="denyJoinRequest(request.id)">Отклонить</button>
+      </li>
+    </ul>
+    <p v-else>Нет заявок на вступление</p>
+  </div>
   </div>
 </template>
 
@@ -135,7 +148,7 @@ import Header from "@/components/header.vue";
 import { fetchOwnerName } from "@/api/ideaHelpers.js";
 import { fetchAccessToken } from "@/api/auth.js";
 import Cookies from "js-cookie"; // Импортируем Cookies
-
+import { joinTeam, acceptRequest, denyRequest, inviteUser, deleteTeam } from '@/api/teamService.js';
 export default {
   components: {
     Header,
@@ -144,12 +157,15 @@ export default {
   data() {
     return {
       team: {}, // Убираем лишнее объявление `team: null`
-      isEditing: false, // Режим редактирования
-      editedTeam: {
-        name: "",
-        description: "",
-        status: "", // Добавляем статус
-      }, // Копия команды для редактирования
+    isEditing: false, // Режим редактирования
+    editedTeam: {
+      name: "",
+      description: "",
+      status: "", // Добавляем статус
+    }, // Копия команды для редактирования
+    joinSuccess: false, // Добавляем joinSuccess
+    requests: [], // Список заявок
+    errorMessage: '', // Для ошибок
     };
   },
   watch: {
@@ -160,6 +176,14 @@ export default {
         if (newId) this.fetchTeamDetails(newId); // Передаем teamId как аргумент
       },
     },
+  },
+  async mounted() {
+    try {
+      this.requests = await fetchJoinRequests(this.teamId);
+    } catch (error) {
+      this.errorMessage = 'Ошибка загрузки заявок.';
+      console.error('Ошибка:', error);
+    }
   },
   computed: {
     // Проверка, является ли текущий пользователь владельцем идеи
@@ -172,6 +196,60 @@ export default {
     },
   },
   methods: {
+    async handleJoinTeam() {
+  try {
+    const result = await joinTeam(this.teamId); // Используем teamId из props
+    this.joinSuccess = true; // Показываем сообщение об успехе
+    console.log('Результат:', result);
+  } catch (error) {
+    this.errorMessage = "Ошибка отправки заявки. Попробуйте снова.";
+    console.error('Ошибка:', error);
+  }
+},
+async refreshTeamData() {
+    try {
+      const token = await fetchAccessToken();
+      if (!token) {
+        console.error("Токен отсутствует, авторизация необходима.");
+        return;
+      }
+
+      const response = await axios.get(`http://127.0.0.1:8000/api/teams/${this.teamId}/`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      this.team = response.data; // Обновляем данные команды
+      console.log("Обновленные данные команды:", this.team);
+    } catch (error) {
+      console.error("Ошибка при обновлении данных команды:", error.response?.data || error);
+    }
+  },
+
+  async acceptJoinRequest(requestId) {
+    try {
+      await acceptRequest(this.teamId, requestId);
+      alert("Заявка принята!");
+
+      // После успешного принятия обновляем данные команды
+      await this.refreshTeamData();
+
+      // Удаляем обработанную заявку из локального списка
+      this.joinRequests = this.joinRequests.filter(request => request.id !== requestId);
+    } catch (error) {
+      console.error("Ошибка принятия заявки:", error);
+      alert("Не удалось принять заявку.");
+    }
+  },
+    async denyJoinRequest(requestId) {
+      try {
+        await denyRequest(this.teamId, requestId);
+        this.requests = this.requests.filter(request => request.id !== requestId);
+        alert('Заявка отклонена!');
+      } catch (error) {
+        console.error('Ошибка отклонения заявки:', error);
+        alert('Не удалось отклонить заявку.');
+      }
+    },
     updateStatus() {
       // Если выбран статус 'Активный', изменяем его на 'open'
       if (this.editedTeam.status === "active") {

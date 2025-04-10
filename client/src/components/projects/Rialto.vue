@@ -32,7 +32,7 @@
         <option>Остальные стеки...</option>
       </select>
 
-      <button
+      <button v-if="userRole === 'EX' && 'CU'"
         @click="openModal"
         class="rounded-md px-4 py-2 transition ml-5 h-10 text-white"
         :style="{ backgroundColor: currentBgColor }"
@@ -64,12 +64,14 @@ import IdeaCard from "@/components/RialtoCard1.vue";
 import IdeaModal from "@/components/projects/IdeaModal.vue";
 import Header from "@/components/header.vue";
 import { instituteStyles } from "@/assets/instituteStyles.js";
+import { getUserRoleFromCookies } from "@/api/storage.js";
 
 export default {
   inject: ["globalState"], // Подключаем глобальное состояние
   components: { IdeaCard, IdeaModal, Header },
   data() {
     return {
+      userRole: null,
       currentBgColor: "", // Исходный цвет
       ideas: [], // Идеи проектов
       searchQuery: "", // Поле для поиска
@@ -85,6 +87,7 @@ export default {
     };
   },
   created() {
+    this.userRole = getUserRoleFromCookies();
     // Загружаем идеи при загрузке компонента
     this.fetchCustomerIdeas();
     console.log("Текущий институт (глобальное состояние):", this.globalState.institute);

@@ -81,8 +81,11 @@ export async function fetchUserData() {
 }
 
 export function getRefreshToken() {
-  return Cookies.get("refresh_token");
+  const refreshToken = Cookies.get("refresh_token");
+  console.log("Refresh token из Cookies:", refreshToken); // Проверьте, что тут возвращается
+  return refreshToken || null; // Возвращаем null, если токен отсутствует
 }
+
 
 export function saveUserData(userData) {
   // Сохраняем данные в cookies и localStorage
@@ -100,4 +103,10 @@ export function clearStorage() {
   Cookies.remove("refresh_token");
   Cookies.remove("userData");
   localStorage.removeItem("userData"); // также удаляем из localStorage
+}
+
+export function getUserRoleFromCookies() {
+  let userData = JSON.parse(Cookies.get("userData")) || {};
+  const userRole = userData.role;
+  return userRole || null; // Если роль отсутствует, возвращаем null
 }

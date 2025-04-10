@@ -1,17 +1,7 @@
 <template>
   <div class="relative h-screen overflow-hidden">
     <!-- Размытый фон с параллакс-эффектом -->
-    <img
-      ref="backgroundImage"
-      alt="background"
-      class="absolute top-0 left-0 h-full w-full object-cover filter blur-md transform-gpu scale-105"
-      src="/bgg.jpg"
-      :style="{
-        transform: `translate(${offsetX}px, ${offsetY}px) scale(1.05)`,
-        transition: 'transform 0.5s cubic-bezier(0.13, 0.62, 0.23, 0.99)',
-      }"
-    />
-
+    <ParallaxBackground />
     <!-- Затемнение фона -->
     <div class="absolute inset-0 bg-black opacity-30 z-10"></div>
 
@@ -210,80 +200,83 @@
 
 <script>
 import { useAuth } from "@/composables/useAuth";
+import ParallaxBackground from "@/components/ParallaxBackground.vue";
+import api from '@/api/axiosInstance.js'; // Путь к вашему axios instance
 
 export default {
+  components: {ParallaxBackground},
   data() {
-    return {
-      first_name: "",
-      last_name: "",
-      group: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-      role: "ST",
-      showPassword: false,
-      showConfirmPassword: false,
-      emailError: "",
-      passwordError: "",
-      confirmPasswordError: "",
-      passwordStrength: "",
-      isFormValid: false,
-      // Параллакс-эффект
-      offsetX: 0,
-      offsetY: 0,
-      targetX: 0,
-      targetY: 0,
-      mouseX: 0,
-      mouseY: 0,
-      windowWidth: 0,
-      windowHeight: 0,
-      animationFrame: null,
-    };
-  },
+  return {
+    first_name: "",
+    last_name: "",
+    searchQuery: '', // Для хранения введенного текста
+    dropdownOpen: false, // Для отображения выпадающего списка
+    groups: [], // Список всех групп
+    filteredGroups: [], // Отфильтрованный список групп
+    selectedGroup: null, // Объект выбранной группы
+    email: "",
+    password: "",
+    confirmPassword: "",
+    role: "ST",
+    showPassword: false,
+    showConfirmPassword: false,
+    emailError: "",
+    passwordError: "",
+    confirmPasswordError: "",
+    passwordStrength: "",
+    isFormValid: false,
+  };
+},
   mounted() {
-    // Инициализация параллакс-эффекта
-    this.windowWidth = window.innerWidth;
-    this.windowHeight = window.innerHeight;
-    window.addEventListener("mousemove", this.handleMouseMove);
-    window.addEventListener("resize", this.handleResize);
-    this.animate();
-
-    // Остальная инициализация...
-  },
-  beforeDestroy() {
-    window.removeEventListener("mousemove", this.handleMouseMove);
-    window.removeEventListener("resize", this.handleResize);
-    cancelAnimationFrame(this.animationFrame);
+    this.fetchGroups(); // Загружаем группы при монтировании компонента
   },
   methods: {
-    // Методы параллакс-эффекта
-    handleMouseMove(e) {
-      this.mouseX = e.clientX;
-      this.mouseY = e.clientY;
 
-      const x = (e.clientX / this.windowWidth - 0.5) * 2;
-      const y = (e.clientY / this.windowHeight - 0.5) * 2;
-
-      const coefficient = 30;
-      this.targetX = x * coefficient;
-      this.targetY = y * coefficient;
-    },
-    handleResize() {
-      this.windowWidth = window.innerWidth;
-      this.windowHeight = window.innerHeight;
-    },
-    animate() {
-      const smoothness = 0.08;
-      this.offsetX += (this.targetX - this.offsetX) * smoothness;
-      this.offsetY += (this.targetY - this.offsetY) * smoothness;
-
-      this.animationFrame = requestAnimationFrame(this.animate);
-    },
     goBack() {
       this.$router.go(-1);
     },
 
     // Остальные методы формы
+
+     // Функция для получения списка всех групп
+     async fetchGroups() {
+      try {
+        const response = await api.get('/core/university_groups');
+        this.groups = response.data; // Сохраняем все группы
+        this.filteredGroups = this.groups; // Изначально все группы видны
+      } catch (error) {
+        console.error("Ошибка при получении групп:", error);
+      }
+    },
+
+    // Фильтрация групп по запросу
+    filterGroups() {
+      if (this.searchQuery === '') {
+        this.filteredGroups = this.groups; // Если нет запроса, показываем все группы
+      } else {
+        this.filteredGroups = this.groups.filter(group =>
+          group.name.toLowerCase().includes(this.searchQuery.toLowerCase()) // Фильтруем по имени
+        );
+      }
+    },
+
+    // Функция для выбора группы
+    selectGroup(group) {
+  this.selectedGroup = group; // Сохраняем объект выбранной группы
+  this.searchQuery = group.name; // Заполняем поле поиска названием группы
+  this.dropdownOpen = false; // Закрываем выпадающий список
+},
+
+    // Метод для открытия выпадающего списка
+    openDropdown() {
+      this.dropdownOpen = true;
+      this.fetchGroups(); // Загружаем группы, когда открываем список
+    },
+
+    // Метод для закрытия выпадающего списка
+    closeDropdown() {
+      this.dropdownOpen = false;
+    },
     toggleShowPassword() {
       this.showPassword = !this.showPassword;
     },
@@ -338,38 +331,40 @@ export default {
       this.validateForm();
     },
     validateForm() {
-      this.isFormValid =
-        this.first_name &&
-        this.last_name &&
-        this.group &&
-        this.email &&
-        !this.emailError &&
-        this.password &&
-        !this.passwordError &&
-        this.confirmPassword &&
-        !this.confirmPasswordError &&
-        this.password === this.confirmPassword;
-    },
-    async registerStudent() {
-      if (!this.isFormValid) {
-        alert("Пожалуйста, заполните все поля корректно.");
-        return;
-      }
+  this.isFormValid =
+    this.first_name &&
+    this.last_name &&
+    this.selectedGroup &&  // Проверка на выбранную группу
+    this.email &&
+    !this.emailError &&
+    this.password &&
+    !this.passwordError &&
+    this.confirmPassword &&
+    !this.confirmPasswordError &&
+    this.password === this.confirmPassword;
+},
+async registerStudent() {
+  if (!this.isFormValid) {
+    alert("Пожалуйста, заполните все поля корректно.");
+    return;
+  }
 
-      const { registerStudent } = useAuth();
+  const { registerStudent } = useAuth();
 
-      try {
-        await registerStudent({
-          first_name: this.first_name,
-          last_name: this.last_name,
-          group: this.group,
-          email: this.email,
-          password: this.password,
-        });
-      } catch (error) {
-        this.emailError = error.message;
-      }
-    },
+  try {
+    await registerStudent({
+      first_name: this.first_name,
+      last_name: this.last_name,
+      group: this.selectedGroup.id,  // Используем только ID группы
+      email: this.email,
+      password: this.password,
+    });
+     // Переход на страницу логина после успешной регистрации
+     router.push("/login");
+  } catch (error) {
+    this.emailError = error.message;
+  }
+},
   },
 };
 </script>

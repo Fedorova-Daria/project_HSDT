@@ -40,35 +40,48 @@ export function useAuth() {
     }
   };
 
-  // 👨‍🎓 Регистрация студента
   const registerStudent = async ({
     first_name,
     last_name,
-    group,
+    university,
     email,
     password,
-    role = "ST",
   }) => {
-    const data = {
-      first_name,
-      last_name,
-      group,
-      email,
-      password,
-      role,
-    };
-
     try {
-      await api.post("/users/registration/", data);
-      router.push("/login");
+      // Отправляем запрос на регистрацию
+      const response = await axios.post('http://127.0.0.1:8000/api/users/registration/', {
+        email,
+        password,
+        first_name,
+        last_name,
+        university,
+      });
+  
+      // Выводим ответ в консоль для отладки
+      console.log(response.data);
+  
+      // Проверяем успешность регистрации
+      if (response.data.success) {
+        // Извлекаем токены из ответа
+        const { access_token, refresh_token } = response.data;
+  
+        // Сохраняем токены
+        saveTokens(access_token, refresh_token);
+  
+      } else {
+        throw new Error("Ошибка при регистрации: " + (response.data.message || "Неизвестная ошибка"));
+      }
     } catch (error) {
+      // Логируем ошибку и проверяем причину
+      console.error("Ошибка при регистрации:", error);
+      
       if (error.response?.data?.email) {
         throw new Error("Пользователь с таким email уже существует");
       }
+  
       throw new Error("Ошибка при регистрации студента");
     }
   };
-
   // 🧑‍💼 Регистрация заказчика
   const registerCustomer = async ({
     first_name,

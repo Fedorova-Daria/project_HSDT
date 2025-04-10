@@ -129,6 +129,12 @@ export default {
   },
 
   methods: {
+    async goToRegisterZ(){
+      this.$router.push({ path: `/registerZ` });
+    },
+    async goToRegister(){
+      this.$router.push({ path: `/register` });
+    },
     // Метод для логина
     async asyncLogin() {
       this.clearError("email");

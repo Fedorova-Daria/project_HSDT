@@ -9,6 +9,7 @@
       <button
         class=" button mt-4 px-6 py-2 rounded-md transition-all transform hover:button:hover text-white"
         @click="openCreateModal"
+        v-if="userRole === 'ST'"
       >
       Создать команду
       </button>
@@ -31,6 +32,8 @@ import TeamCreate from "@/components/teams/TeamCreate.vue";
 import { instituteStyles } from "@/assets/instituteStyles.js";
 import TeamTable from "@/components/teams/TeamsTable.vue";
 import api from '@/api/axiosInstance.js'; // Путь к вашему axios instance
+import { getUserRoleFromCookies } from "@/api/storage.js";
+
 export default {
   inject: ["globalState"], // Подключаем глобальное состояние
   components: {
@@ -40,6 +43,7 @@ export default {
   },
   data() {
     return {
+      userRole: null, // Хранение роли пользователя
       availableTechStack: {
         "Программирование": ["Python", "Vue", "Django", "Node.js", "React"],
         "Дизайн": ["3D-моделирование", "Figma", "Photoshop"],
@@ -144,6 +148,9 @@ export default {
     selectedInstitute(newValue) {
       console.log("Глобальное состояние института обновлено:", newValue);
     },
+  },
+  created() {
+    this.userRole = getUserRoleFromCookies(); // Получаем роль при создании компонента
   },
 };
 </script>

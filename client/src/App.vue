@@ -1,12 +1,11 @@
 <script>
+import { startBackgroundTokenRefresh } from "@/api/auth.js"; // Импортируем вашу функцию обновления токенов
+
 export default {
-  methods: {
-    goToHome() {
-      this.$router.push("/");
-    },
-    goToAbout() {
-      this.$router.push("/register");
-    },
+  name: "App",
+  mounted() {
+    // Запускаем процесс фонового обновления токенов при загрузке приложения
+    startBackgroundTokenRefresh();
   },
 };
 </script>

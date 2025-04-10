@@ -4,23 +4,19 @@ import { saveTokens, getAccessToken, getRefreshToken, clearStorage } from "./sto
 // Обновление токена
 export async function refreshToken() {
   try {
-    const refreshToken = getRefreshToken();
-console.log("refresh token from cookies:", refreshToken); // 🔍 посмотри, что тут
-if (!refreshToken) throw new Error("Refresh token отсутствует");
+    const refreshToken = Cookies.get("refresh_token"); // Напрямую берём токен из Cookies
+    if (!refreshToken) {
+      throw new Error("Refresh token отсутствует");
+    }
 
-    const response = await axios.post(
-      "http://127.0.0.1:8000/api/users/token/refresh/",
-      { refresh: refreshToken }
-    );
-
+    const response = await axios.post("/api/users/token/refresh/", { refresh: refreshToken });
     const newAccessToken = response.data.access;
-    saveTokens(newAccessToken, refreshToken); // Сохраняем новый токен
 
-    console.log("Access token успешно обновлен:", newAccessToken);
+    Cookies.set("access_token", newAccessToken, { expires: 7 });
+    console.log("Токен успешно обновлён:", newAccessToken);
     return newAccessToken;
   } catch (error) {
-    console.error("Ошибка обновления токена:", error);
-    clearStorage(); // Чистим токены, чтобы избежать ошибок в будущем
+    console.error("Ошибка обновления токена:", error.response?.data || error.message);
     return null;
   }
 }
@@ -57,4 +53,24 @@ export async function fetchAccessToken() {
   }
 
   return access_token; // Возвращаем актуальный access_token
+}
+
+let intervalId;
+
+export function startBackgroundTokenRefresh() {
+  intervalId = setInterval(async () => {
+    const newAccessToken = await refreshToken();
+    if (newAccessToken) {
+      console.log("Токен обновлён на фоне:", newAccessToken);
+    } else {
+      console.error("Не удалось обновить токен, требуется повторная авторизация.");
+    }
+  }, 5 * 60 * 1000); // Проверяем каждые 5 минут
+}
+
+export function stopBackgroundTokenRefresh() {
+  if (intervalId) {
+    clearInterval(intervalId);
+    console.log("Фоновое обновление токенов остановлено.");
+  }
 }

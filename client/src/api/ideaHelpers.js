@@ -17,7 +17,7 @@ export async function fetchOwnerName(target, ownerId) {
   }
 }
 
-// Обновление лайка
+// Обновление лайка с учётом роли эксперта
 export async function toggleLike(
   idea,
   event,
@@ -40,9 +40,15 @@ export async function toggleLike(
       }
     }
 
+    // Получение роли пользователя из Cookies
+    const userData = JSON.parse(Cookies.get("userData")) || {};
+    const isExpert = userData.role === "expert"; // Проверяем, является ли пользователь экспертом
+
     const response = await axios.post(
       `http://localhost:8000/api/projects/${idea.id}/like/`,
-      {},
+      {
+        expert_voted: isExpert, // Передаём статус голосования эксперта
+      },
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -58,6 +64,12 @@ export async function toggleLike(
       idea.likes.push(getUserId());
     }
     idea.likes_count = response.data.likes_count;
+
+    // Если пользователь является экспертом, обновляем дополнительные данные
+    if (isExpert) {
+      idea.experts_voted_count = response.data.experts_voted_count;
+      idea.approved = response.data.approved;
+    }
   } catch (error) {
     console.error("Ошибка при обновлении лайка:", error);
 

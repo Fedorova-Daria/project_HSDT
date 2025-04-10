@@ -134,7 +134,7 @@ export default {
       } else if (this.activeFilter === "favorites") {
         this.filteredItems = this.items.filter(idea => idea.likes.includes(this.userData.id));
       } else if (this.activeFilter === "drafts") {
-        this.filteredItems = this.items.filter(idea => idea.status === 'draft');
+        this.filteredItems = this.items.filter(idea => idea.status === 'draft' && idea.owner === this.userData.id);
       }
     },
     async fetchIdeas() {
