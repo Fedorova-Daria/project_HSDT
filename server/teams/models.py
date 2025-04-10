@@ -31,6 +31,7 @@ class TeamJoinRequest(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="team_join_requests")
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="join_requests")
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    message = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -8,7 +8,9 @@ from .views import (
     join_team,
     accept_request,
     deny_request,
-    leave_team
+    leave_team,
+    TeamJoinRequestListView,
+    TeamJoinRequestDetailView
 )
 
 urlpatterns = [
@@ -20,4 +22,6 @@ urlpatterns = [
     path('<int:team_id>/accept/<int:request_id>', accept_request),
     path('<int:team_id>/deny/<int:request_id>', deny_request),
     path('<int:team_id>/leave', leave_team),
+    path('join_requests', TeamJoinRequestListView.as_view(), name='requests-list'),
+    path('join_requests/<int:id>', TeamJoinRequestListView.as_view(), name='requests-list'),
 ]

@@ -1,12 +1,24 @@
 from rest_framework import generics, permissions
 from .models import Team
-from .serializers import TeamDetailSerializer, TeamEditSerializer
+from .serializers import TeamDetailSerializer, TeamEditSerializer, TeamJoinRequestSerializer
 from users.models import Account
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Team, TeamJoinRequest
+
+
+class TeamJoinRequestListView(generics.ListAPIView):
+    queryset = TeamJoinRequest.objects.all()
+    serializer_class = TeamJoinRequestSerializer
+
+
+class TeamJoinRequestDetailView(generics.ListAPIView):
+    queryset = TeamJoinRequest.objects.all()
+    serializer_class = TeamJoinRequestSerializer
+    lookup_field = 'id'
+
 
 class TeamListView(generics.ListAPIView):
     """Список всех команд"""

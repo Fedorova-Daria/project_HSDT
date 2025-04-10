@@ -1,7 +1,6 @@
 from rest_framework import serializers
-from .models import Team
+from .models import Team, TeamJoinRequest
 from users.models import Account
-from projects.models import Project
 
 
 class TeamMemberSerializer(serializers.ModelSerializer):
@@ -24,3 +23,10 @@ class TeamEditSerializer(serializers.ModelSerializer):
     class Meta:
         model = Team
         fields = ('name', 'description', 'avatar', 'owner')
+
+
+class TeamJoinRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TeamJoinRequest
+        fields = "__all__"
+
