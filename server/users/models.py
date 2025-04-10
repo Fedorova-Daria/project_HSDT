@@ -3,6 +3,7 @@ from django.db import models
 from core.models import Technology, UniversityGroup
 from .managers import AccountManager
 from django.contrib.auth import get_user_model
+from django.conf import settings
 
 
 class Account(AbstractUser):

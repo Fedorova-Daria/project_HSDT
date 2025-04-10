@@ -2,7 +2,11 @@ from rest_framework import generics, permissions
 from .models import Team
 from .serializers import TeamDetailSerializer, TeamEditSerializer
 from users.models import Account
-
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Team, TeamJoinRequest
 
 class TeamListView(generics.ListAPIView):
     """Список всех команд"""
@@ -68,3 +72,78 @@ class TeamMembersView(generics.GenericAPIView):
         user_id = request.data.get('user_id')
         # Добавьте логику удаления участника
         return Response({'status': 'success'})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def join_team(request, team_id):
+    user = request.user
+
+    if user.teams.exists():
+        return Response({"detail": "Вы уже состоите в команде."}, status=400)
+
+    try:
+        team = Team.objects.get(id=team_id)
+    except Team.DoesNotExist:
+        return Response({"detail": "Команда не найдена."}, status=404)
+
+    if TeamJoinRequest.objects.filter(user=user, team=team).exists():
+        return Response({"detail": "Вы уже отправили заявку."}, status=400)
+
+    TeamJoinRequest.objects.create(user=user, team=team)
+    return Response({"detail": "Заявка отправлена."}, status=201)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def accept_request(request, team_id, request_id):
+    user = request.user
+
+    try:
+        team = Team.objects.get(id=team_id)
+        join_request = TeamJoinRequest.objects.get(id=request_id, team=team)
+    except (Team.DoesNotExist, TeamJoinRequest.DoesNotExist):
+        return Response({"detail": "Команда или заявка не найдена."}, status=404)
+
+    if team.owner != user:
+        return Response({"detail": "Вы не владелец команды."}, status=403)
+
+    join_request.status = 'accepted'
+    join_request.save()
+    team.members.add(join_request.user)
+
+    return Response({"detail": "Заявка принята."})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def deny_request(request, team_id, request_id):
+    user = request.user
+
+    try:
+        team = Team.objects.get(id=team_id)
+        join_request = TeamJoinRequest.objects.get(id=request_id, team=team)
+    except (Team.DoesNotExist, TeamJoinRequest.DoesNotExist):
+        return Response({"detail": "Команда или заявка не найдена."}, status=404)
+
+    if team.owner != user:
+        return Response({"detail": "Вы не владелец команды."}, status=403)
+
+    join_request.status = 'declined'
+    join_request.save()
+
+    return Response({"detail": "Заявка отклонена."})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def leave_team(request, team_id):
+    user = request.user
+
+    try:
+        team = Team.objects.get(id=team_id)
+    except Team.DoesNotExist:
+        return Response({"detail": "Команда не найдена."}, status=404)
+
+    if user not in team.members.all():
+        return Response({"detail": "Вы не состоите в команде."}, status=400)
+
+    team.members.remove(user)
+    return Response({"detail": "Вы покинули команду."})
+

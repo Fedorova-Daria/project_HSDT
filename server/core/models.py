@@ -2,16 +2,36 @@ from django.db import models
 
 
 # Модель данных для списка технологий
+from django.db import models
+
 class Technology(models.Model):
-    name = models.CharField(max_length=255, unique=True)    # Создаём уникальное текстовое поле на 255 символов
+    class TechCategory(models.TextChoices):
+        PROGRAMMING = 'programming', 'Программирование'
+        DESIGN = 'design', 'Дизайн'
+        # можно добавить другие категории позже:
+        # MANAGEMENT = 'management', 'Менеджмент'
+        # MARKETING = 'marketing', 'Маркетинг'
+        # и т.д.
+
+    type = models.CharField(
+        max_length=50,
+        choices=TechCategory.choices,
+        default=TechCategory.PROGRAMMING,  # можно изменить дефолтное значение
+        verbose_name="Раздел"
+    )
+    name = models.CharField(
+        max_length=255,
+        unique=True,
+        verbose_name="Название"
+    )
 
     def __str__(self):
         return self.name
 
-    # Залезаем в класс "метаданных", который мы унаследовали из Model
     class Meta:
         verbose_name = "Технология"
         verbose_name_plural = "Технологии"
+
 
 
 class UniversityGroup(models.Model):
