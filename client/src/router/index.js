@@ -10,12 +10,12 @@ import TeamDetails from "@/components/teams/TeamDetails.vue";
 import Ideas from "@/components/projects/Ideas.vue";
 import IdeaDetail from "@/components/projects/IdeaDetail.vue";
 import AboutTYIU from "../components/university/AboutTYIU.vue"; // Страница About только для TYIU
-
+import Cookies from "js-cookie";
 const routes = [
   {
     path: "/",
     redirect: () => {
-      const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+      const userData = JSON.parse(Cookies.get("userData") || "{}");
       return userData.institute ? `/${userData.institute}/rialto` : "/login";
     },
   },
@@ -37,9 +37,10 @@ const routes = [
     component: Teams,
   },
   {
-    path: "/:institute/team/:name",
+    path: "/:institute/team/:teamId",
     name: "teamDetails",
     component: TeamDetails,
+    props: true // Это позволяет передавать параметры как props в компонент
   },
   {
     path: "/:institute/ideas/",

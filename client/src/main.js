@@ -2,8 +2,7 @@ import "./assets/main.css";
 import { createApp, reactive } from "vue";
 import App from "./App.vue";
 import router from "./router";
-import store from './store';
-import { getAccessToken, getUserData } from "@/utils/storage.js"; // Импортируем нужные функции
+import { getAccessToken, getUserData } from "@/api/storage.js"; // Импортируем нужные функции
 
 const app = createApp(App);
 
@@ -16,7 +15,6 @@ const globalState = reactive({
 app.provide("globalState", globalState);
 
 // Подключаем Vuex и роутер
-app.use(store);
 app.use(router);
 
 // Монтируем приложение

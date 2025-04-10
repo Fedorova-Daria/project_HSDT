@@ -187,7 +187,7 @@
 
 <script>
 import axios from "axios";
-import { fetchAccessToken } from "@/utils/auth.js"; // Импортируем утилиту для получения актуального токена
+import { fetchAccessToken } from "@/api/auth.js"; // Импортируем утилиту для получения актуального токена
 
 export default {
   data() {

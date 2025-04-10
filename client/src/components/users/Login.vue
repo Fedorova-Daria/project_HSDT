@@ -72,7 +72,7 @@
           </div>
 
           <button
-            @click="login"
+            @click="asyncLogin"
             class="bg-purple-500 text-white font-medium w-90 p-2 rounded-lg hover:bg-purple-600 duration-500"
           >
             Войти
@@ -104,11 +104,8 @@
 </template>
 
 <script>
-import axios from "axios";
-import { getUserData, getAccessToken, clearStorage, saveTokens, saveUserData, updateInstitute } from "@/utils/storage.js";
-const API_BASE_URL = "http://127.0.0.1:8000/api";
-const LOGIN_URL = `${API_BASE_URL}/users/login/`;
-const USER_DATA_URL = `${API_BASE_URL}/users/me/`;
+import { useAuth } from "@/composables/useAuth"; // Импортируем useAuth
+import Cookies from 'js-cookie';
 
 export default {
   data() {
@@ -132,55 +129,74 @@ export default {
   },
 
   methods: {
-    initParallax() {
-      this.windowWidth = window.innerWidth;
-      this.windowHeight = window.innerHeight;
-      window.addEventListener("mousemove", this.handleMouseMove);
-      window.addEventListener("resize", this.handleResize);
-      this.animate();
-    },
-    handleMouseMove(e) {
-      this.mouseX = e.clientX;
-      this.mouseY = e.clientY;
-      const x = (e.clientX / this.windowWidth - 0.5) * 2;
-      const y = (e.clientY / this.windowHeight - 0.5) * 2;
-      const coefficient = 30;
-      this.targetX = x * coefficient;
-      this.targetY = y * coefficient;
-    },
-    handleResize() {
-      this.windowWidth = window.innerWidth;
-      this.windowHeight = window.innerHeight;
-    },
-    animate() {
-      const smoothness = 0.08;
-      this.offsetX += (this.targetX - this.offsetX) * smoothness;
-      this.offsetY += (this.targetY - this.offsetY) * smoothness;
-      this.animationFrame = requestAnimationFrame(this.animate);
-    },
-    cleanupParallax() {
-      window.removeEventListener("mousemove", this.handleMouseMove);
-      window.removeEventListener("resize", this.handleResize);
-      if (this.animationFrame) {
-        cancelAnimationFrame(this.animationFrame);
+    // Метод для логина
+    async asyncLogin() {
+      this.clearError("email");
+      this.clearError("password");
+
+      if (!this.validateForm()) return;
+
+      try {
+        // Вызов логина
+        const userData = await this.login(this.email, this.password);
+        // Проверка авторизации после получения userData
+        const isAuthenticated = this.checkAuth();
+        if (!isAuthenticated) {
+          throw new Error("Ошибка авторизации, токены не найдены");
+        }
+
+        // Логика для редиректа
+        let redirectPath = '';
+          redirectPath = `/TYIU/about`;  // Для института TYIU перенаправляем на /TYIU/about
+
+        // Перенаправляем пользователя
+        this.$router.push(redirectPath);
+
+      } catch (error) {
+        this.handleError(error);
       }
     },
 
-    clearErrors() {
-      this.emailError = "";
-      this.passwordError = "";
-    },
+    // Логика входа через useAuth
+    async login(email, password) {
+      const { login } = useAuth(); // Извлекаем login из useAuth
 
-    checkToken() {
-      const accessToken = getAccessToken();
-      const selectedInstitute = updateInstitute() || "TYIU";
+      try {
+        const userData = await login(email, password);
 
-      if (accessToken) {
-        this.isLoggedIn = true;
-        this.$router.push(`/${selectedInstitute}/rialto`);
+        // Сохраняем токены в cookies
+        Cookies.set('access_token', userData.access);
+        Cookies.set('refresh_token', userData.refresh);
+
+        // Сохраняем информацию о пользователе в localStorage
+        const user = {
+          first_name: userData.first_name,
+          last_name: userData.last_name,
+          email: userData.email,
+          role: userData.role,
+          institute: userData.institute || "TYIU",
+        };
+        localStorage.setItem("userData", JSON.stringify(user));
+
+        return userData; // Возвращаем данные пользователя
+
+      } catch (error) {
+        throw error; // Обработка ошибок
       }
     },
 
+    // Проверка авторизации
+    checkAuth() {
+      const accessToken = Cookies.get('access_token');
+      const refreshToken = Cookies.get('refresh_token');
+      if (!accessToken || !refreshToken) {
+        console.error("Пользователь не авторизован");
+        return false;  // Токены не найдены, значит пользователь не авторизован
+      }
+      return true;  // Токены есть, авторизация прошла
+    },
+
+    // Валидация формы
     validateForm() {
       let isValid = true;
       if (!this.email) {
@@ -197,94 +213,73 @@ export default {
       return isValid;
     },
 
+    // Валидация email
     validateEmail(email) {
       const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return re.test(email);
     },
 
-    async login() {
-      this.clearErrors();
-      if (!this.validateForm()) return;
-
-      try {
-        clearStorage();
-        const tokens = await this.authenticateUser(this.email, this.password);
-        await this.fetchAndSaveUserData(tokens.access_token);
-        this.redirectToHome();
-      } catch (error) {
-        this.handleError(error);
-      }
+    // Очистка ошибки
+    clearError(field) {
+      if (field === "email") this.emailError = "";
+      if (field === "password") this.passwordError = "";
     },
 
-    async authenticateUser(email, password) {
-      try {
-        const response = await axios.post(LOGIN_URL, { email, password });
-        if (!response.data.access_token || !response.data.refresh_token) {
-          throw new Error("Токены не получены");
-        }
-        saveTokens(response.data.access_token, response.data.refresh_token);
-        return response.data;
-      } catch (error) {
-        console.error("Ошибка при аутентификации:", error.response || error);
-        throw error;
-      }
-    },
-
-    async fetchAndSaveUserData(accessToken) {
-      try {
-        const userData = await this.fetchUserData(accessToken);
-        saveUserData(userData);
-      } catch (error) {
-        console.error("Ошибка при получении данных пользователя:", error);
-        throw error;
-      }
-    },
-
-    async fetchUserData(accessToken) {
-      const response = await axios.get(USER_DATA_URL, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-      });
-      return response.data;
-    },
-
+    // Обработка ошибок
     handleError(error) {
-      if (error.response) {
-        switch (error.response.data?.message) {
-          case "Invalid credentials":
-            this.passwordError = "Неверный email или пароль";
-            break;
-          case "Email not found":
-            this.emailError = "Данная почта не зарегистрирована";
-            break;
-          default:
-            this.passwordError = error.response.data.message || "Ошибка при входе";
+      if (error.response?.data?.message) {
+        const msg = error.response.data.message;
+        if (msg === "Invalid credentials") {
+          this.passwordError = "Неверный email или пароль";
+        } else if (msg === "Email not found") {
+          this.emailError = "Почта не найдена";
+        } else {
+          this.passwordError = msg;
         }
-      } else if (error.request) {
-        this.passwordError = "Ошибка соединения с сервером";
       } else {
-        this.passwordError = "Произошла непредвиденная ошибка";
+        this.passwordError = "Ошибка при входе, попробуйте позже";
       }
     },
 
-    redirectToHome() {
-      const institute = getInstitute() || "TYIU";
-      this.$router.push(`/${institute}/rialto`);
+    // Параллакс-эффект
+    initParallax() {
+      window.addEventListener("mousemove", this.handleMouseMove);
+      window.addEventListener("resize", this.handleResize);
+      this.animate();
     },
 
-    goToRegister() {
-      this.$router.push("/register");
+    handleMouseMove(e) {
+      this.mouseX = e.clientX;
+      this.mouseY = e.clientY;
+      const x = (e.clientX / this.windowWidth - 0.5) * 2;
+      const y = (e.clientY / this.windowHeight - 0.5) * 2;
+      const coefficient = 30;
+      this.targetX = x * coefficient;
+      this.targetY = y * coefficient;
     },
 
-    goToRegisterZ() {
-      this.$router.push("/registerZ");
+    handleResize() {
+      this.windowWidth = window.innerWidth;
+      this.windowHeight = window.innerHeight;
+    },
+
+    animate() {
+      const smoothness = 0.08;
+      this.offsetX += (this.targetX - this.offsetX) * smoothness;
+      this.offsetY += (this.targetY - this.offsetY) * smoothness;
+      this.animationFrame = requestAnimationFrame(this.animate);
+    },
+
+    cleanupParallax() {
+      window.removeEventListener("mousemove", this.handleMouseMove);
+      window.removeEventListener("resize", this.handleResize);
+      if (this.animationFrame) {
+        cancelAnimationFrame(this.animationFrame);
+      }
     },
   },
 
   mounted() {
-    this.checkToken();
     this.initParallax();
   },
 

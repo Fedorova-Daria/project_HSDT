@@ -195,7 +195,7 @@
             </div>
 
             <button
-              @click="registerUser"
+              @click="registerStudent"
               :disabled="!isFormValid"
               class="bg-purple-500 mt-4 text-white font-medium w-90 h-12 p-2 rounded-lg hover:bg-purple-600 duration-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
@@ -209,15 +209,14 @@
 </template>
 
 <script>
-import axios from "axios";
-import Cookies from "js-cookie";
+import { useAuth } from "@/composables/useAuth";
 
 export default {
   data() {
     return {
       first_name: "",
       last_name: "",
-      Company: "",
+      group: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -293,13 +292,11 @@ export default {
     },
     validateEmail() {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!this.email) {
-        this.emailError = "Поле email обязательно";
-      } else if (!emailRegex.test(this.email)) {
-        this.emailError = "Введите корректный email";
-      } else {
-        this.emailError = "";
-      }
+      this.emailError = !this.email
+        ? "Поле email обязательно"
+        : !emailRegex.test(this.email)
+        ? "Введите корректный email"
+        : "";
       this.validateForm();
     },
     validatePassword() {
@@ -326,32 +323,25 @@ export default {
       if (hasNumbers) strength++;
       if (hasSpecialChars) strength++;
 
-      if (strength < 2) {
-        this.passwordStrength = "weak";
-      } else if (strength < 4) {
-        this.passwordStrength = "medium";
-      } else {
-        this.passwordStrength = "strong";
-      }
+      this.passwordStrength =
+        strength < 2 ? "weak" : strength < 4 ? "medium" : "strong";
 
       this.passwordError = "";
       this.validateForm();
     },
     validateConfirmPassword() {
-      if (!this.confirmPassword) {
-        this.confirmPasswordError = "Подтвердите пароль";
-      } else if (this.password !== this.confirmPassword) {
-        this.confirmPasswordError = "Пароли не совпадают";
-      } else {
-        this.confirmPasswordError = "";
-      }
+      this.confirmPasswordError = !this.confirmPassword
+        ? "Подтвердите пароль"
+        : this.password !== this.confirmPassword
+        ? "Пароли не совпадают"
+        : "";
       this.validateForm();
     },
     validateForm() {
       this.isFormValid =
         this.first_name &&
         this.last_name &&
-        this.Company &&
+        this.group &&
         this.email &&
         !this.emailError &&
         this.password &&
@@ -360,46 +350,24 @@ export default {
         !this.confirmPasswordError &&
         this.password === this.confirmPassword;
     },
-    async registerUser() {
+    async registerStudent() {
       if (!this.isFormValid) {
         alert("Пожалуйста, заполните все поля корректно.");
         return;
       }
 
-      const data = {
-        first_name: this.first_name,
-        last_name: this.last_name,
-        company: this.Company,
-        email: this.email,
-        password: this.password,
-        role: this.role,
-      };
+      const { registerStudent } = useAuth();
 
       try {
-        const response = await axios.post(
-          "http://127.0.0.1:8000/api/users/registration/",
-          data
-        );
-
-        if (response.status === 201) {
-          const userData = {
-            first_name: this.first_name,
-            last_name: this.last_name,
-            company: this.Company,
-            email: this.email,
-            role: this.role,
-          };
-
-          Cookies.set("userData", JSON.stringify(userData));
-          this.$router.push("/login");
-        }
+        await registerStudent({
+          first_name: this.first_name,
+          last_name: this.last_name,
+          group: this.group,
+          email: this.email,
+          password: this.password,
+        });
       } catch (error) {
-        console.error("Ошибка при отправке данных:", error);
-        if (error.response?.data?.email) {
-          this.emailError = "Пользователь с таким email уже существует";
-        } else {
-          alert("Ошибка при регистрации. Проверьте введённые данные.");
-        }
+        this.emailError = error.message;
       }
     },
   },

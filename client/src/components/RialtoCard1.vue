@@ -34,7 +34,7 @@
 </template>
 
 <script>
-import { fetchOwnerName, toggleLike } from "@/utils/ideaHelpers.js";
+import { fetchOwnerName, toggleLike } from "@/api/ideaHelpers.js";
 import Cookies from "js-cookie";
 
 export default {

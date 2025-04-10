@@ -1,19 +1,19 @@
 import axios from "axios";
-import { fetchAccessToken } from "@/utils/auth.js";
+import { fetchAccessToken } from "@/api/auth.js";
 import Cookies from "js-cookie";
 // Получение имени инициатора
-export async function fetchOwnerName(idea, ownerId) {
+export async function fetchOwnerName(target, ownerId) {
   try {
     const response = await axios.get(`http://localhost:8000/api/users/${ownerId}/`);
     // Проверяем данные пользователя, и если они есть, формируем имя
     if (response.data.first_name && response.data.last_name) {
-      idea.initiator = `${response.data.first_name} ${response.data.last_name}`;
+      target.initiator = `${response.data.first_name} ${response.data.last_name}`;
     } else {
-      idea.initiator = "Неизвестный автор";
+      target.initiator = "Неизвестный автор";
     }
   } catch (error) {
     console.error("Ошибка при загрузке инициатора:", error);
-    idea.initiator = "Неизвестный автор"; // Если не удается получить данные
+    target.initiator = "Неизвестный автор"; // Если не удается получить данные
   }
 }
 

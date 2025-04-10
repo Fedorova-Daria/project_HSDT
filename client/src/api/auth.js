@@ -5,7 +5,8 @@ import { saveTokens, getAccessToken, getRefreshToken, clearStorage } from "./sto
 export async function refreshToken() {
   try {
     const refreshToken = getRefreshToken();
-    if (!refreshToken) throw new Error("Refresh token отсутствует");
+console.log("refresh token from cookies:", refreshToken); // 🔍 посмотри, что тут
+if (!refreshToken) throw new Error("Refresh token отсутствует");
 
     const response = await axios.post(
       "http://127.0.0.1:8000/api/users/token/refresh/",
@@ -26,31 +27,34 @@ export async function refreshToken() {
 
 // Получаем актуальный access-токен
 export async function fetchAccessToken() {
-  let token = getAccessToken();
+  let access_token = getAccessToken();
 
-  if (!token) {
+  if (!access_token) {
     console.warn("Access token отсутствует. Пытаемся обновить...");
-    token = await refreshToken(); // Обновляем токен
-    if (!token) {
+    access_token = await refreshToken(); // Обновляем токен
+    if (!access_token) {
       console.error("Обновление токена не удалось. Требуется авторизация.");
-      return null; // Возвращаем null, если обновление токена не удалось
+      return null;
     }
   }
 
   try {
-    // Проверяем истечение токена
-    const tokenPayload = JSON.parse(atob(token.split(".")[1]));
-    const tokenExp = tokenPayload.exp; // Время истечения токена
+    // ⛔ Проверка валидности структуры токена
+    const parts = access_token.split("."); // Теперь используется access_token
+    if (parts.length !== 3) throw new Error("Невалидный формат JWT токена");
+
+    const tokenPayload = JSON.parse(atob(parts[1]));
+    const tokenExp = tokenPayload.exp;
     const currentTime = Math.floor(Date.now() / 1000);
 
     if (currentTime >= tokenExp) {
       console.log("Access token истёк. Обновляем...");
-      token = await refreshToken(); // Попытка обновить токен
+      access_token = await refreshToken(); // Используем access_token, а не token
     }
   } catch (error) {
     console.error("Ошибка обработки токена:", error);
     return null;
   }
 
-  return token; // Возвращаем актуальный или обновлённый токен
+  return access_token; // Возвращаем актуальный access_token
 }

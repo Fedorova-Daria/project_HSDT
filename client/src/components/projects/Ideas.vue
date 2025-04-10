@@ -1,15 +1,7 @@
 <template>
   <div class="relative min-h-screen overflow-hidden">
     <!-- Размытый фон с параллакс-эффектом -->
-    <img
-      ref="backgroundImage"
-      class="absolute top-0 left-0 h-full w-full object-cover filter blur-md transform-gpu scale-105 -z-10"
-      src="/bgg.jpg"
-      :style="{
-        transform: `translate(${offsetX}px, ${offsetY}px) scale(1.05)`,
-        transition: 'transform 0.5s cubic-bezier(0.13, 0.62, 0.23, 0.99)',
-      }"
-    />
+    <ParallaxBackground />
 
     <!-- Затемнение фона (увеличена прозрачность) -->
     <div class="absolute inset-0 bg-black opacity-50 -z-10"></div>
@@ -84,15 +76,16 @@
 <script>
 import IdeasTable from "@/components/projects/IdeasTable.vue";
 import Header from "@/components/header.vue";
-import IdeaModal from "@/components/projects/IdeaModal.vue"; // Импортируем модальное окно
-import { fetchOwnerName, toggleLike } from "@/utils/ideaHelpers.js";
-import api from "@/utils/axiosInstance.js";
+import IdeaModal from "@/components/projects/IdeaModal.vue";
+import { fetchOwnerName, toggleLike } from "@/api/ideaHelpers.js";
+import api from "@/api/axiosInstance.js";
 import { instituteStyles } from "@/assets/instituteStyles.js";
 import Cookies from "js-cookie";
+import ParallaxBackground from "@/components/ParallaxBackground.vue";
 
 export default {
   inject: ["globalState"], // Подключаем глобальное состояние
-  components: { IdeaModal, Header, IdeasTable },
+  components: { IdeaModal, Header, IdeasTable, ParallaxBackground },
   data() {
     return {
       userData: {}, // Изначально пустой объект
@@ -108,16 +101,6 @@ export default {
       activeFilter: "all", // Начальный фильтр
       isModalOpen: false,
       likedItems: {}, // Объект для хранения лайков по каждому элементу
-      // Данные для параллакс-эффекта
-      offsetX: 0,
-      offsetY: 0,
-      targetX: 0,
-      targetY: 0,
-      mouseX: 0,
-      mouseY: 0,
-      windowWidth: 0,
-      windowHeight: 0,
-      animationFrame: null,
     };
   },
   computed: {
@@ -197,50 +180,6 @@ export default {
     closeModal() {
       this.isModalOpen = false;
     },
-    // Инициализация параллакс-эффекта
-    initParallax() {
-      this.windowWidth = window.innerWidth;
-      this.windowHeight = window.innerHeight;
-      window.addEventListener("mousemove", this.handleMouseMove);
-      window.addEventListener("resize", this.handleResize);
-      this.animate();
-    },
-
-    handleMouseMove(e) {
-      this.mouseX = e.clientX;
-      this.mouseY = e.clientY;
-
-      // Вычисляем смещение относительно центра экрана (от -1 до 1)
-      const x = (e.clientX / this.windowWidth - 0.5) * 2;
-      const y = (e.clientY / this.windowHeight - 0.5) * 2;
-
-      // Устанавливаем целевые координаты с коэффициентом
-      const coefficient = 30;
-      this.targetX = x * coefficient;
-      this.targetY = y * coefficient;
-    },
-
-    handleResize() {
-      this.windowWidth = window.innerWidth;
-      this.windowHeight = window.innerHeight;
-    },
-
-    animate() {
-      // Интерполяция с коэффициентом плавности
-      const smoothness = 0.08;
-      this.offsetX += (this.targetX - this.offsetX) * smoothness;
-      this.offsetY += (this.targetY - this.offsetY) * smoothness;
-
-      this.animationFrame = requestAnimationFrame(this.animate);
-    },
-
-    cleanupParallax() {
-      window.removeEventListener("mousemove", this.handleMouseMove);
-      window.removeEventListener("resize", this.handleResize);
-      if (this.animationFrame) {
-        cancelAnimationFrame(this.animationFrame);
-      }
-    },
   },
   mounted() {
     this.fetchIdeas(); // Загружаем идеи при монтировании
@@ -258,10 +197,6 @@ export default {
     console.warn("User data not found in cookies.");
     this.userData = {}; // Если данных нет, устанавливаем пустой объект
   }
-  },
-
-  beforeDestroy() {
-    this.cleanupParallax();
   },
 };
 </script>
