@@ -3,14 +3,23 @@
     <header class="flex items-center justify-between px-8 py-4 border border-border">
       <!-- Логотип слева -->
       <div class="flex items-center">
-  <h1 :style="{ color: instituteStyle?.textColor }" class="font-display text-3xl">
-    <select @change="changeInstitute" v-model="selectedInstitute">
-      <option v-for="inst in institutes" :key="inst" :value="inst">
-        {{ inst }}
-      </option>
-    </select>
-  </h1>
-</div>
+        <h1 :style="{ color: instituteStyle?.textColor }" class="font-display text-3xl">
+          <div class="relative">
+            <button @click="toggleDropdown" class="flex items-center px-4 py-2 rounded-lg">
+              {{ selectedInstitute }}
+              <svg xmlns="http://www.w3.org/2000/svg" class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <ul v-if="isDropdownOpen" class="absolute left-0 w-50 mt-2 bg-card text-white rounded-lg shadow-lg z-10">
+              <li v-for="inst in institutes" :key="inst" @click="changeInstitute(inst)" class="py-2 px-4 cursor-pointer hover:bg-zinc-600 rounded-lg">
+                {{ inst }}
+              </li>
+            </ul>
+          </div>
+        </h1>
+      </div>
+
 
       <!-- Навигация -->
       <nav class="flex items-center gap-10">
@@ -80,9 +89,9 @@ export default {
   name: "Header",
   inject: ["globalState"], 
   components: { Notifications },
-  name: "Header",
   data() {
     return {
+      isDropdownOpen: false,
       localSelectedInstitute: Cookies.get("institute") || "TYIU",
       showNotifications: false,
       notifications: [],
@@ -137,6 +146,9 @@ export default {
 },
   },
   methods: {
+    toggleDropdown() {
+      this.isDropdownOpen = !this.isDropdownOpen;
+    },
     checkInstitute() {
       const userData = JSON.parse(Cookies.get("userData") || "{}");
   const institute = userData.institute || "TYIU"; // Получаем институт, если он указан, иначе используем TYIU
@@ -145,32 +157,21 @@ export default {
     this.$router.push("/TYIU/about"); // Перенаправление на страницу TYIU/about
   }
 },
-changeInstitute(event) {
-  const newInstituteRus = event.target.value;
-  const newInstituteLat = this.instituteMap[newInstituteRus];
-
-  if (!newInstituteLat) {
-    console.error(`Ошибка: Латинское название для "${newInstituteRus}" не найдено.`);
-    return;
-  }
-
-  // Синхронизируем глобальное состояние
-  this.globalState.institute = newInstituteLat; // Обновляем глобальное состояние
-
-  // Сохраняем локальное состояние
-  this.localSelectedInstitute = newInstituteLat; 
-
-  // Сохраняем в localStorage
-  let userData = JSON.parse(Cookies.get("userData") || "{}");
-  userData.institute = newInstituteLat;
-  Cookies.set("userData", JSON.stringify(userData));
-
-  console.log("Глобальное состояние обновлено:", this.globalState.institute);
-
-  // Перенаправляем пользователя
-  const routePath = newInstituteLat === "TYIU" ? "/TYIU/about" : `/${newInstituteLat}/rialto`;
-  this.$router.push(routePath);
-},
+changeInstitute(inst) {
+      const newInstituteLat = this.instituteMap[inst] || inst;
+      if (!newInstituteLat) {
+        console.error(`Ошибка: Латинское название для "${inst}" не найдено.`);
+        return;
+      }
+      this.localSelectedInstitute = newInstituteLat;
+      this.globalState.institute = newInstituteLat;
+      let userData = JSON.parse(Cookies.get("userData") || "{}");
+      userData.institute = newInstituteLat;
+      Cookies.set("userData", JSON.stringify(userData));
+      const routePath = newInstituteLat === "TYIU" ? "/TYIU/about" : `/${newInstituteLat}/rialto`;
+      this.$router.push(routePath);
+      this.isDropdownOpen = false;
+    },
 updateInstituteFromRoute() {
   const instituteFromRoute = this.$route.params.institute;
   const institute = this.reverseInstituteMap[instituteFromRoute] || instituteFromRoute;

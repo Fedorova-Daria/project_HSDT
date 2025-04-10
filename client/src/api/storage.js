@@ -91,7 +91,7 @@ export function saveUserData(userData) {
 }
 
 export function saveTokens(accessToken, refreshToken) {
-  Cookies.set('access_token', accessToken, { expires: 1 }); // Токен хранится 1 день
+  Cookies.set('access_token', accessToken, { expires: 7 }); // Токен хранится 1 день
   Cookies.set('refresh_token', refreshToken, { expires: 7 }); // refresh токен хранится 7 дней
 }
 
