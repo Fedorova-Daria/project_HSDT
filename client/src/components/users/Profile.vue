@@ -543,7 +543,7 @@
 
 <script>
 import Header from "@/components/header.vue";
-import { saveUserData, getUserData } from "@/utils/storage.js";
+import { saveUserData, getUserData } from "@/api/storage.js";
 
 export default {
   components: { Header },

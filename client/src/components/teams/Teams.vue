@@ -31,8 +31,8 @@ import TeamCreate from "@/components/teams/TeamCreate.vue";
 import { instituteStyles } from "@/assets/instituteStyles.js";
 import TeamTable from "@/components/teams/TeamsTable.vue";
 import Cookies from "js-cookie";
-import { refreshToken } from "@/utils/auth.js";
-import api from '@/utils/axiosInstance.js'; // Путь к вашему axios instance
+import { refreshToken } from "@/api/auth.js";
+import api from '@/api/axiosInstance.js'; // Путь к вашему axios instance
 export default {
   inject: ["globalState"], // Подключаем глобальное состояние
   components: {

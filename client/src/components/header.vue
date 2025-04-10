@@ -195,7 +195,7 @@ created() {
   const userData = JSON.parse(Cookies.get("userData") || "{}");
   const institute = userData.institute || "TYIU";
 
-  console.log("Институт из localStorage:", institute);
+  console.log("Институт из Cookies:", institute);
 
   // Синхронизируем глобальное состояние
   this.globalState.institute = institute;

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { fetchAccessToken } from "@/utils/auth.js";
+import { fetchAccessToken } from "@/api/auth.js";
 import Cookies from "js-cookie";
 // Получение имени инициатора
 export async function fetchOwnerName(target, ownerId) {
