@@ -20,14 +20,16 @@
     <p class="text-gray-300 mb-3 truncate-text">
   {{ idea.description || "Описание отсутствует" }}
 </p>
-
+<p class="text-gray-300 truncate-text">
+  {{ idea.status }}
+</p>
     <div class="mt-auto">
       <h3 class="text-xl text-white mb-3">
         Инициатор: {{ idea.initiator || "Неизвестный автор" }}
       </h3>
     </div>
 
-    <div v-if="userRole === 'EX'" class="text-white mt-2">
+    <div v-if="userRole === 'EX' && 'CU'" class="text-white mt-2">
       Голосов экспертов: {{ idea.experts_voted_count }}
     </div>
   </div>

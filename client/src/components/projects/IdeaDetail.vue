@@ -26,7 +26,7 @@
     <h3 class="text-xl text-white font-semibold mb-2">
       Инициатор: {{ idea.initiator || "Неизвестный автор" }}
     </h3>
-
+    
     <p class="text-gray-400">Дата создания: {{ new Date(idea.created_at).toLocaleDateString("ru-RU") }}</p>
   </div>
 
@@ -88,7 +88,8 @@
     </div>
     <div class="w-4/5 m-auto">
     <button
-            
+            v-if="canClaim"
+      @click="claimProject"
             class="text-white ml-20 inline-flex items-center bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:outline-none focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-800"
           >
             <svg
@@ -105,6 +106,8 @@
             </svg>
             Взять как проект
           </button>
+          <p v-if="claimSuccess" class="text-green-600 mt-2">Вы успешно взяли проект!</p>
+    <p v-if="claimError" class="text-green-600 mt-2">Вы успешно взяли проект!</p>
         </div>
   </div>
 </template>
@@ -136,6 +139,8 @@ export default {
       },
       isEditing: false, // Управление режимом редактирования
       isAnimating: false,
+      claimSuccess: false,
+      claimError: false
     };
   },
   watch: {
@@ -148,6 +153,13 @@ export default {
     },
   },
   computed: {
+    user() {
+      const userStr = Cookies.get('userData');
+      return userStr ? JSON.parse(userStr) : null;
+    },
+    canClaim() {
+  return this.user?.role === 'CU' && !!this.user?.company_name;
+},
     liked() {
       if (!this.idea || !this.idea.likes) return false;
       const userData = JSON.parse(Cookies.get("userData")) || {};
@@ -163,6 +175,33 @@ export default {
     },
   },
   methods: {
+    async claimProject() {
+      
+      this.claimSuccess = false;
+      this.claimError = false;
+
+      try {
+        const access_token = await fetchAccessToken();
+        const response = await fetch(`http://127.0.0.1:8000/api/projects/${this.idea.id}/claim/`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          this.claimSuccess = true;
+          // Можно также обновить local project.customer
+          this.$emit('claimed'); // если нужно оповестить родителя
+        } else {
+          this.claimError = true;
+        }
+      } catch (err) {
+        this.claimError = true;
+        console.error(err);
+      }
+    },
     updateStatus() {
       // Если выбран статус 'Активный', изменяем его на 'open'
       if (this.editedIdea.status === "active") {

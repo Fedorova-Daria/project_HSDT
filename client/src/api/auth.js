@@ -1,26 +1,39 @@
 import axios from "axios";
 import { saveTokens, getAccessToken, getRefreshToken, clearStorage } from "./storage.js";
-
+import Cookies from 'js-cookie'
 // Обновление токена
 export async function refreshToken() {
+  const refresh = Cookies.get('refresh_token');
+  if (!refresh) return null;
+
   try {
-    const refreshToken = Cookies.get("refresh_token"); // Напрямую берём токен из Cookies
-    if (!refreshToken) {
-      throw new Error("Refresh token отсутствует");
+    const response = await axios.post('http://127.0.0.1:8000/api/users/token/refresh/', { refresh });
+    
+    const newAccess = response.data.access;
+    const newRefresh = response.data.refresh;
+
+    // Сохраняем новые токены
+    Cookies.set('access_token', newAccess, { secure: false, sameSite: 'Lax' });
+    if (newRefresh) {
+      Cookies.set('refresh_token', newRefresh, { secure: false, sameSite: 'Lax' });
     }
 
-    const response = await axios.post("/api/users/token/refresh/", { refresh: refreshToken });
-    const newAccessToken = response.data.access;
+    // Сохраняем новые токены в localStorage
+    localStorage.setItem("access_token", newAccess);
+    if (newRefresh) {
+      localStorage.setItem("refresh_token", newRefresh);
+    }
 
-    Cookies.set("access_token", newAccessToken, { expires: 7 });
-    console.log("Токен успешно обновлён:", newAccessToken);
-    return newAccessToken;
+    return newAccess;
   } catch (error) {
-    console.error("Ошибка обновления токена:", error.response?.data || error.message);
+    console.error("Ошибка обновления токена:", error.response?.data || error);
+    Cookies.remove("access_token");
+    Cookies.remove("refresh_token");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
     return null;
   }
 }
-
 // Получаем актуальный access-токен
 export async function fetchAccessToken() {
   let access_token = getAccessToken();
