@@ -28,7 +28,7 @@ export async function fetchJoinRequests(teamId) {
     }
   
     try {
-      const response = await axios.get(`/api/teams/${teamId}/requests`, {
+      const response = await axios.get(`http://127.0.0.1:8000/api/teams/${teamId}/requests`, {
         headers: { Authorization: `Bearer ${access_token}` }
       });
       console.log('Заявки на вступление:', response.data);
@@ -77,24 +77,26 @@ export async function denyRequest(teamId, requestId) {
   }
 }
 
-export async function inviteUser(teamId, userId) {
-  const access_token = await fetchAccessToken();
-  if (!access_token) {
-    console.error("Авторизация требуется.");
-    return;
+export async function inviteUserById(teamId, userId) {
+    const access_token = await fetchAccessToken();
+    if (!access_token) {
+      console.error("Авторизация требуется.");
+      return;
+    }
+  
+    try {
+      const response = await axios.post(`http://127.0.0.1:8000/api/teams/${teamId}/join`, {
+        user_id: userId // Передаем ID пользователя в теле запроса
+      }, {
+        headers: { Authorization: `Bearer ${access_token}` }
+      });
+      console.log('Приглашение отправлено:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Ошибка отправки приглашения:', error.response?.data || error.message);
+      throw error;
+    }
   }
-
-  try {
-    const response = await axios.post(`http://127.0.0.1:8000/api/teams/${teamId}/invite/${userId}`, {}, {
-      headers: { Authorization: `Bearer ${access_token}` }
-    });
-    console.log('Пользователь приглашен:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('Ошибка приглашения пользователя:', error);
-    throw error;
-  }
-}
 
 export async function deleteTeam(teamId) {
   const access_token = await fetchAccessToken();
