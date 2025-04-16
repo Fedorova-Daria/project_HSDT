@@ -1,10 +1,12 @@
 from django.db import models
 
 
+
 # Модель данных для списка технологий
 from django.db import models
 
 class Technology(models.Model):
+
     class TechCategory(models.TextChoices):
         PROGRAMMING = 'programming', 'Программирование'
         DESIGN = 'design', 'Дизайн'
@@ -24,6 +26,8 @@ class Technology(models.Model):
         unique=True,
         verbose_name="Название"
     )
+
+    users = models.ManyToManyField('users.Account' , related_name="technologies", verbose_name="Пользователи")
 
     def __str__(self):
         return self.name
