@@ -18,7 +18,6 @@ class Technology(models.Model):
     type = models.CharField(
         max_length=50,
         choices=TechCategory.choices,
-        default=TechCategory.PROGRAMMING,  # можно изменить дефолтное значение
         verbose_name="Раздел"
     )
     name = models.CharField(
@@ -27,7 +26,7 @@ class Technology(models.Model):
         verbose_name="Название"
     )
 
-    users = models.ManyToManyField('users.Account' , related_name="technologies", verbose_name="Пользователи")
+    # users = models.ManyToManyField('users.Account' , related_name="technologies", verbose_name="Пользователи")
 
     def __str__(self):
         return self.name
