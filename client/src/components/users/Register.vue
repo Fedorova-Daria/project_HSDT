@@ -201,7 +201,7 @@
 <script>
 import { useAuth } from "@/composables/useAuth";
 import ParallaxBackground from "@/components/ParallaxBackground.vue";
-import api from '@/api/axiosInstance.js'; // Путь к вашему axios instance
+import api from '@/composables/auth'; // Путь к вашему axios instance
 
 export default {
   components: {ParallaxBackground},

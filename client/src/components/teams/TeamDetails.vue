@@ -22,21 +22,12 @@
     v-model="editedTeam.name"
     class="w-full text-2xl text-black bg-gray-100 rounded-md p-2"
   />
-<div
-  :class="{
-    'bg-green-500 bg-opacity-50': team.status === 'open',
-    'bg-red-500 bg-opacity-50': team.status === 'close',
-    'rounded-xl px-4 py-2 w-fit font-semibold text-sm text-white': true
-  }"
->
-  {{ team.status === 'open' ? 'Открыта' : team.status === 'close' ? 'Закрыта' : 'Неизвестно' }}
-</div>
-    <h3 class="text-xl mt-5 text-white font-semibold mb-2">
+
+    <h3 class="text-xl text-white font-semibold mb-2">
       Тим-лид: {{ team.initiator || "Неизвестный автор" }}
     </h3>
-    
   </div>
-  
+
   <!-- Блок с иконками теперь прижат к низу -->
   <div>
 <div class="mt-auto flex justify-end gap-5">
@@ -60,26 +51,26 @@
 
     <div class="w-3/4 mt-5 bg-card rounded-lg p-6 overflow-auto"  style="height: auto; max-height: 100vh; overflow-y: auto;">
       <h2 class="text-2xl text-white font-semibold mb-4">Описание идеи</h2>
-<div
-  v-if="!isEditing"
-  class="prose prose-invert prose-lg max-w-none text-gray-100"
-  v-html="renderedDescription"
-></div>
-<textarea
-  v-else
-  v-model="editedTeam.description"
-  class="w-full bg-gray-100 rounded-md p-2"
-></textarea>
-
+  <p v-if="!isEditing" class="text-gray-400">
+    {{ team.description }}
+  </p>
+  <textarea
+    v-else
+    v-model="editedTeam.description"
+    class="w-full bg-gray-100 rounded-md p-2"
+  ></textarea>
   <div v-if="isEditing">
   <label for="status">Статус:</label>
   <select
     id="status"
     v-model="editedTeam.status"
+    @change="updateStatus"
     class="w-full bg-gray-100 rounded-md p-2"
   >
-    <option value="open">Открытый</option>
-    <option value="close">Закрытый</option>
+    <option value="">Не задан</option>
+    <option value="active">Активный</option>
+    <option value="completed">Завершён</option>
+    <option value="paused">Приостановлен</option>
   </select>
   </div>
 
@@ -116,7 +107,8 @@
     </div>
     </div>
     <div class="w-4/5 m-auto">
-    <button @click="handleJoinTeam" v-if="!isMember"
+    <button @click="handleJoinTeam"
+            
             class="text-white ml-20 inline-flex items-center bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:outline-none focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-800"
           >
             <svg
@@ -147,330 +139,236 @@
     </ul>
     <p v-else>Нет заявок на вступление</p>
   </div>
-
-  <div class="text-white">
-    <h2>Пригласить пользователя</h2>
-    <input v-model="userId" type="number" placeholder="Введите ID пользователя" />
-    <button @click="sendInvitation">Пригласить</button>
-    <p v-if="successMessage" class="success">{{ successMessage }}</p>
-    <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
-  </div>
-
   </div>
 </template>
 
 <script>
-import axios from "axios";
+import api from "@/composables/auth.js"; // axios-инстанс с интерсепторами
 import Header from "@/components/header.vue";
-import { fetchOwnerName } from "@/api/ideaHelpers.js";
-import { fetchAccessToken } from "@/api/auth.js";
-import Cookies from "js-cookie"; // Импортируем Cookies
-import { joinTeam, acceptRequest, denyRequest, inviteUserById, deleteTeam } from '@/api/teamService.js';
-import { marked } from 'marked';
+import Cookies from "js-cookie";
+import { fetchOwnerName } from "@/services/ideaHelpers.js";
+import { 
+  joinTeam, 
+  fetchJoinRequests, 
+  acceptRequest, 
+  denyRequest, 
+  inviteUser, 
+  deleteTeam 
+} from "@/services/teamService.js";
 
 export default {
+  name: "TeamDetails",
   components: {
     Header,
   },
-  props: ['institute', 'teamId'],
+  props: {
+    institute: {
+      type: String,
+      required: false,
+    },
+    teamId: {
+      type: [String, Number],
+      required: true,
+    },
+  },
   data() {
     return {
-      userId: null, // Инициализация ID пользователя
-      isMember: false, // Проверка статуса участника
-      team: {
-        members: []
-      }, // Убираем лишнее объявление `team: null`
-    isEditing: false, // Режим редактирования
-    editedTeam: {
-      name: "",
-      description: "",
-      status: "", // Добавляем статус
-    }, // Копия команды для редактирования
-    joinSuccess: false, // Добавляем joinSuccess
-    requests: [], // Список заявок
-    errorMessage: '', // Для ошибок
-    successMessage: '', // Сообщение об успехе
+      team: {},                // Объект с данными команды
+      isEditing: false,        // Флаг режима редактирования
+      editedTeam: {            // Копия данных для редактирования
+        name: "",
+        description: "",
+        status: "",
+      },
+      joinSuccess: false,      // Флаг успешного запроса на вступление
+      requests: [],            // Список заявок на вступление в команду
+      errorMessage: '',        // Сообщения об ошибках
     };
+  },
+  computed: {
+    /**
+     * Получает данные текущего пользователя из Cookies.
+     */
+    currentUser() {
+      return JSON.parse(Cookies.get("userData") || "{}");
+    },
+    /**
+     * Определяет, является ли текущий пользователь владельцем команды.
+     */
+    isOwner() {
+      return this.team.owner && this.team.owner === this.currentUser.id;
+    },
+    /**
+     * Для простоты: права редактирования доступны только владельцу.
+     */
+    hasEditAccess() {
+      return this.isOwner;
+    },
   },
   watch: {
     teamId: {
       immediate: true,
       handler(newId) {
-        console.log("Получен новый ID:", newId);
-        if (newId) this.fetchTeamDetails(newId); // Передаем teamId как аргумент
+        console.log("Получен новый teamId:", newId);
+        if (newId) {
+          this.fetchTeamDetails(newId);
+          this.fetchTeamJoinRequests(newId);
+        }
       },
     },
-    'team.members': {
-    immediate: true,
-    handler(newMembers) {
-      console.log("Обновлены данные участников:", newMembers);
-      if (Array.isArray(newMembers)) {
-        this.checkMembership(newMembers);
-      } else {
-        console.warn("members отсутствуют или не являются массивом.");
-      }
-    }
-  }
   },
-
   async mounted() {
-    console.log("teamMembers в компоненте:", this.teamMembers);
-  if (!Array.isArray(this.teamMembers)) {
-    console.warn("teamMembers отсутствует или не является массивом.");
-    this.teamMembers = []; // Защита от ошибок
-  }
-  this.checkMembership();
-  
-  // Загружаем локальные данные или работаем без fetchJoinRequests
-  try {
-    if (typeof fetchJoinRequests === 'function') {
-      this.requests = await fetchJoinRequests(this.teamId);
-    } else {
-      console.warn('fetchJoinRequests не реализован, работаем с локальными данными.');
-      this.requests = []; // Инициализируем пустой массив или используем локально переданные данные
+    // Если component загружается сначала, пробуем загрузить заявки
+    try {
+      await this.fetchTeamJoinRequests(this.teamId);
+    } catch (error) {
+      this.errorMessage = "Ошибка загрузки заявок.";
+      console.error("Ошибка:", error);
     }
-  } catch (error) {
-    this.errorMessage = 'Ошибка загрузки заявок.';
-    console.error('Ошибка:', error);
-  }
-},
-
-  computed: {
-    renderedDescription() {
-      const html = marked(this.team.description || '');
-    console.log('HTML:', html); // ← должен быть HTML (h1, ul, li, a и т.д.)
-    return html;
   },
-    teamMembers() {
-    return Array.isArray(this.team?.members) ? this.team.members : [];
-  },
-  isOwner() {
-    const userData = JSON.parse(Cookies.get("userData")) || {};
-    return this.team.owner && this.team.owner === userData.id;
-  },
-  hasEditAccess() {
-    return this.isOwner;
-  }
-  },
-
   methods: {
-
-    async sendInvitation() {
-      if (!this.userId) {
-        this.errorMessage = "Введите корректный ID пользователя.";
-        return;
-      }
-
+    /**
+     * Перенаправляет пользователя на предыдущую страницу.
+     */
+    goBack() {
+      this.$router.go(-1);
+    },
+    /**
+     * Загружает список заявок на вступление для команды.
+     */
+    async fetchTeamJoinRequests(teamId) {
       try {
-        const response = await inviteUserById(this.teamId, this.userId);
-        this.successMessage = `Пользователь с ID ${this.userId} успешно приглашен!`;
-        this.errorMessage = ''; // Сброс ошибок
-        console.log('Результат:', response);
+        this.requests = await fetchJoinRequests(teamId);
+        console.log("Заявки загружены:", this.requests);
       } catch (error) {
-        this.successMessage = ''; // Сброс успешного сообщения
-
-        // Обработка ошибки
-        if (error.response?.data?.detail) {
-          this.errorMessage = error.response.data.detail; // Используем сообщение сервера
-        } else {
-          this.errorMessage = "Не удалось отправить приглашение. Попробуйте снова.";
-        }
-
-        console.error('Ошибка:', error);
+        this.errorMessage = "Ошибка загрузки заявок.";
+        console.error("Ошибка при загрузке заявок:", error);
       }
     },
-
+    /**
+     * Отправляет запрос на вступление в команду.
+     */
     async handleJoinTeam() {
       try {
         const result = await joinTeam(this.teamId);
-        alert('Заявка успешно отправлена!');
-        console.log('Результат:', result);
+        this.joinSuccess = true;
+        console.log("Заявка отправлена:", result);
       } catch (error) {
-        console.error('Ошибка отправки заявки:', error);
-        alert('Не удалось отправить заявку.');
+        this.errorMessage = "Ошибка отправки заявки. Попробуйте снова.";
+        console.error("Ошибка при отправке запроса на вступление:", error);
       }
     },
-    checkMembership(members = this.team.members) {
-  const userData = JSON.parse(Cookies.get("userData") || "{}");
-  if (!userData.id) {
-    console.warn("ID пользователя отсутствует в Cookies.");
-    return;
-  }
-
-  if (!Array.isArray(members)) {
-    console.warn("members отсутствуют или не являются массивом.");
-    this.isMember = false;
-    return;
-  }
-
-  this.isMember = members.some(member => member.id === userData.id);
-  console.log("Проверка членства:", this.isMember);
-},
-
-async refreshTeamData() {
-    try {
-      const token = await fetchAccessToken();
-      if (!token) {
-        console.error("Токен отсутствует, авторизация необходима.");
+    /**
+     * Обновляет данные команды через API с использованием настроенного axios-инстанса.
+     */
+    async fetchTeamDetails(teamId) {
+      try {
+        // Используем инстанс api – он сам позаботится о токене
+        const response = await api.get(`/teams/${teamId}/`);
+        if (response.status !== 200) {
+          throw new Error(`Ошибка загрузки команды: ${response.status}`);
+        }
+        this.team = response.data;
+        console.log("Данные команды получены:", this.team);
+        if (!this.team.owner) {
+          console.warn("Поле owner отсутствует в данных команды!");
+          this.team.initiator = "Неизвестный автор";
+        } else {
+          await this.loadOwnerName();
+        }
+      } catch (error) {
+        console.error("Ошибка при получении данных команды:", error.response?.data || error);
+      }
+    },
+    /**
+     * Загружает имя владельца команды и записывает его в team.initiator.
+     */
+    async loadOwnerName() {
+      if (!this.team.owner) {
+        console.warn("ID владельца отсутствует, устанавливаем 'Неизвестный автор'.");
+        this.team.initiator = "Неизвестный автор";
         return;
       }
-
-      const response = await axios.get(`http://127.0.0.1:8000/api/teams/${this.teamId}/`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      this.team = response.data; // Обновляем данные команды
-      console.log("Обновленные данные команды:", this.team);
-    } catch (error) {
-      console.error("Ошибка при обновлении данных команды:", error.response?.data || error);
-    }
-  },
-
-  async acceptJoinRequest(requestId) {
-    try {
-      await acceptRequest(this.teamId, requestId);
-      alert("Заявка принята!");
-
-      // После успешного принятия обновляем данные команды
-      await this.refreshTeamData();
-
-      // Удаляем обработанную заявку из локального списка
-      this.joinRequests = this.joinRequests.filter(request => request.id !== requestId);
-    } catch (error) {
-      console.error("Ошибка принятия заявки:", error);
-      alert("Не удалось принять заявку.");
-    }
-  },
-
+      try {
+        await fetchOwnerName(this.team, this.team.owner);
+      } catch (error) {
+        console.error("Ошибка при получении имени владельца:", error);
+        this.team.initiator = "Неизвестный автор";
+      }
+    },
+    /**
+     * Принимает заявку на вступление в команду, обновляет данные команды и удаляет заявку из списка.
+     *
+     * @param {string|number} requestId - Идентификатор заявки.
+     */
+    async acceptJoinRequest(requestId) {
+      try {
+        await acceptRequest(this.teamId, requestId);
+        alert("Заявка принята!");
+        await this.fetchTeamDetails(this.teamId);
+        this.requests = this.requests.filter((request) => request.id !== requestId);
+      } catch (error) {
+        console.error("Ошибка при принятии заявки:", error);
+        alert("Не удалось принять заявку.");
+      }
+    },
+    /**
+     * Отклоняет заявку на вступление в команду и удаляет её из списка.
+     *
+     * @param {string|number} requestId - Идентификатор заявки.
+     */
     async denyJoinRequest(requestId) {
       try {
         await denyRequest(this.teamId, requestId);
-        this.requests = this.requests.filter(request => request.id !== requestId);
-        alert('Заявка отклонена!');
+        this.requests = this.requests.filter((request) => request.id !== requestId);
+        alert("Заявка отклонена!");
       } catch (error) {
-        console.error('Ошибка отклонения заявки:', error);
-        alert('Не удалось отклонить заявку.');
+        console.error("Ошибка при отклонении заявки:", error);
+        alert("Не удалось отклонить заявку.");
       }
     },
-
-    async loadOwnerName() {
-      if (!this.team.owner) {
-        console.warn("ID владельца отсутствует! Установка значения по умолчанию.");
-        this.team.initiator = "Неизвестный автор"; // Значение по умолчанию
-        return;
-      }
-
-      console.log("ID владельца проекта:", this.team.owner);
-
-      try {
-        await fetchOwnerName(this.team, this.team.owner); // Загружаем имя владельца
-      } catch (error) {
-        console.error("Ошибка при загрузке имени владельца:", error);
-        this.team.initiator = "Неизвестный автор"; // Значение по умолчанию при ошибке
-      }
-    },
-
+    /**
+     * Переключает режим редактирования команды.
+     * Если включён режим редактирования, копирует текущие данные команды в editedTeam.
+     */
     toggleEditing() {
       if (!this.hasEditAccess) {
-        alert("У вас нет прав на редактирование этой идеи!");
+        alert("У вас нет прав на редактирование этой команды!");
         return;
       }
-
       this.isEditing = !this.isEditing;
-
       if (this.isEditing) {
-        // Копируем текущие данные в `editedTeam`
-        this.editedTeam.name = this.team.name;
-        this.editedTeam.description = this.team.description;
-        this.editedTeam.status = this.team.status ?? ""; // Обработка статуса
+        this.editedTeam = {
+          name: this.team.name,
+          description: this.team.description,
+          status: this.team.status || "",
+        };
       }
     },
-
-    // Сохранение изменений через API
+    /**
+     * Сохраняет изменения в команде через API.
+     */
     async saveAllChanges() {
-  try {
-    const token = await fetchAccessToken();
-    if (!token) {
-      console.error("Токен отсутствует, авторизация необходима");
-      return;
-    }
-
-    const payload = {
-      ...(this.editedTeam.name && { name: this.editedTeam.name }),
-      ...(this.editedTeam.description && { description: this.editedTeam.description }),
-      status: this.editedTeam.status || null,
-    };
-
-    const response = await axios.patch(
-      `http://127.0.0.1:8000/api/teams/${this.team.id}/edit/`,
-      payload,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+      try {
+        const payload = {
+          ...(this.editedTeam.name && { name: this.editedTeam.name }),
+          ...(this.editedTeam.description && { description: this.editedTeam.description }),
+          status: this.editedTeam.status || null,
+        };
+        console.log("Payload перед сохранением:", payload);
+        const response = await api.patch(`/teams/${this.team.id}/edit/`, payload, {
+          headers: { "Content-Type": "application/json" },
+        });
+        console.log("Изменения сохранены:", response.data);
+        // Обновляем данные команды после сохранения
+        await this.fetchTeamDetails(this.team.id);
+      } catch (error) {
+        console.error("Ошибка при сохранении изменений:", error.response?.data || error);
       }
-    );
-
-    console.log("Изменения сохранены:", response.data);
-
-    // 🔥 Обновляем team на новые данные
-    this.team = { ...this.team, ...response.data };
-
-    // 🔥 Выход из режима редактирования
-    this.isEditing = false;
-
-  } catch (error) {
-    console.error("Ошибка при сохранении:", error.response?.data || error);
-  }
-},
-
-    async fetchTeamDetails(teamId) {
-  try {
-    // Проверка наличия токена
-    let token = Cookies.get("access");
-    if (!token) {
-      console.log("Токен доступа отсутствует, обновляем токен...");
-      // Если токен отсутствует, пробуем обновить его
-      token = await fetchAccessToken(); // Запрашиваем новый токен
-      if (!token) {
-        console.error("Не удалось получить токен доступа.");
-        return;
-      }
-    }
-
-    console.log("Используем токен доступа:", token); // Логируем токен
-
-    // Отправка запроса с токеном
-    const response = await axios.get(`http://localhost:8000/api/teams/${teamId}/`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    // Если статус не OK, выбрасываем ошибку
-    if (response.status !== 200) {
-      throw new Error(`Ошибка при загрузке проекта: ${response.status}`);
-    }
-
-    // Получаем данные команды
-    this.team = response.data;
-    console.log("Полученные данные команды:", this.team);
-
-    // Проверка на наличие владельца команды
-    if (!this.team.owner) {
-      console.warn("Поле owner отсутствует в данных команды! Проверьте API.");
-      this.team.initiator = "Неизвестный автор"; // Значение по умолчанию
-      return;
-    }
-
-    // Загружаем имя владельца
-    await this.loadOwnerName();
-  } catch (error) {
-    console.error("Ошибка при загрузке команды:", error.response?.data || error);
-  }
-},
-
+    },
+    /**
+     * Переходит на предыдущую страницу.
+     */
     goBack() {
       this.$router.go(-1);
     },
@@ -479,10 +377,5 @@ async refreshTeamData() {
 </script>
 
 <style scoped>
-.success {
-  color: green;
-}
-.error {
-  color: red;
-}
+/* Дополнительные стили, если нужно */
 </style>

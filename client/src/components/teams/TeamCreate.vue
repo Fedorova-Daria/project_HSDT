@@ -7,7 +7,26 @@
     >
       <div class="bg-card p-6 rounded-lg w-1/3">
         <h2 class="text-white text-xl mb-4">Создать новую команду</h2>
+        <!-- Блок для аватарки -->
+        <div class="flex flex-col items-center mb-4">
+          <div class="avatar-preview mb-2">
+            <!-- Если есть превью, отображаем его, иначе показываем иконку-заглушку -->
+            <img
+              v-if="newTeam.avatarPreview"
+              :src="newTeam.avatarPreview"
+              alt="Avatar Preview"
+              class="rounded-full object-cover"
+            />
+            <div v-else class="rounded-full bg-zinc-700 w-24 h-24 flex items-center justify-center text-white">
+              Аватар
+            </div>
+          </div>
+          <!-- Инпут для выбора файла -->
+          <input type="file" accept="image/*" @change="handleAvatarChange" />
+        </div>
+  
         <form @submit.prevent="createTeam">
+          <!-- Название команды -->
           <div class="mb-4">
             <label class="block text-white mb-2">Название команды</label>
             <input
@@ -17,39 +36,14 @@
               required
             />
           </div>
+          <!-- Описание команды -->
           <div class="mb-4">
-            <label class="block text-white mb-2">Стек технологий</label>
-            <div class="grid grid-cols-2 gap-2">
-              <div
-                v-for="tech in availableTechStack"
-                :key="tech"
-                class="flex items-center"
-              >
-                <input
-                  type="checkbox"
-                  :id="`create-${tech}`"
-                  :value="tech"
-                  v-model="newTeam.techStack"
-                  class="mr-2"
-                />
-                <label :for="`create-${tech}`" class="text-white">{{
-                  tech
-                }}</label>
-              </div>
-            </div>
-          </div>
-          <div class="mb-4">
-            <label class="block text-white mb-2">Статус</label>
-            <select
-              v-model="newTeam.status"
+            <label class="block text-white mb-2">Описание команды</label>
+            <textarea
+              v-model="newTeam.description"
               class="w-full p-2 rounded bg-zinc-700 text-white"
-            >
-              <option value="В работе">В работе</option>
-              <option value="В поисках">В поисках</option>
-              <option value="Неактивна">Неактивна</option>
-              <option value="Проверяем">Проверяем</option>
-              <option value="Забанена">Забанена</option>
-            </select>
+              required
+            ></textarea>
           </div>
           <div class="flex justify-end">
             <button
@@ -62,7 +56,6 @@
             <button
               type="submit"
               class="btn cursor-pointer bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
-              :disabled="newTeam.members < 1"
             >
               Создать
             </button>
@@ -72,51 +65,118 @@
     </div>
   </div>
 </template>
-
+  
 <script>
+import api from '@/composables/auth'; // Используем настроенный axios-инстанс
+import UserService from '@/composables/storage.js'; // Сервис для работы с данными пользователя
+
 export default {
+  name: "TeamCreate",
   props: {
     isCreateModalOpen: {
       type: Boolean,
       required: true,
-    },
-    availableTechStack: {
-      type: Object,
-      required: true
     },
   },
   data() {
     return {
       newTeam: {
         name: "",
-        members: 1,
-        techStack: [],
-        rating: 0,
-        status: "В поисках",
+        description: "",
+        avatar: null, 
+        avatarPreview: null,
+        
       },
     };
   },
   methods: {
-    closeCreateModal() {
-      this.$emit("close-create-modal");
-      this.resetNewTeam();
-    },
-    resetNewTeam() {
-      this.newTeam = {
-        name: "",
-        members: 1,
-        techStack: [],
-        rating: 0,
-        status: "В поисках",
-      };
-    },
-    createTeam() {
-      if (this.newTeam.members < 1) {
-        return;
+    /**
+     * Обрабатывает выбор файла для аватарки.
+     * Читает файл через FileReader и сохраняет данные в avatarPreview.
+     */
+    handleAvatarChange(e) {
+      const file = e.target.files[0];
+      if (file) {
+        this.newTeam.avatar = file;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          this.newTeam.avatarPreview = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        this.newTeam.avatar = null;
+        this.newTeam.avatarPreview = null;
       }
-      this.$emit("create-team", { ...this.newTeam });
-      this.closeCreateModal();
     },
+    /**
+     * Закрывает модальное окно создания команды.
+     */
+    closeCreateModal() {
+      this.$emit('close');
+    },
+    /**
+     * Отправляет запрос на создание команды.
+     * Если аватар выбран, используется FormData. Иначе – отправляются данные в формате JSON.
+     */
+    async createTeam() {
+      try {
+        let payload;
+        let headers = {};
+    
+        if (this.newTeam.avatar) {
+          payload = new FormData();
+          payload.append('name', this.newTeam.name);
+          payload.append('description', this.newTeam.description);
+          // Передаём owner как строку (либо числовой ID)
+          payload.append('avatar', this.newTeam.avatar);
+          headers['Content-Type'] = 'multipart/form-data';
+        } else {
+          payload = {
+            name: this.newTeam.name,
+            description: this.newTeam.description,
+            avatar: null,
+          };
+        }
+  
+        // Обратите внимание: URL с завершающим слэшем
+        const response = await api.post('/teams/create/', payload, { headers });
+        console.log("Команда успешно создана:", response.data);
+        this.$emit('teamCreated', response.data);
+        // Очищаем форму
+        this.newTeam = { name: "", description: "", avatar: null, avatarPreview: null};
+        this.closeCreateModal();
+      } catch (error) {
+        console.error("Ошибка при создании команды:", error.response?.data || error.message);
+      }
+    },
+  },
+  /**
+   * При создании компонента автоматически устанавливаем owner,
+   * получая данные текущего пользователя из UserService.
+   */
+  created() {
   },
 };
 </script>
+  
+<style scoped>
+.avatar-preview {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.avatar-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.fixed {
+  background: rgba(0, 0, 0, 0.3); /* Полупрозрачный черный */
+  backdrop-filter: blur(5px); /* Эффект размытия */
+}
+</style>

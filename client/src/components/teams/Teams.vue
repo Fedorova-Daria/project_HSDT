@@ -29,47 +29,62 @@
 <script>
 import Header from "@/components/header.vue";
 import TeamCreate from "@/components/teams/TeamCreate.vue";
-import { instituteStyles } from "@/assets/instituteStyles.js";
 import TeamTable from "@/components/teams/TeamsTable.vue";
-import api from '@/api/axiosInstance.js'; // Путь к вашему axios instance
-import { getUserRoleFromCookies } from "@/api/storage.js";
+import { instituteStyles } from "@/assets/instituteStyles.js";
+import api from "@/composables/auth"; // Настроенный axios-инстанс
+import UserService from "@/composables/storage.js"; // Экземпляр для работы с токенами и данными
 
 export default {
-  inject: ["globalState"], // Подключаем глобальное состояние
+  name: "Teams",
+  inject: ["globalState"], // Глобальное состояние (например, выбранный институт)
   components: {
     Header,
     TeamCreate,
-    TeamTable
+    TeamTable,
   },
   data() {
     return {
-      userRole: null, // Хранение роли пользователя
+      userRole: null, // Роль текущего пользователя
       availableTechStack: {
         "Программирование": ["Python", "Vue", "Django", "Node.js", "React"],
         "Дизайн": ["3D-моделирование", "Figma", "Photoshop"],
-        "Маркетинг": ["SEO", "SMM", "Контент-маркетинг"]
+        "Маркетинг": ["SEO", "SMM", "Контент-маркетинг"],
       },
-      currentBgColor: "", // Исходный цвет
-      isFavorite: false,
+      currentBgColor: "",
       teams: [],
       isCreateModalOpen: false,
-      bgPosition: { x: 0, y: 0 }, // Позиция фона
-      targetPosition: { x: 0, y: 0 }, // Целевая позиция фона
-      lerpFactor: 0.1, // Коэффициент интерполяции (0.1 = плавное движение)
+      bgPosition: { x: 0, y: 0 },
+      targetPosition: { x: 0, y: 0 },
+      lerpFactor: 0.1, // Коэффициент плавности анимации
     };
   },
   computed: {
+    /**
+     * Глобально выбранный институт из глобального состояния
+     */
     selectedInstitute() {
-      return this.globalState.institute; // Глобальное состояние для чтения
+      return this.globalState.institute;
     },
+    /**
+     * Выбирает стиль института из предопределённого набора стилей.
+     * Если стиль не найден, возвращается дефолтный объект.
+     */
     instituteStyle() {
-      const style = instituteStyles[this.selectedInstitute]; // Используем глобальное состояние
-      return style ? style : { buttonOffColor: "#ccc" };
+      return instituteStyles[this.selectedInstitute] || { buttonOffColor: "#ccc" };
     },
+    /**
+     * Возвращает команды, отсортированные по флагу isFavorite.
+     * Сортировка идёт в порядке убывания (сначала избранные).
+     */
     sortedTeams() {
-    return Array.isArray(this.teams) ? [...this.teams].sort((a, b) => b.isFavorite - a.isFavorite) : [];
+      if (!Array.isArray(this.teams)) return [];
+      return [...this.teams].sort(
+        (a, b) => Number(b.isFavorite) - Number(a.isFavorite)
+      );
     },
-    // Стили для фона
+    /**
+     * Динамически вычисляемый стиль для фонового изображения.
+     */
     bgStyle() {
       return {
         backgroundImage: "url('/bob.svg')",
@@ -78,24 +93,44 @@ export default {
     },
   },
   methods: {
-    async fetchTeams() {
-  try {
-    const response = await api.get('teams/'); // Используем api для запроса
-    this.teams = response.data; // Обрабатываем полученные данные
-  } catch (error) {
-    console.error("Ошибка загрузки команд:", error);
-  }
-},
+    /**
+     * Загружает список команд с использованием настроенного axios-инстанса.
+     */
+      async fetchTeams() {
+      try {
+        // При выполнении запроса через "api" интерсептор гарантирует, что передается корректный token.
+        const response = await api.get("/teams/");
+        this.teams = response.data;
+        console.log("Команды успешно загружены:", response.data);
+      } catch (error) {
+        console.error("Ошибка загрузки команд:", error);
+      }
+    },
+    /**
+     * Проверяет, что имя команды является уникальным.
+     * @param {string} name - Имя команды, которое нужно проверить.
+     * @returns {boolean}
+     */
     isTeamNameUnique(name) {
       return !this.teams.some((team) => team.name === name);
     },
-    
+    /**
+     * Открывает модальное окно создания команды.
+     */
     openCreateModal() {
       this.isCreateModalOpen = true;
     },
+    /**
+     * Закрывает модальное окно создания команды.
+     */
     closeCreateModal() {
       this.isCreateModalOpen = false;
     },
+    /**
+     * Создаёт новую команду. Если количество участников < 1 или имя не уникально,
+     * операция отклоняется.
+     * @param {Object} newTeam - Объект с данными новой команды.
+     */
     createTeam(newTeam) {
       if (newTeam.members < 1) {
         return;
@@ -107,50 +142,61 @@ export default {
       this.teams.push({ ...newTeam, isFavorite: false });
       this.closeCreateModal();
     },
+    /**
+     * Помечает команду для удаления, устанавливая статус "Проверяем".
+     * @param {Object} team - Команда, которую нужно пометить.
+     */
     markTeamForDeletion(team) {
       team.status = "Проверяем";
       team.markedForDeletion = true;
     },
+    /**
+     * Переключает состояние избранного для команды.
+     * @param {Object} team - Команда, для которой меняется состояние.
+     */
     toggleFavorite(team) {
       team.isFavorite = !team.isFavorite;
     },
-    // Обновление позиции фона
+    /**
+     * Обновляет целевую позицию фона в ответ на движение мыши.
+     * @param {MouseEvent} event
+     */
     updateBackgroundPosition(event) {
-      const x = (event.clientX / window.innerWidth - 0.5) * 50; // Смещение по X
-      const y = (event.clientY / window.innerHeight - 0.5) * 50; // Смещение по Y
+      const x = (event.clientX / window.innerWidth - 0.5) * 50;
+      const y = (event.clientY / window.innerHeight - 0.5) * 50;
       this.targetPosition = { x, y };
     },
-    // Интерполяция позиции фона
+    /**
+     * Плавно интерполирует позицию фона к целевой позиции.
+     */
     lerpBackgroundPosition() {
-      this.bgPosition.x +=
-        (this.targetPosition.x - this.bgPosition.x) * this.lerpFactor;
-      this.bgPosition.y +=
-        (this.targetPosition.y - this.bgPosition.y) * this.lerpFactor;
-      requestAnimationFrame(this.lerpBackgroundPosition);
+      this.bgPosition.x += (this.targetPosition.x - this.bgPosition.x) * this.lerpFactor;
+      this.bgPosition.y += (this.targetPosition.y - this.bgPosition.y) * this.lerpFactor;
+      requestAnimationFrame(() => this.lerpBackgroundPosition());
     },
   },
   mounted() {
-    window.addEventListener("mousemove", this.updateBackgroundPosition); // Следим за движением курсора
-    this.lerpBackgroundPosition(); // Запускаем интерполяцию
+    window.addEventListener("mousemove", this.updateBackgroundPosition);
+    this.lerpBackgroundPosition();
     this.fetchTeams();
-    
   },
   beforeDestroy() {
-    window.removeEventListener("mousemove", this.updateBackgroundPosition); // Удаляем обработчик
+    window.removeEventListener("mousemove", this.updateBackgroundPosition);
   },
   watch: {
     instituteStyle: {
       handler(newStyle) {
         this.currentBgColor = newStyle.buttonOffColor;
       },
-      immediate: true, // Устанавливаем цвет сразу при загрузке
+      immediate: true,
     },
     selectedInstitute(newValue) {
       console.log("Глобальное состояние института обновлено:", newValue);
     },
   },
   created() {
-    this.userRole = getUserRoleFromCookies(); // Получаем роль при создании компонента
+    // Получаем роль пользователя через UserService
+    this.userRole = UserService.getUserRole();
   },
 };
 </script>

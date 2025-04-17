@@ -186,18 +186,18 @@
 </template>
 
 <script>
-import axios from "axios";
-import { fetchAccessToken } from "@/api/auth.js"; // Импортируем утилиту для получения актуального токена
+import api from "@/composables/auth.js"; // axios-инстанс с интерсепторами
 
 export default {
+  name: "IdeaSubmission",
   data() {
     return {
-      needHelp: false, // Следим за чекбоксом "Нужна помощь"
-      isDropdownOpen: false, // Флаг для управления состоянием выпадающего списка
-      selectedStacks: [], // Массив для выбранных технологий
-      ideaTitle: "", // Название проекта
-      description: "", // Описание проекта
-      stacks: [
+      needHelp: false,            // Флаг для чекбокса "Нужна помощь"
+      isDropdownOpen: false,      // Состояние открытости выпадающего списка
+      selectedStacks: [],         // Выбранные технологии
+      ideaTitle: "",              // Название проекта
+      description: "",            // Описание проекта
+      stacks: [                   // Массив доступных технологий
         "Vue",
         "React",
         "Angular",
@@ -205,60 +205,67 @@ export default {
         "Python",
         "Node.js",
         "Django",
-      ], // Массив стеков
+      ],
     };
   },
-  methods: {
-    closeModal() {
-      this.$emit("close"); // Сообщаем родителю закрыть окно
+  computed: {
+    /**
+     * Вычисляемое свойство, которое преобразует выбранные технологии в ID.
+     * Предполагается, что индекс технологии в массиве stacks плюс единица – это её ID.
+     *
+     * @returns {Array<number>} Массив ID.
+     */
+    technologyIds() {
+      return this.selectedStacks
+        .map((stack) => {
+          const index = this.stacks.findIndex((item) => item === stack);
+          return index >= 0 ? index + 1 : null;
+        })
+        .filter((id) => id !== null);
     },
+  },
+  methods: {
+    /**
+     * Закрывает модальное окно, уведомляя родительский компонент.
+     */
+    closeModal() {
+      this.$emit("close");
+    },
+    /**
+     * Переключает состояние открытости выпадающего списка.
+     */
     toggleDropdown() {
       this.isDropdownOpen = !this.isDropdownOpen;
     },
+    /**
+     * Отправляет запрос на создание новой идеи с заданным статусом.
+     * Использует axios-инстанс из auth.js — интерсепторы позаботятся о добавлении токена.
+     *
+     * @param {string} status - Статус идеи ("open" или "draft").
+     */
     async submitIdea(status) {
-  try {
-    // Получаем токен, обновляя его при необходимости
-    const token = await fetchAccessToken();
+      try {
+        // Формируем объект с данными идеи
+        const ideaData = {
+          name: this.ideaTitle,
+          description: this.description,
+          technologies: this.technologyIds,
+          status: status,
+        };
 
-    if (!token) {
-      console.error("Ошибка: токен отсутствует.");
-      return;
-    }
+        // Отправляем запрос через настроенный axios-инстанс
+        const response = await api.post("/projects/create/", ideaData, {
+          headers: { "Content-Type": "application/json" },
+        });
 
-    // Преобразуем выбранные технологии в ID
-    const technologyIds = this.selectedStacks.map(stack => {
-      return this.stacks.findIndex(item => item === stack) + 1; // Здесь предполагается, что ID = индексу + 1
-    });
-
-    // Формируем данные
-    const ideaData = {
-      name: this.ideaTitle,
-      description: this.description,
-      technologies: technologyIds, // Технологии
-      status: status, // Указываем переданный статус ("open" или "draft")
-    };
-
-    // Отправляем запрос
-    const response = await axios.post(
-      "http://127.0.0.1:8000/api/projects/create/", 
-      ideaData, 
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
+        console.log(`Идея со статусом "${status}" создана успешно:`, response.data);
+        this.closeModal();
+      } catch (error) {
+        console.error("Ошибка при создании идеи:", error.response?.data || error.message);
       }
-    );
-
-    console.log(`Идея со статусом "${status}" создана успешно:`, response.data);
-    this.closeModal(); // Закрываем модальное окно после успешного создания
-
-  } catch (error) {
-    console.error("Ошибка при создании идеи:", error.response?.data || error.message);
-  }
-}
+    },
   },
-    };
+};
 </script>
 
 <style scoped>

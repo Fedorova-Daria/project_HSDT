@@ -26,7 +26,7 @@
     <h3 class="text-xl text-white font-semibold mb-2">
       Инициатор: {{ idea.initiator || "Неизвестный автор" }}
     </h3>
-    
+
     <p class="text-gray-400">Дата создания: {{ new Date(idea.created_at).toLocaleDateString("ru-RU") }}</p>
   </div>
 
@@ -88,8 +88,7 @@
     </div>
     <div class="w-4/5 m-auto">
     <button
-            v-if="canClaim"
-      @click="claimProject"
+            
             class="text-white ml-20 inline-flex items-center bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:outline-none focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-800"
           >
             <svg
@@ -106,20 +105,18 @@
             </svg>
             Взять как проект
           </button>
-          <p v-if="claimSuccess" class="text-green-600 mt-2">Вы успешно взяли проект!</p>
-    <p v-if="claimError" class="text-green-600 mt-2">Вы успешно взяли проект!</p>
         </div>
   </div>
 </template>
 
 <script>
-import axios from "axios";
+import api from "@/composables/auth.js"; // axios-инстанс с интерсепторами
 import Header from "@/components/header.vue";
-import { fetchOwnerName, toggleLike } from "@/api/ideaHelpers.js";
-import { fetchAccessToken } from "@/api/auth.js";
-import Cookies from "js-cookie"; // Импортируем Cookies
+import { fetchOwnerName, toggleLike } from "@/services/ideaHelpers.js";
+import Cookies from "js-cookie";
 
 export default {
+  name: "IdeaDetails",
   components: { Header },
   props: {
     ideaId: {
@@ -129,175 +126,143 @@ export default {
   },
   data() {
     return {
-      idea: {}, // Текущая идея
+      idea: {}, // Загруженные данные идеи
       editedIdea: {
         name: "",
         description: "",
         technologies: [],
         is_hiring: false,
-        status: "", // Добавляем статус
+        status: "", // Статус идеи
       },
-      isEditing: false, // Управление режимом редактирования
-      isAnimating: false,
-      claimSuccess: false,
-      claimError: false
+      isEditing: false,  // Режим редактирования включен/выключен
+      isAnimating: false, // Состояние анимации лайка
     };
+  },
+  computed: {
+    /**
+     * Получаем данные пользователя из Cookies один раз.
+     */
+    currentUser() {
+      return JSON.parse(Cookies.get("userData") || "{}");
+    },
+    /**
+     * Определяет, поставил ли пользователь лайк.
+     */
+    liked() {
+      if (!this.idea || !this.idea.likes) return false;
+      return Boolean(this.currentUser.id && this.idea.likes.includes(this.currentUser.id));
+    },
+    /**
+     * Определяет, является ли текущий пользователь владельцем идеи.
+     */
+    isOwner() {
+      return this.idea.owner && this.idea.owner === this.currentUser.id;
+    },
+    /**
+     * Права на редактирование доступны владельцу.
+     */
+    hasEditAccess() {
+      return this.isOwner;
+    },
   },
   watch: {
     ideaId: {
       immediate: true,
       handler(newId) {
-        console.log("Получен новый ID:", newId);
-        if (newId) this.fetchIdeaDetails(newId);
+        console.log("Получен новый ideaId:", newId);
+        if (newId) {
+          this.fetchIdeaDetails(newId);
+        }
       },
     },
   },
-  computed: {
-    user() {
-      const userStr = Cookies.get('userData');
-      return userStr ? JSON.parse(userStr) : null;
-    },
-    canClaim() {
-  return this.user?.role === 'CU' && !!this.user?.company_name;
-},
-    liked() {
-      if (!this.idea || !this.idea.likes) return false;
-      const userData = JSON.parse(Cookies.get("userData")) || {};
-      return this.idea.likes.includes(userData.id);
-    },
-    // Проверка, является ли текущий пользователь владельцем идеи
-    isOwner() {
-      const userData = JSON.parse(Cookies.get("userData")) || {};
-      return this.idea.owner === userData.id;
-    },
-    hasEditAccess() {
-      return this.isOwner;
-    },
-  },
   methods: {
-    async claimProject() {
-      
-      this.claimSuccess = false;
-      this.claimError = false;
-
-      try {
-        const access_token = await fetchAccessToken();
-        const response = await fetch(`http://127.0.0.1:8000/api/projects/${this.idea.id}/claim/`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${access_token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (response.ok) {
-          this.claimSuccess = true;
-          // Можно также обновить local project.customer
-          this.$emit('claimed'); // если нужно оповестить родителя
-        } else {
-          this.claimError = true;
-        }
-      } catch (err) {
-        this.claimError = true;
-        console.error(err);
-      }
-    },
-    updateStatus() {
-      // Если выбран статус 'Активный', изменяем его на 'open'
-      if (this.editedIdea.status === "active") {
-        this.editedIdea.status = "open";
-      }
-    },
-    async loadOwnerName() {
-      if (!this.idea.owner) {
-        console.warn("ID владельца отсутствует! Установка значения по умолчанию.");
-        this.idea.initiator = "Неизвестный автор"; // Значение по умолчанию
-        return;
-      }
-
-      console.log("ID владельца проекта:", this.idea.owner);
-
-      try {
-        await fetchOwnerName(this.idea, this.idea.owner);
-      } catch (error) {
-        console.error("Ошибка при загрузке имени владельца:", error);
-        this.idea.initiator = "Неизвестный автор"; // Значение по умолчанию при ошибке
-      }
-    },
+    /**
+     * Переключает режим редактирования. При входе в режим редактирования копирует текущие данные идеи.
+     */
     toggleEditing() {
       if (!this.hasEditAccess) {
         alert("У вас нет прав на редактирование этой идеи!");
         return;
       }
-
       this.isEditing = !this.isEditing;
-
       if (this.isEditing) {
-        // Копируем текущие данные в `editedIdea`
+        // Копирование данных идеи для редактирования
         this.editedIdea.name = this.idea.name;
         this.editedIdea.description = this.idea.description;
+        // Копирование массивов копированием через spread необходимо для независимости
         this.editedIdea.technologies = [...(this.idea.technologies || [])];
         this.editedIdea.is_hiring = this.idea.is_hiring || false;
-        this.editedIdea.status = this.idea.status ?? ""; // Обработка статуса
+        this.editedIdea.status = this.idea.status ?? "";
       }
     },
-
-    // Сохранение изменений через API
+    /**
+     * Сохраняет изменения идеи через API.
+     * Используется axios-инстанс из auth.js, поэтому токен обновляется автоматически.
+     */
     async saveAllChanges() {
       try {
-        const token = await fetchAccessToken();
-        if (!token) {
-          console.error("Токен отсутствует, авторизация необходима");
-          return;
-        }
+        // Формируем payload, исключая пустые строки для статуса
         const payload = {
           ...(this.editedIdea.name && { name: this.editedIdea.name }),
           ...(this.editedIdea.description && { description: this.editedIdea.description }),
           ...(this.editedIdea.technologies && { technologies: this.editedIdea.technologies }),
-          is_hiring: this.editedIdea.is_hiring, // Boolean, передаётся всегда
-          status: this.editedIdea.status || null, // null вместо пустой строки
+          is_hiring: this.editedIdea.is_hiring,
+          status: this.editedIdea.status || null,
         };
         console.log("Payload перед отправкой:", payload);
-        const response = await axios.patch(
-          `http://127.0.0.1:8000/api/projects/${this.idea.id}/edit/`,
-          this.editedIdea,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`, // Добавляем токен в заголовки
-            },
-          }
-        );
 
+        const response = await api.patch(`/projects/${this.idea.id}/edit/`, payload, {
+          headers: { "Content-Type": "application/json" },
+        });
         console.log("Изменения сохранены:", response.data);
+        // Можно обновить или перезагрузить данные идеи после сохранения:
+        this.fetchIdeaDetails(this.idea.id);
       } catch (error) {
         console.error("Ошибка при сохранении:", error.response?.data || error);
       }
     },
-
+    /**
+     * Загружает данные идеи по её ID через api-инстанс.
+     */
     async fetchIdeaDetails(id) {
       try {
-        const response = await fetch(`http://localhost:8000/api/projects/${id}/`);
-        if (!response.ok) {
-          throw new Error(`Ошибка при загрузке проекта: ${response.status}`);
-        }
-
-        this.idea = await response.json();
+        const response = await api.get(`/projects/${id}/`);
+        this.idea = response.data;
         console.log("Полученные данные проекта:", this.idea);
 
         if (!this.idea.owner) {
-          console.warn("Поле owner отсутствует в данных проекта! Проверьте API.");
-          this.idea.initiator = "Неизвестный автор"; // Значение по умолчанию
+          console.warn("Поле owner отсутствует в данных проекта! Проверить API.");
+          this.idea.initiator = "Неизвестный автор";
           return;
         }
-
-        // Вызываем loadOwnerName после успешного присвоения данных
         await this.loadOwnerName();
       } catch (error) {
-        console.error("Ошибка при загрузке проекта:", error);
+        console.error("Ошибка при загрузке проекта:", error.response?.data || error);
       }
     },
-
+    /**
+     * Загружает имя владельца идеи и записывает его в свойства идеи.
+     */
+    async loadOwnerName() {
+      if (!this.idea.owner) {
+        console.warn("ID владельца отсутствует! Установка значения по умолчанию.");
+        this.idea.initiator = "Неизвестный автор";
+        return;
+      }
+      console.log("ID владельца проекта:", this.idea.owner);
+      try {
+        await fetchOwnerName(this.idea, this.idea.owner);
+      } catch (error) {
+        console.error("Ошибка при загрузке имени владельца:", error);
+        this.idea.initiator = "Неизвестный автор";
+      }
+    },
+    /**
+     * Обновляет лайк для идеи, используя утилиту toggleLike.
+     *
+     * @param {Event} event - Событие, например, click.
+     */
     async updateLike(event) {
       try {
         await toggleLike(
@@ -305,13 +270,15 @@ export default {
           event,
           this.liked,
           (state) => (this.isAnimating = state),
-          () => JSON.parse(Cookies.get("userData"))?.id // Получаем id пользователя из cookies
+          () => this.currentUser.id
         );
       } catch (error) {
         console.error("Ошибка при обновлении лайка:", error);
       }
     },
-
+    /**
+     * Переходит на предыдущую страницу.
+     */
     goBack() {
       this.$router.go(-1);
     },
