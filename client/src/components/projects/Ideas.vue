@@ -77,9 +77,9 @@
 import IdeasTable from "@/components/projects/IdeasTable.vue";
 import Header from "@/components/header.vue";
 import IdeaModal from "@/components/projects/IdeaModal.vue";
-import { fetchOwnerName, toggleLike } from "@/api/ideaHelpers.js";
-import api from "@/api/axiosInstance.js";
+import { fetchOwnerName, toggleLike } from "@/services/ideaHelpers.js";
 import { instituteStyles } from "@/assets/instituteStyles.js";
+import api from "@/composables/auth";
 import Cookies from "js-cookie";
 import ParallaxBackground from "@/components/ParallaxBackground.vue";
 

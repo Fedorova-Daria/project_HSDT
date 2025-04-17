@@ -1,10 +1,10 @@
 <template>
   <div
-    class="idea-card border border-zinc-700 bg-card rounded-xl p-5 shadow-lg cursor-pointer"
+    class="idea-card border bg-card rounded-2xl p-5 shadow-lg cursor-pointer"
     @click="openIdea(idea)"
   >
     <div class="flex justify-between items-center mb-3">
-      <h1 class="text-2xl font-semibold text-white">{{ idea.name }}</h1>
+      <h1 class="text-2xl font-semibold text-dynamic">{{ idea.name }}</h1>
       <div class="flex items-center">
         <img
   :src="liked ? '/liked.svg' : '/like.svg'"
@@ -13,30 +13,30 @@
   :class="{ 'animate-like': isAnimating }"
   @click.stop="updateLike"
 />
-        <span class="text-white">{{ idea.likes_count }}</span> 
+        <span class="text-dynamic">{{ idea.likes_count }}</span> 
       </div>
     </div>
 
-    <p class="text-gray-300 mb-3 truncate-text">
+    <p class="texth2-dynamic mb-3 truncate-text">
   {{ idea.description || "Описание отсутствует" }}
 </p>
 
     <div class="mt-auto">
-      <h3 class="text-xl text-white mb-3">
+      <h3 class="text-xl text-dynamic mb-3">
         Инициатор: {{ idea.initiator || "Неизвестный автор" }}
       </h3>
     </div>
 
-    <div v-if="userRole === 'EX'" class="text-white mt-2">
+    <div v-if="userRole === 'EX'" class="text-dynamic mt-2">
       Голосов экспертов: {{ idea.experts_voted_count }}
     </div>
   </div>
 </template>
 
 <script>
-import { fetchOwnerName, toggleLike } from "@/api/ideaHelpers.js";
+import { fetchOwnerName, toggleLike } from "@/services/ideaHelpers.js";
 import Cookies from "js-cookie";
-import { getUserRoleFromCookies } from "@/api/storage.js";
+import UserService from "@/composables/storage.js";
 export default {
   inject: ["globalState"], // Подключаем глобальное состояние
   props: {
@@ -52,7 +52,7 @@ export default {
     };
   },
   created() {
-    this.userRole = getUserRoleFromCookies(); // Устанавливаем значение из Cookies
+    this.userRole = UserService.getUserRole(); // Устанавливаем значение из Cookies
   },
   computed: {
     liked() {

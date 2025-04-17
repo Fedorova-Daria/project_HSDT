@@ -543,7 +543,8 @@
 
 <script>
 import Header from "@/components/header.vue";
-import { saveUserData, getUserData } from "@/api/storage.js";
+import UserService from "@/composables/storage.js";
+import Cookies from "js-cookie";
 
 export default {
   components: { Header },
@@ -802,7 +803,7 @@ export default {
         console.log("Пароль будет изменён на:", this.password);
       }
 
-      saveUserData(this.userData);
+      UserService.saveUserData(this.userData);
       alert("Профиль обновлён!");
       this.closeModal();
     },
@@ -818,6 +819,8 @@ export default {
       localStorage.removeItem("access");
       localStorage.removeItem("refresh");
       localStorage.removeItem("userData");
+      Cookies.remove("access_token");
+      Cookies.remove("refresh_token");
       this.$router.push("/login");
     },
     addSelectedSkills() {
@@ -840,7 +843,7 @@ export default {
       this.showSkillsModal = false;
 
       // Сохраняем изменения
-      saveUserData({
+      UserService.saveUserData({
         ...this.userData,
         skills: this.userTechStack,
       });
@@ -848,7 +851,7 @@ export default {
     removeSkill(index) {
       this.userTechStack.splice(index, 1);
       // Сохраняем изменения
-      saveUserData({
+      UserService.saveUserData({
         ...this.userData,
         skills: this.userTechStack,
       });
@@ -865,7 +868,7 @@ export default {
     },
   },
   async mounted() {
-    const savedData = await getUserData();
+    const savedData = await UserService.getUserData();
     this.userData = savedData;
     if (savedData.skills) {
       this.userTechStack = savedData.skills;

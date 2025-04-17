@@ -2,7 +2,7 @@
   <div>
     <Header @institute-changed="onInstituteChanged" />
 
-    <h1 class="font-display w-4/5 m-auto mt-20 text-white text-5xl">
+    <h1 class="font-display w-4/5 m-auto mt-20 text-dynamic text-5xl">
       Биржа проектов {{ instituteName }}
     </h1>
 
@@ -11,13 +11,13 @@
         <img class="absolute left-2 top-2" src="/search.svg" />
         <input
           v-model="searchQuery"
-          class="w-full max-w-md border bg-white rounded-md py-2 pl-10 pr-4 outline-none focus:border-purple-400 duration-500"
+          class="w-full max-w-md border bg-white rounded-md py-2 pl-10 pr-4 outline-none border-zinc-400 duration-500"
           type="text"
           placeholder="Поиск..."
         />
       </div>
       <select
-        class="ml-5 h-10 py-2 px-3 border bg-white rounded-md focus:border-fiol duration-500"
+        class="ml-5 h-10 py-2 px-3 border bg-white rounded-md border-zinc-400 duration-500"
       >
         <option>Все статусы идей</option>
         <option>Набор открыт</option>
@@ -25,7 +25,7 @@
       </select>
 
       <select
-        class="ml-5 h-10 py-2 px-3 border bg-white rounded-md focus:border-fiol duration-500"
+        class="ml-5 h-10 py-2 px-3 border bg-white rounded-md border-zinc-400 duration-500"
       >
         <option>Все стеки технологий</option>
         <option>Которые я знаю</option>
@@ -64,7 +64,7 @@ import IdeaCard from "@/components/RialtoCard1.vue";
 import IdeaModal from "@/components/projects/IdeaModal.vue";
 import Header from "@/components/header.vue";
 import { instituteStyles } from "@/assets/instituteStyles.js";
-import { getUserRoleFromCookies } from "@/api/storage.js";
+import UserService from "@/composables/storage.js";
 
 export default {
   inject: ["globalState"], // Подключаем глобальное состояние
@@ -87,7 +87,7 @@ export default {
     };
   },
   created() {
-    this.userRole = getUserRoleFromCookies();
+    this.userRole = UserService.getUserRole(); // Устанавливаем значение из Cookies
     // Загружаем идеи при загрузке компонента
     this.fetchCustomerIdeas();
     console.log("Текущий институт (глобальное состояние):", this.globalState.institute);
