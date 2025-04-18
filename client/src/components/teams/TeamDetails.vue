@@ -24,7 +24,7 @@
   />
 
     <h3 class="text-xl text-white font-semibold mb-2">
-      Тим-лид: {{ team.initiator || "Неизвестный автор" }}
+      Тим-лид: {{ team.owner_name || "Неизвестный автор" }}
     </h3>
   </div>
 
@@ -87,12 +87,12 @@
   <tbody>
     <tr v-for="member in team.members" :key="member.id" class="transition-colors text-white hover:bg-zinc-600">
       <td class="p-3 border-t border-zinc-600">
-        {{ member.first_name }} {{ member.last_name }}
+        {{ member.full_name }}
       </td>
       <td class="p-3 border-t border-zinc-600">
-        {{ member.skills.length ? member.skills.join(", ") : "Нет навыков" }}
+        {{ skills.length ? skills.join(", ") : "Нет навыков" }}
       </td>
-      <td class="p-3 border-t border-zinc-600"></td>
+      <td class="p-3 border-t border-zinc-600">{{ member.total_rating }}</td>
       <td class="p-3 border-t border-zinc-600">
         <button class="button btn text-white px-4 py-2 rounded-md transition-colors hover:button:hover cursor-pointer">
           Подробнее
@@ -107,8 +107,8 @@
     </div>
     </div>
     <div class="w-4/5 m-auto">
-    <button @click="handleJoinTeam"
-            
+    <button @click="sendJoinRequest"
+            v-if="requestStatus === 'none'"
             class="text-white ml-20 inline-flex items-center bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:outline-none focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-800"
           >
             <svg
@@ -125,36 +125,47 @@
             </svg>
             Присоединиться
           </button>
-          <p v-if="joinSuccess">Заявка успешно отправлена!</p>
-          <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
+          
+    <div v-else-if="requestStatus === 'pending'">
+      <p class="text-yellow-600">Заявка отправлена, ожидает ответа</p>
+      <button @click="cancelJoinRequest" class="text-red-500 underline">Отменить</button>
+    </div>
+
+    <div v-else-if="requestStatus === 'accepted'">
+      <p class="text-green-600">Вы уже в команде 🎉</p>
+    </div>
+
+    <div v-else-if="requestStatus === 'canceled'">
+      <p class="text-gray-500">Заявка отменена</p>
+    </div>
         </div>
         <div class="text-white">
-    <h2 v-if="isOwner" >Заявки на вступление</h2>
-    <ul v-if="requests.length && isOwner">
-      <li v-for="request in requests" :key="request.id">
-        {{ request.user.first_name }} {{ request.user.last_name }}
+    <h1>Заявки на вступление в команду</h1>
+
+    <ul>
+      <li v-for="request in joinRequests" :key="request.id">
+        <span>{{ request.user.name }}</span>
         <button @click="acceptJoinRequest(request.id)">Принять</button>
-        <button @click="denyJoinRequest(request.id)">Отклонить</button>
+        <button @click="cancelJoinRequest(request.id)">Отклонить</button>
       </li>
     </ul>
-    <p v-else>Нет заявок на вступление</p>
   </div>
+
   </div>
 </template>
 
 <script>
 import api from "@/composables/auth.js"; // axios-инстанс с интерсепторами
 import Header from "@/components/header.vue";
-import Cookies from "js-cookie";
-import { fetchOwnerName } from "@/services/ideaHelpers.js";
-import { 
-  joinTeam, 
-  fetchJoinRequests, 
-  acceptRequest, 
-  denyRequest, 
-  inviteUser, 
-  deleteTeam 
-} from "@/services/teamService.js";
+import Cookies from "js-cookie"; 
+
+import {
+  fetchJoinRequests,
+  createJoinRequest,
+  cancelJoinRequestDelete,
+  getJoinRequestById,
+  cancelJoinRequestPost
+} from "@/services/joinRequests";
 
 export default {
   name: "TeamDetails",
@@ -173,6 +184,10 @@ export default {
   },
   data() {
     return {
+      joinRequests: [],  // Список заявок
+      joinRequestId: null,
+      requestStatus: 'none', // 'none', 'pending', 'accepted', 'canceled'
+      userId: null,
       team: {},                // Объект с данными команды
       isEditing: false,        // Флаг режима редактирования
       editedTeam: {            // Копия данных для редактирования
@@ -183,6 +198,7 @@ export default {
       joinSuccess: false,      // Флаг успешного запроса на вступление
       requests: [],            // Список заявок на вступление в команду
       errorMessage: '',        // Сообщения об ошибках
+      skills: []
     };
   },
   computed: {
@@ -196,7 +212,7 @@ export default {
      * Определяет, является ли текущий пользователь владельцем команды.
      */
     isOwner() {
-      return this.team.owner && this.team.owner === this.currentUser.id;
+      return this.team.owner_name && this.team.owner_name === this.currentUser.first_name && this.currentUser.last_name;
     },
     /**
      * Для простоты: права редактирования доступны только владельцу.
@@ -212,51 +228,89 @@ export default {
         console.log("Получен новый teamId:", newId);
         if (newId) {
           this.fetchTeamDetails(newId);
-          this.fetchTeamJoinRequests(newId);
         }
       },
     },
   },
-  async mounted() {
-    // Если component загружается сначала, пробуем загрузить заявки
-    try {
-      await this.fetchTeamJoinRequests(this.teamId);
-    } catch (error) {
-      this.errorMessage = "Ошибка загрузки заявок.";
-      console.error("Ошибка:", error);
-    }
+  mounted() {
+    const userData = JSON.parse(localStorage.getItem('userData'));
+    console.log('teamId:', this.teamId, 'Тип данных:', typeof this.teamId);
+    this.userId = userData?.id;
+    this.fetchJoinRequests();  // Загружаем заявки при монтировании компонента
   },
   methods: {
+// Метод для получения заявок
+async fetchJoinRequests() {
+    try {
+      const response = await fetchJoinRequests(); // Это может быть функция API для получения заявок
+      this.joinRequests = response.data; // Пример того, как можно обработать полученные данные
+    } catch (error) {
+      console.error('Ошибка при получении заявок:', error);
+    }
+  },
+     // Метод для принятия заявки
+     async acceptJoinRequest(requestId) {
+      try {
+        await acceptJoinRequest(requestId);  // Принять заявку
+        this.fetchJoinRequests();  // Перезагружаем заявки
+      } catch (error) {
+        console.error('Ошибка при принятии заявки', error);
+      }
+    },
+
+    // Метод для отклонения заявки
+    async cancelJoinRequest(requestId) {
+      try {
+        await cancelJoinRequestDelete(requestId);  // Отклонить заявку
+        this.fetchJoinRequests();  // Перезагружаем заявки
+      } catch (error) {
+        console.error('Ошибка при отклонении заявки', error);
+      }
+    },
+    async sendJoinRequest() {
+  try {
+    // Преобразуем teamId в целое число
+    const teamId = parseInt(this.teamId, 10);
+    
+    // Проверяем, что преобразование прошло успешно
+    if (isNaN(teamId)) {
+      console.error('teamId должен быть целым числом');
+      return;
+    }
+    const requestData = {
+      team: teamId,
+      message: 'Хочу присоединиться к вашей команде!',
+    };
+
+    console.log('Данные запроса:', requestData);  // Логируем данные перед отправкой
+    // Отправляем запрос
+    const newRequest = await createJoinRequest({
+      team: teamId,
+      message: 'Хочу присоединиться к вашей команде!',
+    });
+    
+    // Если запрос успешен, сохраняем данные
+    this.joinRequestId = newRequest.id;
+    this.requestStatus = newRequest.status;
+  } catch (err) {
+    console.error('Ошибка при отправке заявки:', err);
+  }
+},
+    async cancelJoinRequest() {
+      try {
+        if (this.joinRequestId) {
+          await cancelJoinRequestPost(this.joinRequestId);
+          this.requestStatus = 'canceled';
+        }
+      } catch (err) {
+        console.error('Ошибка при отмене заявки:', err);
+      }
+    },
     /**
      * Перенаправляет пользователя на предыдущую страницу.
      */
     goBack() {
       this.$router.go(-1);
-    },
-    /**
-     * Загружает список заявок на вступление для команды.
-     */
-    async fetchTeamJoinRequests(teamId) {
-      try {
-        this.requests = await fetchJoinRequests(teamId);
-        console.log("Заявки загружены:", this.requests);
-      } catch (error) {
-        this.errorMessage = "Ошибка загрузки заявок.";
-        console.error("Ошибка при загрузке заявок:", error);
-      }
-    },
-    /**
-     * Отправляет запрос на вступление в команду.
-     */
-    async handleJoinTeam() {
-      try {
-        const result = await joinTeam(this.teamId);
-        this.joinSuccess = true;
-        console.log("Заявка отправлена:", result);
-      } catch (error) {
-        this.errorMessage = "Ошибка отправки заявки. Попробуйте снова.";
-        console.error("Ошибка при отправке запроса на вступление:", error);
-      }
     },
     /**
      * Обновляет данные команды через API с использованием настроенного axios-инстанса.
@@ -270,61 +324,8 @@ export default {
         }
         this.team = response.data;
         console.log("Данные команды получены:", this.team);
-        if (!this.team.owner) {
-          console.warn("Поле owner отсутствует в данных команды!");
-          this.team.initiator = "Неизвестный автор";
-        } else {
-          await this.loadOwnerName();
-        }
       } catch (error) {
         console.error("Ошибка при получении данных команды:", error.response?.data || error);
-      }
-    },
-    /**
-     * Загружает имя владельца команды и записывает его в team.initiator.
-     */
-    async loadOwnerName() {
-      if (!this.team.owner) {
-        console.warn("ID владельца отсутствует, устанавливаем 'Неизвестный автор'.");
-        this.team.initiator = "Неизвестный автор";
-        return;
-      }
-      try {
-        await fetchOwnerName(this.team, this.team.owner);
-      } catch (error) {
-        console.error("Ошибка при получении имени владельца:", error);
-        this.team.initiator = "Неизвестный автор";
-      }
-    },
-    /**
-     * Принимает заявку на вступление в команду, обновляет данные команды и удаляет заявку из списка.
-     *
-     * @param {string|number} requestId - Идентификатор заявки.
-     */
-    async acceptJoinRequest(requestId) {
-      try {
-        await acceptRequest(this.teamId, requestId);
-        alert("Заявка принята!");
-        await this.fetchTeamDetails(this.teamId);
-        this.requests = this.requests.filter((request) => request.id !== requestId);
-      } catch (error) {
-        console.error("Ошибка при принятии заявки:", error);
-        alert("Не удалось принять заявку.");
-      }
-    },
-    /**
-     * Отклоняет заявку на вступление в команду и удаляет её из списка.
-     *
-     * @param {string|number} requestId - Идентификатор заявки.
-     */
-    async denyJoinRequest(requestId) {
-      try {
-        await denyRequest(this.teamId, requestId);
-        this.requests = this.requests.filter((request) => request.id !== requestId);
-        alert("Заявка отклонена!");
-      } catch (error) {
-        console.error("Ошибка при отклонении заявки:", error);
-        alert("Не удалось отклонить заявку.");
       }
     },
     /**

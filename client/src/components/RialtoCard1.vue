@@ -4,7 +4,7 @@
     @click="openIdea(idea)"
   >
     <div class="flex justify-between items-center mb-3">
-      <h1 class="text-2xl font-semibold text-dynamic">{{ idea.name }}</h1>
+      <h1 class="text-2xl font-semibold text-dynamic">{{ idea.title }}</h1>
       <div class="flex items-center">
         <img
   :src="liked ? '/liked.svg' : '/like.svg'"
@@ -13,7 +13,7 @@
   :class="{ 'animate-like': isAnimating }"
   @click.stop="updateLike"
 />
-        <span class="text-dynamic">{{ idea.likes_count }}</span> 
+        <span class="text-dynamic">{{ idea.likes.length }}</span> 
       </div>
     </div>
 
@@ -27,14 +27,14 @@
       </h3>
     </div>
 
-    <div v-if="userRole === 'EX'" class="text-dynamic mt-2">
-      Голосов экспертов: {{ idea.experts_voted_count }}
+    <div v-if="userRole === 'EX' && userRole === 'CU'" class="text-dynamic mt-2">
+      Голосов экспертов: {{ idea.expert_likes.length }}
     </div>
   </div>
 </template>
 
 <script>
-import { fetchOwnerName, toggleLike } from "@/services/ideaHelpers.js";
+import { fetchOwnerName, toggleLike } from "@/services/projects.js";
 import Cookies from "js-cookie";
 import UserService from "@/composables/storage.js";
 export default {
@@ -75,7 +75,7 @@ export default {
     openIdea(idea) {
   const institute = this.selectedInstitute; // Используем selectedInstitute из data()
   if (institute) {
-    this.$router.push({ path: `/${institute}/ideas/${idea.id}` });
+    this.$router.push({ path: `/${institute}/project/${idea.id}` });
   } else {
     console.error("Институт не выбран");
   }
@@ -83,7 +83,7 @@ export default {
     async loadOwnerName() {
       try {
         // Передаем текущую идею и ID владельца в функцию из утилит
-        await fetchOwnerName(this.idea, this.idea.owner);
+        await fetchOwnerName(this.idea, this.idea.owner.id);
       } catch (error) {
         console.error("Ошибка при загрузке имени владельца:", error);
       }

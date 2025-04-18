@@ -8,7 +8,8 @@ import Teams from "../components/teams/Teams.vue";
 import ChangeProfile from "../components/users/ChangeProfile.vue";
 import TeamDetails from "@/components/teams/TeamDetails.vue";
 import Ideas from "@/components/projects/Ideas.vue";
-import IdeaDetail from "@/components/projects/IdeaDetail.vue";
+import ProjectDetail from "@/components/projects/ProjectDetail.vue";
+import ideaDetail from "@/components/projects/IdeaDetail.vue";
 import AboutTYIU from "../components/university/AboutTYIU.vue"; // Страница About только для TYIU
 import Cookies from "js-cookie";
 const routes = [
@@ -48,9 +49,15 @@ const routes = [
     component: Ideas,
   },
   {
-    path: "/:institute/ideas/:id",
+    path: "/:institute/project/:id",
+    name: "ProjectDetail",
+    component: ProjectDetail,
+    props: route => ({ ideaId: route.params.id, institute: route.params.institute })  // Передаем параметры как пропсы
+  },
+  {
+    path: "/:institute/idea/:id",
     name: "ideaDetail",
-    component: IdeaDetail,
+    component: ideaDetail,
     props: route => ({ ideaId: route.params.id, institute: route.params.institute })  // Передаем параметры как пропсы
   },
   {

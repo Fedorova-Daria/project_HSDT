@@ -4,10 +4,9 @@
       <thead class="bg-card text-white">
         <tr>
           <th class="p-3 text-left w-10"></th>
-          <th class="p-3 text-left w-1/4">Название команды</th>
-          <th class="p-3 text-left w-1/4">Количество человек</th>
-          <th class="p-3 text-left w-1/8">Навыки</th>
-          <th class="p-3 text-left w-1/8">Статус</th>
+          <th class="p-3 text-left ">Название команды</th>
+          <th class="p-3 text-left ">Количество человек</th>
+          <th class="p-3 text-left w-1/4">Статус</th>
           <th class="p-3 text-left w-1/6"></th>
         </tr>
       </thead>
@@ -32,22 +31,8 @@
             </button>
           </td>
           <td class="p-3 border-t border-zinc-600">{{ team.name }}</td>
-          <td class="p-3 border-t border-zinc-600">{{ team.members.length }}</td>
-          <td class="p-3 border-t border-zinc-600">
-            <!-- Отображаем навыки всех участников команды -->
-            <div v-if="team.members && team.members.length">
-              <div
-                v-for="member in team.members"
-                :key="member.id"
-                class="mb-2"
-              >
-                <span>
-                  {{ formatSkills(member.skills) }}
-                </span>
-              </div>
-            </div>
-            <div v-else>Нет участников</div>
-          </td>
+          <td class="p-3 border-t border-zinc-600">{{ team.participants_count }}</td>
+          
           <td class="p-3 border-t border-zinc-600">
             <span class="flex justify-between px-3 py-1 rounded-full">
               {{ team.status }}

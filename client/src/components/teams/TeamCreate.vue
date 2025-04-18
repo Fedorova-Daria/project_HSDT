@@ -139,7 +139,7 @@ export default {
         }
   
         // Обратите внимание: URL с завершающим слэшем
-        const response = await api.post('/teams/create/', payload, { headers });
+        const response = await api.post('/teams/', payload, { headers });
         console.log("Команда успешно создана:", response.data);
         this.$emit('teamCreated', response.data);
         // Очищаем форму

@@ -19,20 +19,12 @@
           />
         </div>
         <select class="ml-5 h-10 py-2 px-3 border bg-white rounded-md focus:border-fiol duration-500">
-          <option value="" disabled selected class="text-gray-500">Выберите институт</option>
-          <option>ВШЦТ</option>
-          <option>ИПТИ</option>
-          <option>СТРОИН</option>
-          <option>АРХИД</option>
-        </select>
-
-        <select class="ml-5 h-10 py-2 px-3 border bg-white rounded-md focus:border-fiol duration-500">
           <option value="" disabled selected class="text-gray-500">Сортировать по</option>
           <option>По новизне</option>
           <option>По популярности</option>
         </select>
 
-        <button
+        <button v-if="userRole === 'ST'"
           @click="openModal"
           class="bg-purple-600 text-white rounded-md px-4 py-2 hover:bg-purple-700 transition ml-5 h-10"
         >
@@ -69,7 +61,7 @@
     </div>
 
     <!-- Всплывающее окно -->
-    <IdeaModal v-if="isModalOpen" @close="closeModal" @submit="addNewIdea" />
+    <IdeaModal v-if="isModalOpen" @close="closeModal" @submit="submitIdea(status)" />
   </div>
 </template>
 
@@ -77,17 +69,19 @@
 import IdeasTable from "@/components/projects/IdeasTable.vue";
 import Header from "@/components/header.vue";
 import IdeaModal from "@/components/projects/IdeaModal.vue";
-import { fetchOwnerName, toggleLike } from "@/services/ideaHelpers.js";
+import { fetchOwnerName, toggleLike } from "@/services/ideas.js";
 import { instituteStyles } from "@/assets/instituteStyles.js";
 import api from "@/composables/auth";
 import Cookies from "js-cookie";
 import ParallaxBackground from "@/components/ParallaxBackground.vue";
+import UserService from "@/composables/storage.js";
 
 export default {
   inject: ["globalState"], // Подключаем глобальное состояние
   components: { IdeaModal, Header, IdeasTable, ParallaxBackground },
   data() {
     return {
+      userRole: null,
       userData: {}, // Изначально пустой объект
       isAnimating: false,
       items: [], // Список идей
@@ -118,6 +112,9 @@ export default {
       return style || { buttonOffColor: "#ccc" }; // Дефолтный стиль
     },
   },
+  created() {
+    this.userRole = UserService.getUserRole(); // Устанавливаем значение из Cookies
+  },
   methods: {
     // Устанавливаем активный фильтр
     setFilter(filter) {
@@ -139,7 +136,7 @@ export default {
     },
     async fetchIdeas() {
       try {
-        const response = await api.get("/projects/");
+        const response = await api.get("/ideas/");
         this.items = response.data;
         this.filterItems(); // Применяем фильтрацию сразу после загрузки идей
         // Загружаем инициаторов для каждой идеи
@@ -169,7 +166,7 @@ export default {
     openIdea(idea) {
       const institute = this.selectedInstitute; // Используем selectedInstitute из data()
       if (institute) {
-        this.$router.push({ path: `/${institute}/ideas/${idea.id}` });
+        this.$router.push({ path: `/${institute}/idea/${idea.id}` });
       } else {
         console.error("Институт не выбран");
       }

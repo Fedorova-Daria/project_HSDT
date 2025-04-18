@@ -167,5 +167,9 @@ SESSION_COOKIE_AGE = 2592000  # 30 дней
 # Если True, сессия будет сохраняться даже после закрытия браузера
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
-CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+]
 
