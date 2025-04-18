@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Account
 from django.contrib.auth.hashers import make_password
 from core.models import UniversityGroup
+from core.serializers import TechnologySerializer  # если хочешь показывать скиллы
 
 
 class AccountSerializer(serializers.ModelSerializer):
@@ -25,4 +26,27 @@ class AccountSerializer(serializers.ModelSerializer):
         # Создаем пользователя
         return super().create(validated_data)
 
+
+class AccountShortSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    role_display = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Account
+        fields = [
+            'id',
+            'email',
+            'full_name',
+            'avatar',
+            'role',
+            'role_display',
+            'university_group',
+            'total_rating',
+        ]
+
+    def get_full_name(self, obj):
+        return f"{obj.first_name or ''} {obj.last_name or ''}".strip() or obj.email
+
+    def get_role_display(self, obj):
+        return obj.get_role_display()
 

@@ -1,66 +1,66 @@
-from .models import Project
-from users.models import Account
-from rest_framework import serializers, viewsets, permissions
-from rest_framework.response import Response
-from rest_framework.decorators import action
+# projects/serializers.py
 
-# Сериализатор для заказчика
-class CustomerSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Account
-        fields = ['id', 'first_name', 'last_name', 'avatar']
+from rest_framework import serializers
+from .models import Project, Idea, TeamResponse
+from users.serializers import AccountShortSerializer
+from core.serializers import TechnologySerializer
 
+class ProjectSerializer(serializers.ModelSerializer):
+    initiator = AccountShortSerializer(read_only=True)
+    customer = AccountShortSerializer(read_only=True)
+    owner = AccountShortSerializer(read_only=True)
 
-# Сериализатор для пользователя
-class AccountSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Account
-        fields = ['id', 'first_name', 'last_name', 'avatar']
+    likes = AccountShortSerializer(many=True, read_only=True)
+    expert_likes = AccountShortSerializer(many=True, read_only=True)
+    applicants = AccountShortSerializer(many=True, read_only=True)
+    workers = AccountShortSerializer(many=True, read_only=True)
+    favorites = AccountShortSerializer(many=True, read_only=True)
+    experts_voted = AccountShortSerializer(many=True, read_only=True)
 
-
-# Сериализатор для проекта
-class ProjectListSerializer(serializers.ModelSerializer):
-    initiator = serializers.StringRelatedField()  # Покажет имя инициатора
-    customer = AccountSerializer(allow_null=True)  # Добавляем информацию о заказчике
-    applicants = AccountSerializer(allow_null=True)
-    likes_count = serializers.IntegerField(source="likes.count", read_only=True)  # Количество лайков
-    applicants_count = serializers.IntegerField(source="applicants.count", read_only=True)  # Количество откликнувшихся
-    workers = AccountSerializer(many=True, read_only=True)  # Проголосовавшие эксперты (или работающие пользователи)
-    is_liked = serializers.SerializerMethodField()
-    is_expert_voted = serializers.SerializerMethodField()
-    experts_voted_count = serializers.IntegerField(source="experts_voted.count", read_only=True)
-    has_customer = serializers.SerializerMethodField()  # Новое поле
+    skills_required = TechnologySerializer(many=True, read_only=True)
 
     class Meta:
         model = Project
-        fields = "__all__"  # Включаем все поля из модели + добавленные через сериализаторы
-        extra_kwargs = {
-            'experts_voted': {'write_only': True}  # Скрываем в ответе, так как используем is_expert_voted
-        }
+        fields = '__all__'
 
-    def get_is_liked(self, obj):
-        user = self.context['request'].user
-        return user.is_authenticated and obj.likes.filter(id=user.id).exists()
-
-    def get_is_expert_voted(self, obj):
-        user = self.context['request'].user
-        return user.is_authenticated and hasattr(user, 'is_expert') and user.is_expert and obj.experts_voted.filter(id=user.id).exists()
-
-    def get_has_customer(self, obj):
-        return obj.customer is not None  # Возвращает True, если у проекта есть заказчик
-
-# Сериалайзер для создания проекта
 class ProjectCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
-        fields = ["id", "name", "description", "technologies", "is_hiring", "status", "owner", "initiator", "customer"]
-        read_only_fields = ["id", "owner", "initiator", "customer"]
+        exclude = [
+            'approved', 'likes', 'favorites', 'applicants', 'workers', 'experts_voted',
+            'created_at', 'expert_likes', 'votes_to_approve'
+        ]
+        read_only_fields = ['initiator', 'owner']
 
-    def create(self, validated_data):
-        user = self.context["request"].user
-        validated_data["owner"] = user
-        validated_data["initiator"] = user
-        if hasattr(user, "company_name") and user.company_name:
-            validated_data["customer"] = user
-        return super().create(validated_data)
+class ProjectUpdateStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Project
+        fields = ['status', 'approved']
+
+
+class IdeaSerializer(serializers.ModelSerializer):
+    owner = serializers.ReadOnlyField(source='owner.id')
+    likes_count = serializers.SerializerMethodField()
+    expert_likes_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Idea
+        fields = '__all__'
+
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+
+    def get_expert_likes_count(self, obj):
+        return obj.expert_likes.count()
+
+class IdeaEditSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Idea
+        fields = ['title', 'description', 'skills_required', 'status']
+
+
+class TeamResponseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TeamResponse
+        fields = ['id', 'project', 'team', 'created_at']
 

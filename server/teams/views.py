@@ -1,149 +1,143 @@
-from rest_framework import generics, permissions
-from .models import Team
-from .serializers import TeamDetailSerializer, TeamEditSerializer
-from users.models import Account
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.decorators import action
+from .permissions import IsTeamLeader
+from rest_framework.permissions import IsAuthenticated
 from .models import Team, TeamJoinRequest
+from .serializers import (
+    TeamCreateSerializer,
+    TeamListSerializer,
+    TeamDetailSerializer,
+    TeamUpdateSerializer,
+    TeamJoinRequestSerializer
+)
 
-class TeamListView(generics.ListAPIView):
-    """Список всех команд"""
+class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
-    serializer_class = TeamDetailSerializer
-    permission_classes = [permissions.IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return TeamCreateSerializer
+        if self.action == "list":
+            return TeamListSerializer
+        if self.action == "retrieve":
+            return TeamDetailSerializer
+        if self.action in ["update", "partial_update"]:
+            return TeamUpdateSerializer
+        return TeamDetailSerializer
+
+    def get_permissions(self):
+        if self.action in ["update", "partial_update"]:
+            return [permissions.IsAuthenticated()]
+        if self.action == "create":
+            return [permissions.IsAuthenticated()]
+        return [permissions.AllowAny()]
+
+    def perform_update(self, serializer):
+        team = self.get_object()
+        if self.request.user != team.owner:
+            raise PermissionError("Только тим-лид может редактировать команду.")
+        serializer.save()
+
+    @action(detail=True, methods=["post"], permission_classes=[IsTeamLeader])
+    def add_member(self, request, pk=None):
+        team = self.get_object()
+        user_id = request.data.get("user_id")
+
+        try:
+            user = Account.objects.get(id=user_id)
+        except Account.DoesNotExist:
+            return Response({"detail": "Пользователь не найден."}, status=404)
+
+        if user.teams.exists():
+            return Response({"detail": "Пользователь уже в команде."}, status=400)
+
+        team.members.add(user)
+
+        # Отклоняем заявки во все команды
+        TeamJoinRequest.objects.filter(user=user, status='pending').update(status='declined')
+
+        return Response({"detail": "Пользователь добавлен в команду."})
+
+    @action(detail=True, methods=["post"], permission_classes=[IsTeamLeader])
+    def remove_member(self, request, pk=None):
+        team = self.get_object()
+        user_id = request.data.get("user_id")
+
+        if not user_id:
+            return Response({"detail": "Не указан ID пользователя."}, status=400)
+
+        try:
+            user = Account.objects.get(id=user_id)
+        except Account.DoesNotExist:
+            return Response({"detail": "Пользователь не найден."}, status=404)
+
+        if user == team.owner:
+            return Response({"detail": "Нельзя удалить тимлида."}, status=400)
+
+        if user not in team.members.all():
+            return Response({"detail": "Пользователь не состоит в команде."}, status=400)
+
+        team.members.remove(user)
+
+        return Response({"detail": "Пользователь удалён из команды."})
 
 
-class TeamDetailView(generics.RetrieveAPIView):
-    """Детальная информация о команде"""
-    queryset = Team.objects.all()
-    serializer_class = TeamDetailSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    lookup_field = 'id'
-
-
-class TeamCreateView(generics.CreateAPIView):
-    """Создание новой команды"""
-    queryset = Team.objects.all()
-    serializer_class = TeamEditSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
-        team.members.add(self.request.user)  # Добавляем создателя в участники. Да, я добавил только одну строчку и что?
-
-
-class TeamUpdateView(generics.UpdateAPIView):
-    """Редактирование команды (только для владельца)"""
-    queryset = Team.objects.all()
-    serializer_class = TeamEditSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    lookup_field = 'id'
+class TeamJoinRequestViewSet(viewsets.ModelViewSet):
+    queryset = TeamJoinRequest.objects.all()
+    serializer_class = TeamJoinRequestSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Team.objects.filter(owner=self.request.user)
+        user = self.request.user
+        if user.is_staff:
+            return TeamJoinRequest.objects.all()
+        return TeamJoinRequest.objects.filter(user=user)
 
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
-class TeamMembersView(generics.GenericAPIView):
-    """Управление участниками команды"""
-    queryset = Team.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
-    lookup_field = 'id'
+    @action(detail=True, methods=["post"])
+    def cancel(self, request, pk=None):
+        join_request = self.get_object()
+        if join_request.user != request.user:
+            return Response({"detail": "Нельзя удалить чужую заявку."}, status=403)
+        if join_request.status != 'pending':
+            return Response({"detail": "Нельзя отменить обработанную заявку."}, status=400)
 
-    def post(self, request, *args, **kwargs):
-        """Добавление участников"""
-        team = self.get_object()
+        join_request.delete()
+        return Response({"detail": "Заявка отозвана."})
+
+    @action(detail=True, methods=["post"])
+    def accept(self, request, pk=None):
+        join_request = self.get_object()
+        team = join_request.team
+
         if team.owner != request.user:
-            return Response({'error': 'Только владелец может добавлять участников'},
-                            status=status.HTTP_403_FORBIDDEN)
+            return Response({"detail": "Только тимлид может принимать заявки."}, status=403)
 
-        user_ids = request.data.get('user_ids', [])
-        # Добавьте логику добавления участников
-        return Response({'status': 'success'})
+        if join_request.user.teams.exists():
+            return Response({"detail": "Пользователь уже состоит в команде."}, status=400)
 
-    def delete(self, request, *args, **kwargs):
-        """Удаление участников"""
-        team = self.get_object()
-        if team.owner != request.user:
-            return Response({'error': 'Только владелец может удалять участников'},
-                            status=status.HTTP_403_FORBIDDEN)
+        join_request.status = 'accepted'
+        join_request.save()
 
-        user_id = request.data.get('user_id')
-        # Добавьте логику удаления участника
-        return Response({'status': 'success'})
+        team.members.add(join_request.user)
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def join_team(request, team_id):
-    user = request.user
+        TeamJoinRequest.objects.filter(
+            user=join_request.user,
+            status='pending'
+        ).exclude(id=join_request.id).update(status='declined')
 
-    if user.teams.exists():
-        return Response({"detail": "Вы уже состоите в команде."}, status=400)
+        return Response({"detail": "Участник добавлен в команду."})
 
-    try:
-        team = Team.objects.get(id=team_id)
-    except Team.DoesNotExist:
-        return Response({"detail": "Команда не найдена."}, status=404)
+    @action(detail=True, methods=["post"])
+    def decline(self, request, pk=None):
+        join_request = self.get_object()
+        if join_request.team.owner != request.user:
+            return Response({"detail": "Нет прав."}, status=403)
 
-    if TeamJoinRequest.objects.filter(user=user, team=team).exists():
-        return Response({"detail": "Вы уже отправили заявку."}, status=400)
-
-    TeamJoinRequest.objects.create(user=user, team=team)
-    return Response({"detail": "Заявка отправлена."}, status=201)
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def accept_request(request, team_id, request_id):
-    user = request.user
-
-    try:
-        team = Team.objects.get(id=team_id)
-        join_request = TeamJoinRequest.objects.get(id=request_id, team=team)
-    except (Team.DoesNotExist, TeamJoinRequest.DoesNotExist):
-        return Response({"detail": "Команда или заявка не найдена."}, status=404)
-
-    if team.owner != user:
-        return Response({"detail": "Вы не владелец команды."}, status=403)
-
-    join_request.status = 'accepted'
-    join_request.save()
-    team.members.add(join_request.user)
-
-    return Response({"detail": "Заявка принята."})
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def deny_request(request, team_id, request_id):
-    user = request.user
-
-    try:
-        team = Team.objects.get(id=team_id)
-        join_request = TeamJoinRequest.objects.get(id=request_id, team=team)
-    except (Team.DoesNotExist, TeamJoinRequest.DoesNotExist):
-        return Response({"detail": "Команда или заявка не найдена."}, status=404)
-
-    if team.owner != user:
-        return Response({"detail": "Вы не владелец команды."}, status=403)
-
-    join_request.status = 'declined'
-    join_request.save()
-
-    return Response({"detail": "Заявка отклонена."})
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def leave_team(request, team_id):
-    user = request.user
-
-    try:
-        team = Team.objects.get(id=team_id)
-    except Team.DoesNotExist:
-        return Response({"detail": "Команда не найдена."}, status=404)
-
-    if user not in team.members.all():
-        return Response({"detail": "Вы не состоите в команде."}, status=400)
-
-    team.members.remove(user)
-    return Response({"detail": "Вы покинули команду."})
+        join_request.status = 'declined'
+        join_request.save()
+        return Response({"detail": "Заявка отклонена."})
 
