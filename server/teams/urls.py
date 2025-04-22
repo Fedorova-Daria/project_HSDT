@@ -4,7 +4,7 @@ from .views import TeamViewSet, TeamJoinRequestViewSet
 
 router = DefaultRouter()
 router.register(r'teams', TeamViewSet, basename='teams')
-router.register(r'join-requests', TeamJoinRequestViewSet, basename='join-request')
+router.register(r'team-join-requests', TeamJoinRequestViewSet, basename='join-request')
 
 urlpatterns = [
     path('', include(router.urls)),
