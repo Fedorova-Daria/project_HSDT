@@ -20,14 +20,11 @@ class Project(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='projects_owned')
-    initiator = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='projects_initiated')
-    customer = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='projects_customer')
+    initiator = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='projects_initiated', blank=True, null=True)
 
-    applicants = models.ManyToManyField(Account, related_name="applied_projects", blank=True)
-    workers = models.ManyToManyField(Account, related_name="working_on_projects", blank=True)
-    selected_team = models.ForeignKey(
-        Team, on_delete=models.SET_NULL, null=True, blank=True, related_name="projects"
-    )
+    teams = models.ManyToManyField(Account, related_name='teams_projects', blank=True, null=True)
+    workers = models.ManyToManyField(Account, related_name='workers_projects', blank=True, null=True)
+
     favorites = models.ManyToManyField(Account, related_name="favorite_projects", blank=True)
     experts_voted = models.ManyToManyField(Account, related_name="voted_projects", blank=True)
 
@@ -63,7 +60,7 @@ class Idea(models.Model):
 
     title = models.CharField(max_length=255)
     description = models.TextField()
-    technologies = models.ManyToManyField(Account, related_name="ideas_with", blank=True)
+    skills_required = models.ManyToManyField(Technology, related_name="ideas_with", blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -75,14 +72,28 @@ class Idea(models.Model):
     likes = models.ManyToManyField(Account, related_name="liked_ideas", blank=True)
     expert_likes = models.ManyToManyField(Account, related_name="experts_liked_ideas", blank=True)
 
+    def __str__(self):
+        return self.title
+
 
 # projects/models.py
 
-class TeamResponse(models.Model):
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="team_responses")
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="responses")
+class ProjectApplication(models.Model):
+    APPLICANT_TYPE_CHOICES = (
+        ('freelancer', 'Фрилансер'),
+        ('team', 'Команда'),
+    )
+
+    STATUS_CHOICES = (
+        ('pending', 'В ожидании'),
+        ('accepted', 'Принято'),
+        ('rejected', 'Отклонено'),
+        ('cancelled', 'Отменено'),
+    )
+
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='applications')
+    applicant_type = models.CharField(max_length=20, choices=APPLICANT_TYPE_CHOICES)
+    freelancer = models.ForeignKey(Account, null=True, blank=True, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, null=True, blank=True, on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('project', 'team')  # чтобы нельзя было откликнуться дважды
-

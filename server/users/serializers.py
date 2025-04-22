@@ -42,6 +42,7 @@ class AccountShortSerializer(serializers.ModelSerializer):
             'role_display',
             'university_group',
             'total_rating',
+            'company_name',
         ]
 
     def get_full_name(self, obj):

@@ -7,10 +7,10 @@ from .models import UniversityGroup, Technology
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = UniversityGroup
-        fields = ["id", "name"]
+        fields = "__all__"
 
 class TechnologySerializer(serializers.ModelSerializer):
     class Meta:
         model = Technology
-        fields = ["id", "name"]
+        fields = "__all__"
 
