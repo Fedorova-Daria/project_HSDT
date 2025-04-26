@@ -55,16 +55,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return Response({'detail': 'Добавлено в лайки'})
 
     @action(detail=True, methods=['post'])
-    def favorite(self, request, pk=None):
-        project = self.get_object()
-        user = request.user
-        if user in project.favorites.all():
-            project.favorites.remove(user)
-            return Response({'detail': 'Убрано из избранного'})
-        project.favorites.add(user)
-        return Response({'detail': 'Добавлено в избранное'})
-
-    @action(detail=True, methods=['post'])
     def apply(self, request, pk=None):
         project = self.get_object()
         user = request.user
