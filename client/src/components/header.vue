@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <header class="flex items-center justify-between px-8 py-4 border border-border">
+  <div class="bg-lightBackground dark:bg-darkBackground">
+    <header class="flex items-center justify-between px-8 py-4 border-b border-dynamic">
       <!-- Логотип слева -->
       <div class="flex items-center">
         <h1 :style="{ color: instituteStyle?.textColor }" class="font-display text-3xl">
@@ -11,7 +11,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
-            <ul v-if="isDropdownOpen" class="absolute left-0 w-50 mt-2 bg-card text-white rounded-lg shadow-lg z-10">
+            <ul v-if="isDropdownOpen" class="absolute left-0 w-50 mt-2 bg-card text-dynamic rounded-lg shadow-lg z-10">
               <li v-for="inst in institutes" :key="inst" @click="changeInstitute(inst)" class="py-2 px-4 cursor-pointer hover:bg-zinc-600 rounded-lg">
                 {{ inst }}
               </li>
@@ -23,12 +23,33 @@
 
       <!-- Навигация -->
       <nav class="flex items-center gap-10">
-        
+
+        <label class="switch">
+  <input
+    id="checkbox"
+    type="checkbox"
+    :checked="isDarkTheme" 
+    @change="toggleTheme"
+  />
+  <span class="slider">
+    <div class="star star_1"></div>
+    <div class="star star_2"></div>
+    <div class="star star_3"></div>
+    <svg viewBox="0 0 16 16" class="cloud_1 cloud">
+      <path
+        transform="matrix(.77976 0 0 .78395-299.99-418.63)"
+        fill="#fff"
+        d="m391.84 540.91c-.421-.329-.949-.524-1.523-.524-1.351 0-2.451 1.084-2.485 2.435-1.395.526-2.388 1.88-2.388 3.466 0 1.874 1.385 3.423 3.182 3.667v.034h12.73v-.006c1.775-.104 3.182-1.584 3.182-3.395 0-1.747-1.309-3.186-2.994-3.379.007-.106.011-.214.011-.322 0-2.707-2.271-4.901-5.072-4.901-2.073 0-3.856 1.202-4.643 2.925"
+      ></path>
+    </svg>
+  </span>
+</label>
+
         <router-link
   v-for="item in menuItems"
   :key="item.name"
   :to="`/${instituteMap[selectedInstitute] || selectedInstitute}${item.link}`"
-  class="relative text-lg font-medium transition-colors duration-300 group text-white"
+  class="relative text-lg font-medium transition-colors duration-300 group text-dynamic"
   :style="{ '--hover-color': instituteStyle?.textColor }"
 >
   {{ item.name }}
@@ -41,7 +62,7 @@
 
 
         <!-- Кнопка уведомлений -->
-        <div class="relative">
+        <div class="relative ">
           <button class="relative p-1" @click="toggleNotifications">
             <img src="/notificate.svg" alt="notification" class="w-6" />
             <span
@@ -66,15 +87,25 @@
         </div>
 
         <!-- Аватарка -->
-        <div class="relative w-12 h-12">
-  <div
-    @click="goToProfile"
-    class="w-full h-full rounded-full border-2 border-zinc-700 transition-all duration-300 cursor-pointer flex items-center justify-center hover:border-[var(--hover-color)]"
-    :style="{ ...avatarStyle, '--hover-color': instituteStyle?.textColor }"
-  >
-    <span class="text-white font-semibold text-xl">{{ userInitials }}</span>
-  </div>
-</div>
+        <div
+      class="relative w-12 h-12 rounded-full overflow-hidden cursor-pointer"
+      @click="goToProfile"
+      :style="avatarStyle"
+    >
+      <!-- Если аватарка есть – покажем её, иначе инициалы -->
+      <img
+        v-if="userAvatar"
+        :src="userAvatar"
+        alt="User Avatar"
+        class="object-cover w-full h-full rounded-full border-2 border-zinc-400"
+      />
+      <span
+  v-else
+  class="flex items-center justify-center w-full h-full text-dynamic font-semibold text-xl rounded-full border-2 border-zinc-400"
+>
+  {{ userInitials }}
+</span>
+    </div>
       </nav>
     </header>
   </div>
@@ -91,11 +122,12 @@ export default {
   components: { Notifications },
   data() {
     return {
+      isDarkTheme: false,
       isDropdownOpen: false,
       localSelectedInstitute: Cookies.get("institute") || "TYIU",
       showNotifications: false,
       notifications: [],
-      userName: "Иван Иванов",
+      user: {}, // Здесь будем хранить данные пользователя
       institutes: ["ВШЦТ", "АРХИД", "ИПТИ", "СТРОИН", "ТИУ"],
       instituteMap: { 
         "ВШЦТ": "HSDT",
@@ -132,12 +164,64 @@ export default {
     unreadNotificationsCount() {
       return this.notifications.filter((n) => !n.read).length;
     },
+    userName() {
+      try {
+        const storedUser = localStorage.getItem("userData");
+        if (storedUser) {
+          const user = JSON.parse(storedUser);
+          // Если у пользователя есть отдельные поля first_name, last_name,
+          // можно объединить их либо взять просто user.name
+          return user.first_name && user.last_name
+            ? `${user.first_name} ${user.last_name}`
+            : user.name || "";
+        }
+        return "";
+      } catch (e) {
+        console.error("Ошибка чтения userData:", e);
+        return "";
+      }
+    },
+    // Вычисляемое свойство для аватара пользователя
+    userAvatar() {
+      try {
+        const storedUser = localStorage.getItem("userData");
+        if (storedUser) {
+          const user = JSON.parse(storedUser);
+          return user.avatar || "";
+        }
+        return "";
+      } catch (e) {
+        return "";
+      }
+    },
+    // Вычисляемое свойство для инициалов пользователя,
+    // если аватара нет (используем userName для генерации)
     userInitials() {
-      return this.userName
-        .split(" ")
-        .map((name) => name[0])
-        .join("")
-        .toUpperCase();
+      if (!this.userName) return "";
+      const splitName = this.userName.split(" ");
+      if (splitName.length > 1) {
+        // Берём первую букву первого и последнего слова
+        return (splitName[0].charAt(0) + splitName[splitName.length - 1].charAt(0)).toUpperCase();
+      }
+      // Если одно слово – первые две буквы
+      return this.userName.substring(0, 2).toUpperCase();
+    },
+    // Вычисляемое свойство для стиля аватарки
+    avatarStyle() {
+      // Если аватарка задана, можно вернуть стиль с background-image,
+      // но если нет, возвращаем, например, цвет фона, зависящий от имени.
+      if (this.userAvatar) {
+        return {
+          backgroundImage: `url(${this.userAvatar})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center"
+        };
+      }
+      // Если аватарки нет, создаём фон (можно сделать градиент, используя длину или хэш имени)
+      // Здесь для примера просто задаём фиксированный градиент.
+      return {
+        background: "linear-gradient(45deg, #ff9a9e, #fad0c4)"
+      }
     },
     avatarStyle() {
   const colors = this.instituteStyle?.avatarColors || ["#ccc"]; // Дефолтный цвет
@@ -146,6 +230,27 @@ export default {
 },
   },
   methods: {
+    /**
+     * Переключает тему и сохраняет выбор в localStorage.
+     */
+    toggleTheme() {
+    this.isDarkTheme = !this.isDarkTheme;
+    localStorage.setItem("theme", this.isDarkTheme ? "dark" : "light");
+    document.documentElement.classList.toggle("dark", this.isDarkTheme);
+  },
+    /**
+     * Применяет текущую тему, добавляя соответствующий класс к элементу <html>.
+     */
+    applyTheme() {
+      const root = document.documentElement;
+      if (this.isDarkTheme) {
+        root.classList.add("dark-theme");
+        root.classList.remove("light-theme");
+      } else {
+        root.classList.add("light-theme");
+        root.classList.remove("dark-theme");
+      }
+    },
     toggleDropdown() {
       this.isDropdownOpen = !this.isDropdownOpen;
     },
@@ -196,6 +301,21 @@ created() {
   const userData = JSON.parse(Cookies.get("userData") || "{}");
   const institute = userData.institute || "TYIU";
 
+// Если данные пользователя (например, имя, фамилия, аватар) сохранены в localStorage,
+    // получаем их и преобразуем из JSON.
+    const storedUser = localStorage.getItem("userData");
+    if (storedUser) {
+      this.user = JSON.parse(storedUser);
+    } else {
+      // В качестве fallback можно получить данные из Cookies или задать пустой объект
+      this.user = {};
+    }
+
+// При загрузке читаем сохранённую тему из localStorage или устанавливаем светлую по умолчанию
+const savedTheme = localStorage.getItem("theme") || "light";
+    this.isDarkTheme = savedTheme === "dark";
+    this.applyTheme();
+
   console.log("Институт из Cookies:", institute);
 
   // Синхронизируем глобальное состояние
@@ -209,6 +329,102 @@ created() {
 </script>
 
 <style scoped>
+/* Theme Switch */
+/* The switch - the box around the slider */
+.switch {
+  font-size: 10px;
+  position: relative;
+  display: inline-block;
+  width: 4em;
+  height: 2.2em;
+  border-radius: 30px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Hide default HTML checkbox */
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #2a2a2a;
+  transition: 0.4s;
+  border-radius: 30px;
+  overflow: hidden;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 1.2em;
+  width: 1.2em;
+  border-radius: 20px;
+  left: 0.5em;
+  bottom: 0.5em;
+  transition: 0.4s;
+  transition-timing-function: cubic-bezier(0.81, -0.04, 0.38, 1.5);
+  box-shadow: inset 8px -4px 0px 0px #fff;
+}
+
+.switch input:checked + .slider {
+  background-color: #00a6ff;
+}
+
+.switch input:checked + .slider:before {
+  transform: translateX(1.8em);
+  box-shadow: inset 15px -4px 0px 15px #ffcf48;
+}
+
+.star {
+  background-color: #fff;
+  border-radius: 50%;
+  position: absolute;
+  width: 5px;
+  transition: all 0.4s;
+  height: 5px;
+}
+
+.star_1 {
+  left: 2.5em;
+  top: 0.5em;
+}
+
+.star_2 {
+  left: 2.2em;
+  top: 1.2em;
+}
+
+.star_3 {
+  left: 3em;
+  top: 0.9em;
+}
+
+.switch input:checked ~ .slider .star {
+  opacity: 0;
+}
+
+.cloud {
+  width: 3.5em;
+  position: absolute;
+  bottom: -1.4em;
+  left: -1.1em;
+  opacity: 0;
+  transition: all 0.4s;
+}
+
+.switch input:checked ~ .slider .cloud {
+  opacity: 1;
+}
+
   .group:hover {
     color: var(--hover-color);
   }

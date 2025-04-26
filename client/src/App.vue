@@ -1,13 +1,8 @@
 <script>
+
+
 export default {
-  methods: {
-    goToHome() {
-      this.$router.push("/");
-    },
-    goToAbout() {
-      this.$router.push("/register");
-    },
-  },
+  name: "App",
 };
 </script>
 

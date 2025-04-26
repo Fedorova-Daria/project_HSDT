@@ -17,7 +17,7 @@
           class="border-b border-zinc-700 hover:bg-card transition duration-200"
         >
           <td class="px-6 py-4">{{ idea.id }}</td>
-          <td class="px-6 py-4 font-medium">{{ idea.name }}</td>
+          <td class="px-6 py-4 font-medium">{{ idea.title }}</td>
           <td class="px-6 py-4">{{ idea.initiator || "Неизвестный автор" }}</td>
           <td class="px-6 py-4">{{ idea.created_at }}</td>
           <td class="px-6 py-4">{{ idea.status || "Неизвестно" }}</td>

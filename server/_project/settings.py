@@ -40,13 +40,15 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'core',
-    'teams',
+    'projects',
     'users',
+    'teams',
     'rest_framework',
     'rest_framework_simplejwt',  # Подключаем JWT
     'corsheaders',
     'rest_framework_simplejwt.token_blacklist',
     'django_filters',
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [
@@ -165,8 +167,7 @@ SESSION_COOKIE_AGE = 2592000  # 30 дней
 # Если True, сессия будет сохраняться даже после закрытия браузера
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
-CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
+    "http://localhost:5173",  
 ]
-
+CORS_ALLOW_CREDENTIALS = True

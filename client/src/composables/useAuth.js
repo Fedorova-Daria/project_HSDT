@@ -1,67 +1,101 @@
-import api from "@/api/axiosInstance.js";
-import { saveTokens, saveUserData, clearStorage } from "@/api/storage.js";
+import api from "@/composables/auth"; // Предварительно настроенный экземпляр axios
+import router from "@/router"; // Импортируем роутер для редиректа после регистрации
+import UserService from "@/composables/storage.js"; // Экземпляр UserService
 import axios from "axios";
+
 export function useAuth() {
-   // 🔐 Логин
-   const login = async (email, password) => {
+  /**
+   * Выполняет логин пользователя.
+   * Очищает данные перед входом, отправляет запрос на аутентификацию,
+   * сохраняет полученные токены и данные пользователя, затем возвращает данные.
+   *
+   * @param {string} email
+   * @param {string} password
+   * @returns {Promise<Object>} Объект с access-токеном и данными пользователя.
+   */
+  const login = async (email, password) => {
     try {
-      clearStorage();  // Очистка перед логином
+      UserService.clearStorage();
   
-      const response = await axios.post("http://127.0.0.1:8000/api/users/login/", {
-        email,
-        password,
-      });
+      const response = await axios.post("http://127.0.0.1:8000/api/users/login/", { email, password });
   
-      // Извлекаем токены из ответа
+      // Проверяем наличие токенов
+      if (!response.data.access_token || !response.data.refresh_token) {
+        throw new Error("Ошибка авторизации: сервер не вернул токены");
+      }
+  
       const { access_token, refresh_token } = response.data;
-      
-      // Сохраняем токены
-      saveTokens(access_token, refresh_token);
+      UserService.saveTokens(access_token, refresh_token);
   
-      // Пример запроса, использующего токен
-      const userDataResponse = await axios.get("http://127.0.0.1:8000/api/users/me/", {
-        headers: {
-          Authorization: `Bearer ${access_token}`, // используем токен, полученный из ответа
-        },
+      // Запрашиваем данные пользователя
+      const userDataResponse = await api.get("/users/me/", {
+        headers: { Authorization: `Bearer ${access_token}` },
+        withCredentials: true,
       });
   
       const userData = userDataResponse.data;
-      saveUserData(userData);
+      UserService.saveUserData(userData);
   
-      return {
-        access: access_token,
-        ...userData,
-      };
+      return { access: access_token, ...userData };
     } catch (error) {
+      console.error("Ошибка при входе:", error.response?.data || error);
+  
       const message = error.response?.data?.message;
-      if (message === "Invalid credentials") throw new Error("Неверный email или пароль");
-      if (message === "Email not found") throw new Error("Email не найден");
-      throw new Error("Ошибка при входе");
+      if (message === "Invalid credentials") {
+        throw new Error("Неверный email или пароль");
+      }
+      if (message === "Email not found") {
+        throw new Error("Email не найден");
+      }
+      throw new Error("Ошибка при входе. Попробуйте позже.");
     }
   };
 
-  // 👨‍🎓 Регистрация студента
+  /**
+   * Регистрирует студента.
+   * Отправляет данные регистрации, затем сохраняет токены,
+   * если регистрация прошла успешно.
+   *
+   * @param {Object} params
+   * @param {string} params.first_name
+   * @param {string} params.last_name
+   * @param {string} params.university
+   * @param {string} params.email
+   * @param {string} params.password
+   * @returns {Promise<Object>} Данные, полученные в ответе от сервера.
+   */
   const registerStudent = async ({
     first_name,
     last_name,
-    group,
+    university,
     email,
     password,
-    role = "ST",
   }) => {
-    const data = {
-      first_name,
-      last_name,
-      group,
-      email,
-      password,
-      role,
-    };
-
     try {
-      await api.post("/users/registration/", data);
-      router.push("/login");
+      // Отправляем данные по эндпоинту регистрации
+      const response = await api.post("/users/registration/", {
+        first_name,
+        last_name,
+        university,
+        email,
+        password,
+      });
+
+      console.log("Результат регистрации студента:", response.data);
+
+      if (response.data.success) {
+        const { access_token, refresh_token } = response.data;
+        UserService.saveTokens(access_token, refresh_token);
+        // Дополнительно можно сразу сохранить данные пользователя,
+        // если они передаются в ответе, или запросить их потом отдельно.
+        return response.data;
+      } else {
+        throw new Error(
+          "Ошибка при регистрации: " + (response.data.message || "Неизвестная ошибка")
+        );
+      }
     } catch (error) {
+      console.error("Ошибка при регистрации студента:", error);
       if (error.response?.data?.email) {
         throw new Error("Пользователь с таким email уже существует");
       }
@@ -69,7 +103,19 @@ export function useAuth() {
     }
   };
 
-  // 🧑‍💼 Регистрация заказчика
+  /**
+   * Регистрирует заказчика.
+   * Отправляет данные регистрации и, при успешной регистрации, перенаправляет на страницу логина.
+   *
+   * @param {Object} params
+   * @param {string} params.first_name
+   * @param {string} params.last_name
+   * @param {string} params.company
+   * @param {string} params.email
+   * @param {string} params.password
+   * @param {string} [params.role="CU"] Роль пользователя (по умолчанию "CU" — Customer).
+   * @returns {Promise<void>}
+   */
   const registerCustomer = async ({
     first_name,
     last_name,

@@ -1,15 +1,11 @@
 <template>
-  <div
-    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm"
-  >
+  <div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm">
     <!-- Main modal -->
     <div class="relative p-4 w-full max-w-md max-h-full">
       <!-- Modal content -->
       <div class="relative rounded-lg shadow-sm bg-card">
         <!-- Modal header -->
-        <div
-          class="flex items-center justify-between p-4 md:p-5 border-b rounded-t border-zinc-600"
-        >
+        <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t border-zinc-600">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
             Создать новый проект
           </h3>
@@ -47,7 +43,7 @@
                 >Название проекта</label
               >
               <input
-                v-model="ideaTitle"
+                v-model="form.title"
                 type="text"
                 name="name"
                 id="name"
@@ -56,89 +52,59 @@
                 required
               />
             </div>
-            <div class="col-span-2 sm:col-span-1">
-      <div class="flex items-start text-white">
-        <div class="flex items-center h-5">
-          <input
-            id="needDevHelp"
-            type="checkbox"
-            v-model="needHelp"
-            class="w-4 h-4 border border-gray-300 rounded-sm bg-gray-50 focus:ring-3 focus:ring-blue-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800"
-          />
-        </div>
-        <label for="needDevHelp" class="ms-2 text-sm font-medium">
-          Вам нужна помощь программиста?
-        </label>
-      </div>
+
+            <div class="col-span-2">
+    <label
+      for="technologies"
+      class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+    >
+      Выберите технологии
+    </label>
+    <div class="relative">
+    <!-- Кнопка для открытия списка -->
+    <div
+      class="w-full border border-fiol rounded-md py-2 px-3 bg-white text-black cursor-pointer flex justify-between items-center transition-colors hover:border-purple-500 focus:border-purple-600"
+      @click="dropdownOpen = !dropdownOpen"
+    >
+      <span>{{ selectedTechnologies.length ? selectedTechnologies.join(", ") : "Выберите технологии" }}</span>
+      <span :class="{ 'rotate-180': dropdownOpen }" class="transition-transform">
+        &#9660;
+      </span>
     </div>
 
-    <!-- Стек технологий (показывается только если выбран чекбокс) -->
-    <div v-if="needHelp" class="col-span-2 sm:col-span-1">
-      <label
-        for="category"
-        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+    <!-- Выпадающий список -->
+    <div
+      v-if="dropdownOpen"
+      class="flex flex-col absolute left-0 w-full bg-white border-3 border-solid border-fiol rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto z-50 transition-colors hover:border-purple-500"
+    >
+      <!-- Поле поиска -->
+      <input
+        v-model="searchQuery"
+        type="text"
+        placeholder="Поиск..."
+        class="w-full px-3 py-2 border-b border-fiol outline-none transition-colors hover:border-purple-500 focus:border-purple-600"
+        @input="filterTechnologies"
+      />
+
+      <!-- Список технологий -->
+      <div
+        v-for="tech in filteredTechnologies"
+        :key="tech.id"
+        @click="toggleTechnology(tech)"
+        class="p-2 cursor-pointer hover:bg-gray-200 transition-colors duration-300"
       >
-        Стек технологий
-      </label>
-      <div class="relative">
-        <!-- Кнопка для открытия выпадающего списка -->
-        <button
-          @click="toggleDropdown"
-          class="flex justify-between text-white bg-blue-700 hover:bg-blue-800 w-45 font-medium rounded-lg text-sm px-2 py-3 text-left items-center dark:bg-zinc-600 dark:hover:bg-zinc-700"
-          type="button"
-        >
-          Выбрать стек
-          <svg
-            class="w-4 h-4 ml-2"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
-        </button>
-        <!-- Выпадающее меню с прокруткой -->
-        <div
-          v-if="isDropdownOpen"
-          class="absolute z-10 w-48 bg-zinc-700 divide-y divide-zinc-600 rounded-lg shadow-sm"
-          style="top: 100%; left: 0; max-height: 200px; overflow-y: auto;"
-        >
-          <ul class="p-3 space-y-3 text-sm text-gray-700 dark:text-gray-200">
-            <li v-for="(stack, index) in stacks" :key="index">
-              <div class="flex items-center">
-                <input
-                  :id="'checkbox-item-' + index"
-                  type="checkbox"
-                  v-model="selectedStacks"
-                  :value="stack"
-                  class="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-purple-600 dark:focus:ring-purple-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500"
-                />
-                <label :for="'checkbox-item-' + index" class="ms-2 text-sm font-medium text-gray-300">
-                  {{ stack }}
-                </label>
-              </div>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- Выбранные технологии -->
-      <div class="mt-2 flex flex-wrap gap-2">
-        <span
-          v-for="tech in selectedStacks"
-          :key="tech"
-          class="px-2 py-1 bg-purple-600 text-white rounded"
-        >
-          {{ tech }}
-        </span>
+        <input
+          type="checkbox"
+          :id="tech.id"
+          :value="tech.id"
+          v-model="selectedTechnologies"
+          class="mr-2"
+        />
+        {{ tech.name }}
       </div>
     </div>
+  </div>
+  </div>
 
             <div class="col-span-2">
               <label
@@ -147,7 +113,7 @@
                 >Расскажите о том, что нужно сделать</label
               >
               <textarea
-                v-model="description"
+                v-model="form.description"
                 id="description"
                 rows="4"
                 class="block mt-3 p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
@@ -157,28 +123,28 @@
             </div>
           </div>
           <div class="flex justify-between gap-4">
-  <button
-    @click="submitIdea('open')"
-    type="button"
-    class="text-white inline-flex items-center bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:outline-none focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-800"
-  >
-    <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-      <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path>
-    </svg>
-    Добавить новый проект
-  </button>
+            <button
+              @click="submitIdea('open')"
+              type="button"
+              class="text-white inline-flex items-center bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:outline-none focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-800"
+            >
+              <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path>
+              </svg>
+              Добавить новый проект
+            </button>
 
-  <button
-    @click="submitIdea('draft')"
-    type="button"
-    class="text-white inline-flex items-center bg-gray-500 hover:bg-gray-600 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
-  >
-    <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-      <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path>
-    </svg>
-    Отложить проект
-  </button>
-</div>
+            <button
+              @click="submitIdea('draft')"
+              type="button"
+              class="text-white inline-flex items-center bg-gray-500 hover:bg-gray-600 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+            >
+              <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path>
+              </svg>
+              Отложить проект
+            </button>
+          </div>
         </form>
       </div>
     </div>
@@ -186,79 +152,76 @@
 </template>
 
 <script>
-import axios from "axios";
-import { fetchAccessToken } from "@/api/auth.js"; // Импортируем утилиту для получения актуального токена
+import { ref, onMounted } from 'vue';
+import { createIdeaOrProject } from "@/services/create"; // Импортируем метод создания
+import { fetchTechnologies } from "@/services/technologies.js";
 
 export default {
   data() {
     return {
-      needHelp: false, // Следим за чекбоксом "Нужна помощь"
-      isDropdownOpen: false, // Флаг для управления состоянием выпадающего списка
-      selectedStacks: [], // Массив для выбранных технологий
-      ideaTitle: "", // Название проекта
-      description: "", // Описание проекта
-      stacks: [
-        "Vue",
-        "React",
-        "Angular",
-        "Svelte",
-        "Python",
-        "Node.js",
-        "Django",
-      ], // Массив стеков
+      form: {
+        title: '',
+        description: '',
+        technologies: [], // Массив для выбранных технологий
+      },
+      dropdownOpen: false,
+      searchQuery: "",
+      selectedTechnologies: [], // Массив для выбранных технологий
+      technologies: [], // Массив всех технологий
+      filteredTechnologies: [], // Отфильтрованные технологии
     };
   },
   methods: {
-    closeModal() {
-      this.$emit("close"); // Сообщаем родителю закрыть окно
+    toggleTechnology(tech) {
+      const index = this.selectedTechnologies.indexOf(tech.id);
+      if (index > -1) {
+        this.selectedTechnologies.splice(index, 1);
+      } else {
+        this.selectedTechnologies.push(tech.id);
+      }
     },
-    toggleDropdown() {
-      this.isDropdownOpen = !this.isDropdownOpen;
+    filterTechnologies() {
+      const query = this.searchQuery.toLowerCase();
+      this.filteredTechnologies = this.technologies.filter((tech) =>
+        tech.name.toLowerCase().includes(query)
+      );
     },
     async submitIdea(status) {
-  try {
-    // Получаем токен, обновляя его при необходимости
-    const token = await fetchAccessToken();
-
-    if (!token) {
-      console.error("Ошибка: токен отсутствует.");
-      return;
-    }
-
-    // Преобразуем выбранные технологии в ID
-    const technologyIds = this.selectedStacks.map(stack => {
-      return this.stacks.findIndex(item => item === stack) + 1; // Здесь предполагается, что ID = индексу + 1
-    });
-
-    // Формируем данные
-    const ideaData = {
-      name: this.ideaTitle,
-      description: this.description,
-      technologies: technologyIds, // Технологии
-      status: status, // Указываем переданный статус ("open" или "draft")
-    };
-
-    // Отправляем запрос
-    const response = await axios.post(
-      "http://127.0.0.1:8000/api/projects/create/", 
-      ideaData, 
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      }
-    );
-
-    console.log(`Идея со статусом "${status}" создана успешно:`, response.data);
-    this.closeModal(); // Закрываем модальное окно после успешного создания
-
-  } catch (error) {
-    console.error("Ошибка при создании идеи:", error.response?.data || error.message);
+  // Проверка, что статус один из допустимых
+  const validStatuses = ['draft', 'open', 'under_review'];
+  if (!validStatuses.includes(status)) {
+    console.error(`Невалидный статус: ${status}`);
+    return;
   }
-}
+
+  const data = {
+    ...this.form,
+    status, // передаем статус без кавычек
+  };
+  try {
+    const response = await createIdeaOrProject(data);
+    console.log("Создано:", response);
+  } catch (error) {
+    console.error("Ошибка при создании:", error);
+  }
+},
+    closeModal() {
+      this.$emit("close");
+    },
   },
-    };
+  async mounted() {
+    const technologiesData = await fetchTechnologies(); // Загружаем данные
+    if (technologiesData) {
+      this.technologies = technologiesData; // Обновляем массив технологий
+      this.filteredTechnologies = technologiesData; // Изначально показываем все технологии
+    }
+  },
+  watch: {
+    technologies(newTechs) {
+      this.filteredTechnologies = newTechs;
+    },
+  },
+};
 </script>
 
 <style scoped>

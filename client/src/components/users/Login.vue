@@ -105,127 +105,101 @@
 
 <script>
 import { useAuth } from "@/composables/useAuth"; // Импортируем useAuth
-import Cookies from 'js-cookie';
+import Cookies from "js-cookie";
+import { nextTick } from "vue";
 
 export default {
+  name: "LoginPage",
   data() {
     return {
+      authCheck: false,
       email: "",
       password: "",
       emailError: "",
       passwordError: "",
-      isLoggedIn: false,
-      // Параллакс-эффект
+      // Данные для параллакс-эффекта
       offsetX: 0,
       offsetY: 0,
       targetX: 0,
       targetY: 0,
       mouseX: 0,
       mouseY: 0,
-      windowWidth: 0,
-      windowHeight: 0,
+      windowWidth: window.innerWidth,
+      windowHeight: window.innerHeight,
       animationFrame: null,
     };
   },
+  computed: {
+    isLoggedIn() {
+    const access = Cookies.get("access_token");
+    const refresh = Cookies.get("refresh_token");
 
+    console.log("Текущие токены:", access, refresh);
+
+    return this.authCheck || !!(access && access !== "undefined" && refresh && refresh !== "undefined");
+  }
+  },
+  created() {
+    // Если пользователь уже авторизован, то сразу редиректим его на целевую страницу
+    if (this.isLoggedIn) {
+      this.$router.push("/TYIU/about");
+    }
+  },
   methods: {
-    // Метод для логина
-    async asyncLogin() {
-      this.clearError("email");
-      this.clearError("password");
-
-      if (!this.validateForm()) return;
-
-      try {
-        // Вызов логина
-        const userData = await this.login(this.email, this.password);
-        // Проверка авторизации после получения userData
-        const isAuthenticated = this.checkAuth();
-        if (!isAuthenticated) {
-          throw new Error("Ошибка авторизации, токены не найдены");
-        }
-
-        // Логика для редиректа
-        let redirectPath = '';
-          redirectPath = `/TYIU/about`;  // Для института TYIU перенаправляем на /TYIU/about
-
-        // Перенаправляем пользователя
-        this.$router.push(redirectPath);
-
-      } catch (error) {
-        this.handleError(error);
-      }
+    goToRegisterZ() {
+      this.$router.push({ path: "/registerZ" });
     },
-
-    // Логика входа через useAuth
-    async login(email, password) {
-      const { login } = useAuth(); // Извлекаем login из useAuth
-
-      try {
-        const userData = await login(email, password);
-
-        // Сохраняем токены в cookies
-        Cookies.set('access_token', userData.access);
-        Cookies.set('refresh_token', userData.refresh);
-
-        // Сохраняем информацию о пользователе в localStorage
-        const user = {
-          first_name: userData.first_name,
-          last_name: userData.last_name,
-          email: userData.email,
-          role: userData.role,
-          institute: userData.institute || "TYIU",
-        };
-        localStorage.setItem("userData", JSON.stringify(user));
-
-        return userData; // Возвращаем данные пользователя
-
-      } catch (error) {
-        throw error; // Обработка ошибок
-      }
+    goToRegister() {
+      this.$router.push({ path: "/register" });
     },
+    /**
+     * Способ входа. Вызывается при клике по кнопке входа.
+     */
+     async asyncLogin() {
+  this.clearError("email");
+  this.clearError("password");
 
-    // Проверка авторизации
-    checkAuth() {
-      const accessToken = Cookies.get('access_token');
-      const refreshToken = Cookies.get('refresh_token');
-      if (!accessToken || !refreshToken) {
-        console.error("Пользователь не авторизован");
-        return false;  // Токены не найдены, значит пользователь не авторизован
-      }
-      return true;  // Токены есть, авторизация прошла
-    },
+  if (!this.validateForm()) return;
 
-    // Валидация формы
+  try {
+    const { login } = useAuth();
+    await login(this.email, this.password);
+
+    console.log("Токены после логина:", Cookies.get("access_token"), Cookies.get("refresh_token"));
+
+    // Принудительно обновляем состояние авторизации
+    this.authCheck = true;
+
+    console.log("Авторизация успешна. Перенаправление...");
+    this.$router.push("/TYIU/about");
+
+  } catch (error) {
+    this.handleError(error);
+  }
+},
     validateForm() {
       let isValid = true;
       if (!this.email) {
-        this.emailError = "Поле почты обязательно для заполнения";
+        this.emailError = "Поле почты обязательно для заполнения!";
         isValid = false;
       } else if (!this.validateEmail(this.email)) {
         this.emailError = "Некорректный формат почты";
         isValid = false;
       }
       if (!this.password) {
-        this.passwordError = "Поле пароля обязательно для заполнения";
+        this.passwordError = "Поле пароля обязательно для заполнения!";
         isValid = false;
       }
       return isValid;
     },
-
-    // Валидация email
     validateEmail(email) {
       const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return re.test(email);
     },
-
-    // Очистка ошибки
     clearError(field) {
       if (field === "email") this.emailError = "";
       if (field === "password") this.passwordError = "";
     },
-
-    // Обработка ошибок
     handleError(error) {
       if (error.response?.data?.message) {
         const msg = error.response.data.message;
@@ -240,14 +214,12 @@ export default {
         this.passwordError = "Ошибка при входе, попробуйте позже";
       }
     },
-
-    // Параллакс-эффект
+    // Методы для параллакс-эффекта:
     initParallax() {
       window.addEventListener("mousemove", this.handleMouseMove);
       window.addEventListener("resize", this.handleResize);
       this.animate();
     },
-
     handleMouseMove(e) {
       this.mouseX = e.clientX;
       this.mouseY = e.clientY;
@@ -257,19 +229,17 @@ export default {
       this.targetX = x * coefficient;
       this.targetY = y * coefficient;
     },
-
     handleResize() {
       this.windowWidth = window.innerWidth;
       this.windowHeight = window.innerHeight;
     },
-
     animate() {
       const smoothness = 0.08;
       this.offsetX += (this.targetX - this.offsetX) * smoothness;
       this.offsetY += (this.targetY - this.offsetY) * smoothness;
-      this.animationFrame = requestAnimationFrame(this.animate);
+      // Используем стрелочную функцию, чтобы сохранить контекст this
+      this.animationFrame = requestAnimationFrame(() => this.animate());
     },
-
     cleanupParallax() {
       window.removeEventListener("mousemove", this.handleMouseMove);
       window.removeEventListener("resize", this.handleResize);
@@ -278,17 +248,15 @@ export default {
       }
     },
   },
-
   mounted() {
-    this.initParallax();
+    //this.initParallax();
+    console.log("LoginPage mounted");
   },
-
   beforeDestroy() {
-    this.cleanupParallax();
+    //this.cleanupParallax();
   },
 };
 </script>
-
 
 <style scoped>
 /* Стили для параллакс-эффекта */
