@@ -112,9 +112,9 @@
   <script>
   import api from "@/composables/auth.js"; // axios-инстанс с интерсепторами
   import Header from "@/components/header.vue";
-  import { fetchOwnerName, toggleLike } from "@/services/projects.js";
   import Cookies from "js-cookie";
-  
+  import { getIdeaById, fetchOwnerName, toggleLike } from "@/services/ideas.js";
+
   export default {
     name: "IdeaDetails",
     components: { Header },
@@ -264,8 +264,7 @@
           this.editedIdea.title = this.idea.title;
           this.editedIdea.description = this.idea.description;
           // Копирование массивов копированием через spread необходимо для независимости
-          this.editedIdea.technologies = [...(this.idea.technologies || [])];
-          this.editedIdea.is_hiring = this.idea.is_hiring || false;
+          this.editedIdea.skills_required = [...(this.idea.skills_required || [])];
           this.editedIdea.status = this.idea.status ?? "";
         }
       },
@@ -277,15 +276,14 @@
         try {
           // Формируем payload, исключая пустые строки для статуса
           const payload = {
-            ...(this.editedIdea.title && { name: this.editedIdea.title }),
+            ...(this.editedIdea.title && { title: this.editedIdea.title }),
             ...(this.editedIdea.description && { description: this.editedIdea.description }),
-            ...(this.editedIdea.technologies && { technologies: this.editedIdea.technologies }),
-            is_hiring: this.editedIdea.is_hiring,
+            ...(this.editedIdea.skills_required && { skills_required: this.editedIdea.skills_required }),
             status: this.editedIdea.status || null,
           };
           console.log("Payload перед отправкой:", payload);
   
-          const response = await api.patch(`/ideas/${this.idea.id}/edit/`, payload, {
+          const response = await api.patch(`/ideas/${this.idea.id}/`, payload, {
             headers: { "Content-Type": "application/json" },
           });
           console.log("Изменения сохранены:", response.data);
@@ -296,41 +294,45 @@
         }
       },
       /**
-       * Загружает данные идеи по её ID через api-инстанс.
-       */
-      async fetchIdeaDetails(id) {
-        try {
-          const response = await api.get(`/ideas/${id}/`);
-          this.idea = response.data;
-          console.log("Полученные данные проекта:", this.idea);
-  
-          if (!this.idea.owner) {
-            console.warn("Поле owner отсутствует в данных проекта! Проверить API.");
-            this.idea.initiator = "Неизвестный автор";
-            return;
-          }
-          await this.loadOwnerName();
-        } catch (error) {
-          console.error("Ошибка при загрузке проекта:", error.response?.data || error);
-        }
-      },
-      /**
-       * Загружает имя владельца идеи и записывает его в свойства идеи.
-       */
-      async loadOwnerName() {
+     * Загружает данные идеи по её ID, используя метод из `ideas.js`
+     */
+    async fetchIdeaDetails(id) {
+      try {
+        const ideaData = await getIdeaById(id);
+        this.idea = ideaData;
+        console.log("Полученные данные идеи:", this.idea);
+
         if (!this.idea.owner) {
-          console.warn("ID владельца отсутствует! Установка значения по умолчанию.");
+          console.warn("Поле owner отсутствует! Проверить API.");
           this.idea.initiator = "Неизвестный автор";
           return;
         }
-        console.log("ID владельца проекта:", this.idea.owner);
-        try {
-          await fetchOwnerName(this.idea, this.idea.owner);
-        } catch (error) {
-          console.error("Ошибка при загрузке имени владельца:", error);
-          this.idea.initiator = "Неизвестный автор";
-        }
-      },
+
+        // Загружаем имя инициатора через метод `fetchOwnerName`
+        await this.loadOwnerName();
+      } catch (error) {
+        console.error("Ошибка при загрузке идеи:", error.response?.data || error);
+      }
+    },
+
+    /**
+     * Загружает имя владельца идеи, используя метод `fetchOwnerName`
+     */
+    async loadOwnerName() {
+      if (!this.idea.owner) {
+        console.warn("ID владельца отсутствует! Установка значения по умолчанию.");
+        this.idea.initiator = "Неизвестный автор";
+        return;
+      }
+
+      console.log("ID владельца идеи:", this.idea.owner);
+      try {
+        await fetchOwnerName(this.idea, this.idea.owner);
+      } catch (error) {
+        console.error("Ошибка при загрузке имени владельца:", error);
+        this.idea.initiator = "Неизвестный автор";
+      }
+    },
       /**
        * Обновляет лайк для идеи, используя утилиту toggleLike.
        *

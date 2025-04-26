@@ -1,23 +1,19 @@
 # projects/views.py
 
+from django.shortcuts import get_object_or_404
+
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Project, TeamResponse
-from .serializers import ProjectSerializer, ProjectCreateSerializer, ProjectUpdateStatusSerializer
-from django.shortcuts import get_object_or_404
-
-from .models import Idea
-from .serializers import IdeaSerializer
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from .permissions import IsStudent, IsOwnerOrReadOnly
-
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework import status
 
+from .serializers import (ProjectSerializer, ProjectUpdateSerializer, ProjectUpdateStatusSerializer,
+                          IdeaSerializer, ProjectApplicationSerializer, IdeaEditSerializer)
+from .permissions import IsStudent, IsOwnerOrReadOnly
 from teams.models import Team
+from .models import Idea, Project, ProjectApplication
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
@@ -25,15 +21,17 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if self.action == 'create':
-            return ProjectCreateSerializer
+            return ProjectUpdateSerializer
         elif self.action in ['update', 'partial_update']:
-            return ProjectUpdateStatusSerializer
+            return ProjectUpdateSerializer
         return ProjectSerializer
 
     def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update', 'destroy',
+        if self.action in ['update', 'partial_update', 'destroy',
                            'like', 'favorite', 'apply', 'vote']:
             return [permissions.IsAuthenticated()]
+        elif self.action in ['create']:
+            return [IsStudent()]
         return [permissions.AllowAny()]
 
     def perform_create(self, serializer):
@@ -92,12 +90,16 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
 class IdeaViewSet(viewsets.ModelViewSet):
     queryset = Idea.objects.all()
-    serializer_class = IdeaSerializer
+
+    def get_serializer_class(self):
+        if self.action in ['create', 'update', 'partial_update']:
+            return IdeaEditSerializer
+        return IdeaSerializer
 
     def get_permissions(self):
-        if self.action == 'create_idea':
+        if self.action == 'create':
             return [IsAuthenticatedOrReadOnly(), IsStudent()]
-        elif self.action in ['edit_idea']:
+        elif self.action in ['update', 'partial_update']:
             return [IsAuthenticatedOrReadOnly(), IsOwnerOrReadOnly()]
         return [IsAuthenticatedOrReadOnly()]
 
@@ -106,23 +108,7 @@ class IdeaViewSet(viewsets.ModelViewSet):
             return Idea.objects.all()
         return Idea.objects.filter(visible=True, status='open')
 
-    @action(detail=False, methods=['post'], url_path='create')
-    def create_idea(self, request):
-        serializer = IdeaEditSerializer(idea, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(owner=request.user)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    @action(detail=True, methods=['put', 'patch'], url_path='edit')
-    def edit_idea(self, request, pk=None):
-        idea = self.get_object()
-        self.check_object_permissions(request, idea)
-        serializer = IdeaEditSerializer(idea, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
-
-    @action(detail=True, methods=['post'], url_path='like')
+    @action(detail=True, methods=['post'], url_path='like', permission_classes=[IsAuthenticated])
     def like(self, request, pk=None):
         idea = self.get_object()
         user = request.user
@@ -134,52 +120,75 @@ class IdeaViewSet(viewsets.ModelViewSet):
             idea.likes.add(user)
             liked = True
 
-        return Response({'liked': liked, 'likes_count': idea.likes.count()})
+        return Response({
+            'liked': liked,
+            'likes_count': idea.likes.count(),
+        })
 
 
-class TeamRespondToProjectView(APIView):
-    permission_classes = [IsAuthenticated]
+class ProjectApplicationViewSet(viewsets.ModelViewSet):
+    queryset = ProjectApplication.objects.all()
+    serializer_class = ProjectApplicationSerializer
+    permission_classes = [permissions.IsAuthenticated]  # можно кастомизировать
 
-    def post(self, request, project_id):
-        user = request.user
-        try:
-            team = user.owned_team  # получаем команду, где он тим-лид
-        except Team.DoesNotExist:
-            return Response({"detail": "Вы не являетесь тим-лидом ни одной команды."}, status=400)
+    def perform_create(self, serializer):
+        user = self.request.user
+        data = serializer.validated_data
+        if data['applicant_type'] == 'freelancer':
+            serializer.save(freelancer=user)
+        elif data['applicant_type'] == 'team':
+            # тут можно проверить, владеет ли юзер этой командой
+            serializer.save()
 
-        project = get_object_or_404(Project, id=project_id)
-
-        if project.selected_team:
-            return Response({"detail": "Команда уже выбрана."}, status=400)
-
-        if project.status in ["in_progress", "done"]:
-            return Response({"detail": "Нельзя откликнуться на завершённый или выполняемый проект."}, status=400)
-
-        response, created = TeamResponse.objects.get_or_create(project=project, team=team)
-
-        if not created:
-            return Response({"detail": "Вы уже откликались на этот проект."}, status=400)
-
-        return Response({"detail": "Команда успешно откликнулась на проект."})
-
-
-class SelectTeamForProjectView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request, project_id, team_id):
-        project = get_object_or_404(Project, id=project_id)
+    @action(detail=True, methods=['post'])
+    def accept(self, request, pk=None):
+        app = self.get_object()
+        project = app.project
 
         if project.owner != request.user:
-            return Response({"detail": "Только заказчик может выбрать команду."}, status=403)
+            return Response({'detail': 'Нет доступа'}, status=403)
 
-        team = get_object_or_404(Team, id=team_id)
+        if app.status != 'pending':
+            return Response({'detail': 'Заявка уже обработана'}, status=400)
 
-        if not TeamResponse.objects.filter(project=project, team=team).exists():
-            return Response({"detail": "Эта команда не откликалась на проект."}, status=400)
+        # Обработка по типу заявки
+        if app.applicant_type == 'freelancer' and app.freelancer:
+            if app.freelancer in project.workers.all():
+                return Response({'detail': 'Фрилансер уже в проекте'}, status=400)
+            project.workers.add(app.freelancer)
 
-        project.selected_team = team
-        project.status = "in_progress"
+        elif app.applicant_type == 'team' and app.team:
+            if app.team in project.teams.all():
+                return Response({'detail': 'Команда уже в проекте'}, status=400)
+            project.teams.add(app.team)
+
+        else:
+            return Response({'detail': 'Тип заявки или данные некорректны'}, status=400)
+
+        app.status = 'accepted'
+        app.save()
         project.save()
 
-        return Response({"detail": f"Команда '{team.name}' выбрана для реализации проекта."})
+        return Response({'status': 'accepted'})
+
+    @action(detail=True, methods=['post'])
+    def decline(self, request, pk=None):
+        app = self.get_object()
+        if app.project.owner != request.user:
+            return Response({'detail': 'Нет доступа'}, status=403)
+        app.status = 'rejected'
+        app.save()
+        return Response({'status': 'rejected'})
+
+    @action(detail=True, methods=['post'])
+    def cancel(self, request, pk=None):
+        app = self.get_object()
+        user = request.user
+        is_freelancer = app.freelancer == user
+        is_team_owner = app.team and app.team.owner == user
+        if not is_freelancer and not is_team_owner:
+            return Response({'detail': 'Нет доступа'}, status=403)
+        app.status = 'cancelled'
+        app.save()
+        return Response({'status': 'cancelled'})
 

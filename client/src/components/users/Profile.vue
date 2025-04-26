@@ -27,7 +27,7 @@
           <div class="text-center">
             <img
               class="w-32 h-32 rounded-full border-4 border-purple-400 mx-auto cursor-pointer hover:border-purple-300 transition-colors"
-              :src="userData.avatar || randomAvatar"
+              :src="userData.avatar || null"
               alt="Аватар пользователя"
               @click="showAvatarModal = true"
             />
@@ -175,7 +175,7 @@
                     <button
                       class="mt-2 text-purple-300 hover:text-purple-200 text-sm flex items-center"
                     >
-                      <span>Подробнее о команде</span>
+                      <span @click="goToTeam">Подробнее о команде</span>
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         class="h-4 w-4 ml-1"
@@ -581,43 +581,21 @@ export default {
       formIsValid: true,
       userProjects: [
         {
-          name: "Паровозик",
-          description: "Система управления железнодорожными перевозками",
-          status: "Завершен",
-          grade: 9,
-          date: "15.03.2022 - 20.06.2022",
-        },
-        {
-          name: "Флора",
-          description: "Приложение для идентификации растений",
+          name: "Тест",
+          description: "123123",
           status: "В работе",
           grade: "-",
-          date: "10.01.2023 - настоящее время",
-        },
-        {
-          name: "Космос",
-          description: "AR-приложение для изучения астрономии",
-          status: "Заморожен",
-          grade: 7,
-          date: "05.09.2021 - 12.12.2021",
+          date: "26.04.2025",
         },
       ],
       userTeams: [
         {
-          name: "Технократы",
-          members: 5,
-          projects: ["Паровозик", "Космос"],
-          teamStatus: "Распущена",
-          joinDate: "10.02.2021",
-          leaveDate: "25.06.2022",
-        },
-        {
-          name: "Зеленый патруль",
-          members: 4,
-          projects: ["Флора"],
-          teamStatus: "Активна",
-          joinDate: "05.01.2023",
-          leaveDate: null,
+          name: "Тест1",
+          members: 1,
+          projects: ["Тест"],
+          teamStatus: "В работе",
+          joinDate: "24.04.2025",
+          leaveDate: "настоящее время",
         },
       ],
       showSkillsModal: false,
@@ -721,6 +699,9 @@ export default {
     },
   },
   methods: {
+    goToTeam(){
+      this.$router.push({ path: "/HSDT/team/1/" });
+    },
     initParallax() {
       this.windowWidth = window.innerWidth;
       this.windowHeight = window.innerHeight;

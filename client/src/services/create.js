@@ -3,11 +3,11 @@ import api from "@/composables/auth"; // Используем уже настр�
 export const createIdeaOrProject = async (formData) => {
   const userData = JSON.parse(localStorage.getItem('userData'));
   const userRole = userData ? userData.role : null;
-  const customer = userData ? userData.id : null;  // Получаем id пользователя из localStorage
+  const owner = userData ? userData.id : null;  // Получаем id пользователя из localStorage
 
   // Заполняем поле customer только если роль пользователя 'CU' или 'EX'
-  if ((userRole === 'CU' || userRole === 'EX') && !formData.customer) {
-    formData.customer = customer;
+  if ((userRole === 'CU' || userRole === 'EX') && !formData.owner) {
+    formData.owner = owner;
   }
 
   // Сбор данных в нужный формат
@@ -15,19 +15,17 @@ export const createIdeaOrProject = async (formData) => {
     title: formData.title,
     description: formData.description,
     status: formData.status,
-    visible: formData.visible ?? false,
-    technologies: (formData.technologies || []).map(Number),
-    // Не включаем likes и expert_likes
+    skills_required: (formData.technologies || []).map(Number),
   };
   
    // Добавляем поле customer только для ролей 'CU' и 'EX'
    if (userRole === 'CU' || userRole === 'EX') {
-    dataToSend.customer = customer;
+    dataToSend.owner = owner;
   }
 
   // Если роль студента (ST), исключаем поле customer
   if (userRole === 'ST') {
-    delete dataToSend.customer;
+    delete dataToSend.owner;
   }
 
   console.log("Отправляемые данные:", dataToSend); // Логирование данных перед отправкой

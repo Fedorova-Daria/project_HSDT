@@ -1,6 +1,7 @@
 import api from "@/composables/auth"; // Предварительно настроенный экземпляр axios
 import router from "@/router"; // Импортируем роутер для редиректа после регистрации
 import UserService from "@/composables/storage.js"; // Экземпляр UserService
+import axios from "axios";
 
 export function useAuth() {
   /**
@@ -14,27 +15,31 @@ export function useAuth() {
    */
   const login = async (email, password) => {
     try {
-      // Очистка предыдущих данных, если они есть
       UserService.clearStorage();
-
-      // Запрос аутентификации
-      const response = await api.post("/users/login/", { email, password });
+  
+      const response = await axios.post("http://127.0.0.1:8000/api/users/login/", { email, password });
+  
+      // Проверяем наличие токенов
+      if (!response.data.access_token || !response.data.refresh_token) {
+        throw new Error("Ошибка авторизации: сервер не вернул токены");
+      }
+  
       const { access_token, refresh_token } = response.data;
-
-      // Сохраняем полученные токены через UserService
       UserService.saveTokens(access_token, refresh_token);
-
-      // Получаем расширенные данные пользователя
+  
+      // Запрашиваем данные пользователя
       const userDataResponse = await api.get("/users/me/", {
         headers: { Authorization: `Bearer ${access_token}` },
+        withCredentials: true,
       });
+  
       const userData = userDataResponse.data;
-
-      // Сохраняем данные пользователя для дальнейшего использования
       UserService.saveUserData(userData);
-
+  
       return { access: access_token, ...userData };
     } catch (error) {
+      console.error("Ошибка при входе:", error.response?.data || error);
+  
       const message = error.response?.data?.message;
       if (message === "Invalid credentials") {
         throw new Error("Неверный email или пароль");
@@ -42,7 +47,7 @@ export function useAuth() {
       if (message === "Email not found") {
         throw new Error("Email не найден");
       }
-      throw new Error("Ошибка при входе");
+      throw new Error("Ошибка при входе. Попробуйте позже.");
     }
   };
 

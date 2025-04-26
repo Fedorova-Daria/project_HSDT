@@ -106,11 +106,13 @@
 <script>
 import { useAuth } from "@/composables/useAuth"; // Импортируем useAuth
 import Cookies from "js-cookie";
+import { nextTick } from "vue";
 
 export default {
   name: "LoginPage",
   data() {
     return {
+      authCheck: false,
       email: "",
       password: "",
       emailError: "",
@@ -129,11 +131,13 @@ export default {
   },
   computed: {
     isLoggedIn() {
-      const access = Cookies.get("access_token");
-      const refresh = Cookies.get("refresh_token");
-      // Проверяем, что токены не равны "undefined" и существуют
-      return !!(access && access !== "undefined" && refresh && refresh !== "undefined");
-    },
+    const access = Cookies.get("access_token");
+    const refresh = Cookies.get("refresh_token");
+
+    console.log("Текущие токены:", access, refresh);
+
+    return this.authCheck || !!(access && access !== "undefined" && refresh && refresh !== "undefined");
+  }
   },
   created() {
     // Если пользователь уже авторизован, то сразу редиректим его на целевую страницу
@@ -151,28 +155,28 @@ export default {
     /**
      * Способ входа. Вызывается при клике по кнопке входа.
      */
-    async asyncLogin() {
-      this.clearError("email");
-      this.clearError("password");
+     async asyncLogin() {
+  this.clearError("email");
+  this.clearError("password");
 
-      if (!this.validateForm()) return;
+  if (!this.validateForm()) return;
 
-      try {
-        // Вызов логина из composable useAuth
-        const { login } = useAuth();
-        const userData = await login(this.email, this.password);
+  try {
+    const { login } = useAuth();
+    await login(this.email, this.password);
 
-        // Проверяем, что токены успешно сохранены – пользователь авторизован
-        if (!this.isLoggedIn) {
-          throw new Error("Ошибка авторизации: токены не найдены");
-        }
-        // Перенаправляем пользователя (например, для института TYIU)
-        this.$router.push("/TYIU/about");
+    console.log("Токены после логина:", Cookies.get("access_token"), Cookies.get("refresh_token"));
 
-      } catch (error) {
-        this.handleError(error);
-      }
-    },
+    // Принудительно обновляем состояние авторизации
+    this.authCheck = true;
+
+    console.log("Авторизация успешна. Перенаправление...");
+    this.$router.push("/TYIU/about");
+
+  } catch (error) {
+    this.handleError(error);
+  }
+},
     validateForm() {
       let isValid = true;
       if (!this.email) {

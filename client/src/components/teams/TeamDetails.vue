@@ -160,7 +160,7 @@ import Header from "@/components/header.vue";
 import Cookies from "js-cookie"; 
 
 import {
-  fetchJoinRequests,
+  fetchJoinRequestsByTeam,
   createJoinRequest,
   cancelJoinRequestDelete,
   getJoinRequestById,
@@ -196,7 +196,7 @@ export default {
         status: "",
       },
       joinSuccess: false,      // Флаг успешного запроса на вступление
-      requests: [],            // Список заявок на вступление в команду
+      joinRequests: [],            // Список заявок на вступление в команду
       errorMessage: '',        // Сообщения об ошибках
       skills: []
     };
@@ -241,15 +241,15 @@ export default {
   methods: {
 // Метод для получения заявок
 async fetchJoinRequests() {
-    try {
-      const response = await fetchJoinRequests(); // Это может быть функция API для получения заявок
-      this.joinRequests = response.data; // Пример того, как можно обработать полученные данные
-    } catch (error) {
-      console.error('Ошибка при получении заявок:', error);
-    }
-  },
+      try {
+        this.joinRequests = await fetchJoinRequestsByTeam(this.teamId);
+        console.log("Заявки на вступление:", this.joinRequests);
+      } catch (error) {
+        console.error("Ошибка при загрузке заявок:", error);
+      }
+    },
      // Метод для принятия заявки
-     async acceptJoinRequest(requestId) {
+      async acceptJoinRequest(requestId) {
       try {
         await acceptJoinRequest(requestId);  // Принять заявку
         this.fetchJoinRequests();  // Перезагружаем заявки

@@ -10,7 +10,7 @@ class AccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
         fields = ['id', 'email', 'username', 'password', 'first_name', 'last_name', 'company_name',
-                  'university_group', 'role', 'phone', 'bio', 'skills', 'avatar', 'created_at']
+                    'university_group', 'role', 'phone', 'bio', 'skills', 'avatar', 'created_at']
         extra_kwargs = {
             'password': {'write_only': True}
         }
@@ -42,6 +42,7 @@ class AccountShortSerializer(serializers.ModelSerializer):
             'role_display',
             'university_group',
             'total_rating',
+            'company_name',
         ]
 
     def get_full_name(self, obj):
