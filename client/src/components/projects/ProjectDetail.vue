@@ -88,8 +88,7 @@
     </div>
     <div class="w-4/5 m-auto">
       <button
-  @click="sendJoinRequest"
-  v-if="isTeamLead"
+  @click="submitApplication"
   class="text-white ml-20 inline-flex items-center bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:outline-none focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-800"
 >
   <svg
@@ -104,7 +103,7 @@
       clip-rule="evenodd"
     ></path>
   </svg>
-  Отозваться командой
+  Подать заявку на проект
 </button>
 <button class="text-white"  @click="openModal">
   Посмотреть заявки 
@@ -116,6 +115,7 @@
       :projectId="ideaId"
       @close="closeModal"
     />
+    
   </div>
 </template>
 
@@ -125,6 +125,8 @@ import Header from "@/components/header.vue";
 import { fetchOwnerName, toggleLike, deleteProject } from "@/services/projects.js";
 import Cookies from "js-cookie";
 import RespondedTeams from "@/components/projects/requestTeams.vue";
+import { createProjectApplication } from "@/services/projectRequests.js";
+import UserService from "@/composables/storage";
 
 export default {
   name: "ProjectDetails",
@@ -137,13 +139,17 @@ export default {
   },
   data() {
     return {
-      teams: [], // Список команд
-      isTeamLead: false, // Проверка, является ли пользователь тимлидом
+       // Флаги для управления показом модальных окон
+      errorModalVisible: false,
+      errorModalMessage: "",
+      confirmModalVisible: false,
+      confirmModalMessage: "",
       idea: {}, // Данные проекта
       editedIdea: {}, // Данные для редактирования
       isEditing: false, // Включён режим редактирования или нет
       isAnimating: false, // Состояние анимации для лайков
       isModalOpen: false,
+      teamDetails: null,
     };
   },
   computed: {
@@ -177,7 +183,7 @@ export default {
     },
   },
   mounted() {
-    this.loadTeams();
+    this.fetchTeamData();
   },
   watch: {
     ideaId: {
@@ -218,55 +224,69 @@ export default {
     closeModal() {
       this.isModalOpen = false;
     },
-    /**
-     * Загружает список команд и проверяет, является ли пользователь тимлидом.
-     */
-     async loadTeams() {
-  try {
-    // Запрос для конкретной команды по ID
-    const response = await api.get("/teams/1/");
+    async fetchTeamData() {
+      const teamId = UserService.getUserData.team;
+      if (!teamId) {
+        return null;
+      }
+      try {
+        const response = await api.get(`/teams/${teamId}/`);
+        this.teamDetails = response.data;
+        return response.data;
+      } catch (error) {
+        console.error("Ошибка при получении данных о команде:", error);
+        return null;
+      }
+    },
 
-    // Устанавливаем список команд с одним объектом в массив
-    this.teams = [response.data];
+    async submitApplication() {
+      // Если в localStorage есть teamId – получаем данные о команде
+      const teamId = UserService.getUserData.team;
+      let teamData = null;
+      if (teamId) {
+        teamData = await this.fetchTeamData();
+      }
+      
+      // Если пользователь состоит в команде, но не является owner, отправка заявки невозможна
+      if (teamData && teamData.owner !== this.currentUser.id) {
+        this.errorModalMessage =
+          "Вы не можете подать заявку, так как вы состоите в команде как участник.";
+        this.errorModalVisible = true;
+        return;
+      }
 
-    // Проверка, является ли текущий пользователь тимлидом
-    const userData = JSON.parse(localStorage.getItem("userData") || "{}");
-    const fullUserName = `${userData.first_name} ${userData.last_name}`;
+      // Формируем объект payload для отправки заявки.
+      // Поле project заполняется из prop ideaId.
+      let applicantType = "freelancer";
+      const payload = {
+        applicant_type: "",
+        project: this.ideaId,
+        freelancer: null,
+        team: null,
+      };
 
-    this.isTeamLead = this.teams.some((team) => {
-      const normalizedTeamOwner = team.owner_name?.trim().toLowerCase();
-      const normalizedUserName = fullUserName?.trim().toLowerCase();
-      return normalizedTeamOwner === normalizedUserName;
-    });
+      if (teamData && teamData.owner === this.currentUser.id) {
+        // Если пользователь состоит в команде и является тимлидом – заявка отправляется от имени команды
+        applicantType = "team";
+        payload.team = teamData.id;
+      } else if (!teamData) {
+        // Пользователь не состоит в команде – заявка отправляется как freelancer
+        applicantType = "freelancer";
+        payload.freelancer = this.currentUser.id;
+      }
+      payload.applicant_type = applicantType;
 
-    console.log("Тимлид:", this.isTeamLead);
-  } catch (error) {
-    console.error("Ошибка при загрузке команды:", error);
-  }
-},
-    /**
-     * Отправляет запрос на присоединение к команде.
-     */
-     async sendJoinRequest() {
-  try {
-    // Формируем URL с использованием `ideaId`
-    const url = `/projects/${this.ideaId}/respond-team/`;
-
-    console.log("Отправляем запрос на отклик для ID проекта:", this.ideaId);
-
-    // Отправляем POST-запрос без тела, так как требуется только `ideaId` в URL
-    const response = await api.post(url, null, {
-      headers: { "Content-Type": "application/json" },
-    });
-
-    console.log("Отклик успешно отправлен:", response.data);
-  } catch (error) {
-    console.error(
-      "Ошибка при отправке отклика:",
-      error.response?.data || error
-    );
-  }
-},
+      try {
+        await createProjectApplication(payload);
+        this.confirmModalMessage = applicantType === "team"
+          ? "Ваша заявка отправлена от имени команды."
+          : "Ваша заявка отправлена как фрилансер.";
+        this.confirmModalVisible = true;
+      } catch (error) {
+        this.errorModalMessage = "Ошибка при отправке заявки. Попробуйте позже.";
+        this.errorModalVisible = true;
+      }
+    },
     /**
      * Переключает режим редактирования и копирует данные идеи для редактирования.
      */

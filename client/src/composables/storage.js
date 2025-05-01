@@ -66,7 +66,7 @@ class UserService {
    */
   async getUserData() {
     let userData = this.getStoredUserData();
-
+  
     if (!userData.id) {
       const token = this.getAccessToken();
       if (!token) {
@@ -81,6 +81,19 @@ class UserService {
           userData = {
             ...userData,
             id: response.data.id,
+            email: response.data.email,
+            username: response.data.username,
+            first_name: response.data.first_name,
+            last_name: response.data.last_name,
+            company_name: response.data.company_name,
+            university_group: response.data.university_group || null,
+            role: response.data.role,
+            phone: response.data.phone || null,
+            bio: response.data.bio || null,
+            skills: response.data.skills || [],
+            avatar: response.data.avatar || null,
+            created_at: response.data.created_at,
+            team: response.data.team || null,
             institute: response.data.institute || this.defaultData.institute,
           };
           this.saveUserData(userData);
@@ -89,10 +102,10 @@ class UserService {
         console.error("Ошибка при получении данных о пользователе:", error);
       }
     }
-
+  
     return userData;
   }
-
+  
   /**
    * Обновляет значение института в сохранённых данных пользователя.
    *

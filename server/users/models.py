@@ -16,6 +16,9 @@ class Account(AbstractUser):
     phone = models.CharField(max_length=15, blank=True, null=True)  # Телефон
     university_group = models.ForeignKey(UniversityGroup, related_name='students', on_delete=models.CASCADE, null=True, blank=True)
 
+    team = models.CharField(max_length=100, blank=True, null=True)
+    institute = models.CharField(max_length=100, blank=True, null=True)
+
     class Role(models.TextChoices):
         STUDENT = "ST", "Student"
         CUSTOMER = "CU", "Customer"

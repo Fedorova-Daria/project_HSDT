@@ -1,7 +1,7 @@
 <template>
     <table class="w-full mt-5 border-collapse shadow-lg rounded-lg overflow-hidden bg-card table-auto">
       <thead>
-        <tr class="bg-card text-left">
+        <tr class="bg-card text-center">
           <th class="px-6 py-3 w-10">#</th>
           <th class="px-6 py-3 w-1/4">Название</th>
           <th class="px-6 py-3 w-1/4">Инициатор</th>
@@ -14,17 +14,23 @@
         <tr
           v-for="idea in items"
           :key="idea.id"
-          class="border-b border-zinc-700 hover:bg-card transition duration-200"
+          class="border-b border-zinc-700 hover:bg-card transition duration-200 text-center"
         >
           <td class="px-6 py-4">{{ idea.id }}</td>
           <td class="px-6 py-4 font-medium">{{ idea.title }}</td>
           <td class="px-6 py-4">{{ idea.initiator || "Неизвестный автор" }}</td>
-          <td class="px-6 py-4">{{ idea.created_at }}</td>
-          <td class="px-6 py-4">{{ idea.status || "Неизвестно" }}</td>
+          <td class="px-6 py-4">{{ new Date(idea.created_at).toLocaleDateString("ru-RU") }}</td>
+          <td class="px-6 py-4 rounded text-white font-semibold text-center"
+>
+  <span class="inline-block px-2 py-1 rounded-lg" 
+        :style="{ backgroundColor: getStatusStyle(idea.status).color }">
+    {{ getStatusStyle(idea.status).label }}
+  </span>
+</td>
           <td class="px-6 py-4 flex justify-end gap-2">
             <button
               @click="$emit('open-idea', idea)"
-              class="px-4 py-2 text-sm font-medium bg-buttonoff hover:bg-buttonon rounded transition"
+              class="px-4 py-2 text-sm font-medium bg-buttonoff hover:bg-buttonon rounded-lg transition"
             >
               Посмотреть
             </button>
@@ -44,6 +50,7 @@
   </template>
   
   <script>
+
   export default {
     props: {
       items: Array, // Список идей
@@ -53,6 +60,15 @@
       isLiked(idea) {
         return idea.likes.includes(this.userId);
       },
+      getStatusStyle(status) {
+      const statusStyles = {
+        draft: { color: "#f0f0f0", label: "Черновик" },
+        open: { color: "#2AC778",color: "#2AC778", label: "Доступен" },
+        under_review: { color: "#ffe5b4", label: "Рассматриваем" },
+        unknown: { color: "#cccccc", label: "Неизвестно" }
+      };
+      return statusStyles[status] || statusStyles.unknown;
+    },
     },
   };
   </script>
