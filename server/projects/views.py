@@ -14,10 +14,15 @@ from .serializers import (ProjectSerializer, ProjectUpdateSerializer, ProjectUpd
 from .permissions import IsStudent, IsOwnerOrReadOnly
 from teams.models import Team
 from .models import Idea, Project, ProjectApplication
+from .filters import ProjectFilter
+from django_filters.rest_framework import DjangoFilterBackend
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all().order_by('-created_at')
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = ProjectFilter
+
 
     def get_serializer_class(self):
         if self.action == 'create':

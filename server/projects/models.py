@@ -22,8 +22,8 @@ class Project(models.Model):
     owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='projects_owned')
     initiator = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='projects_initiated', blank=True, null=True)
 
-    teams = models.ManyToManyField(Account, related_name='teams_projects', blank=True, null=True)
-    workers = models.ManyToManyField(Account, related_name='workers_projects', blank=True, null=True)
+    teams = models.ManyToManyField(Account, related_name='teams_projects', blank=True)
+    workers = models.ManyToManyField(Account, related_name='workers_projects', blank=True)
 
     favorites = models.ManyToManyField(Account, related_name="favorite_projects", blank=True)
     experts_voted = models.ManyToManyField(Account, related_name="voted_projects", blank=True)
