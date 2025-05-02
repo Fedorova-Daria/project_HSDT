@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.views import APIView
 from rest_framework import status
 
@@ -27,12 +27,11 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return ProjectSerializer
 
     def get_permissions(self):
-        if self.action in ['update', 'partial_update', 'destroy',
-                           'like', 'favorite', 'apply', 'vote']:
-            return [permissions.IsAuthenticated()]
-        elif self.action in ['create']:
-            return [IsStudent()]
-        return [permissions.AllowAny()]
+        if self.action in ['create', 'update', 'partial_update', 'destroy', 'like', 'favorite', 'apply', 'vote']:
+            # Требуем авторизацию для определенных действий
+            return [IsAuthenticated()]
+        # Для всех остальных действий доступ разрешен всем (включая неавторизованных пользователей)
+        return [AllowAny()]
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -87,10 +86,8 @@ class IdeaViewSet(viewsets.ModelViewSet):
         return IdeaSerializer
 
     def get_permissions(self):
-        if self.action == 'create':
-            return [IsAuthenticatedOrReadOnly(), IsStudent()]
-        elif self.action in ['update', 'partial_update']:
-            return [IsAuthenticatedOrReadOnly(), IsOwnerOrReadOnly()]
+        if self.action in ['create', 'update', 'partial_update']:
+            return [IsAuthenticated()]
         return [IsAuthenticatedOrReadOnly()]
 
     def get_queryset(self):
@@ -135,8 +132,8 @@ class ProjectApplicationViewSet(viewsets.ModelViewSet):
         app = self.get_object()
         project = app.project
 
-        if project.owner != request.user:
-            return Response({'detail': 'Нет доступа'}, status=403)
+        #if project.owner != request.user:
+        #    return Response({'detail': 'Нет доступа'}, status=403)
 
         if app.status != 'pending':
             return Response({'detail': 'Заявка уже обработана'}, status=400)
@@ -164,8 +161,8 @@ class ProjectApplicationViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def decline(self, request, pk=None):
         app = self.get_object()
-        if app.project.owner != request.user:
-            return Response({'detail': 'Нет доступа'}, status=403)
+        #if app.project.owner != request.user:
+        #    return Response({'detail': 'Нет доступа'}, status=403)
         app.status = 'rejected'
         app.save()
         return Response({'status': 'rejected'})
@@ -181,4 +178,6 @@ class ProjectApplicationViewSet(viewsets.ModelViewSet):
         app.status = 'cancelled'
         app.save()
         return Response({'status': 'cancelled'})
+    
+
 

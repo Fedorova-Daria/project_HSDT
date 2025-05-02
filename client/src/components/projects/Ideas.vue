@@ -86,12 +86,7 @@ export default {
       isAnimating: false,
       items: [], // Список идей
       filteredItems: [], // Отфильтрованные идеи
-      filters: [
-        { label: "Все", value: "all" },
-        { label: "Мои", value: "my" },
-        { label: "Любимые", value: "favorites" },
-        { label: "Черновики", value: "drafts" },
-      ],
+      filters: [], // Изначально пустой массив
       activeFilter: "all", // Начальный фильтр
       isModalOpen: false,
       likedItems: {}, // Объект для хранения лайков по каждому элементу
@@ -114,6 +109,20 @@ export default {
   },
   created() {
     this.userRole = UserService.getUserRole(); // Устанавливаем значение из Cookies
+    // Динамически формируем фильтры на основе роли
+  if (["CU", "EX"].includes(this.userRole)) {
+    this.filters = [
+      { label: "Все", value: "all" },
+      { label: "Любимые", value: "favorites" }
+    ]; 
+  } else if (this.userRole === "ST") {
+    this.filters = [
+      { label: "Все", value: "all" },
+      { label: "Мои", value: "my" },
+      { label: "Любимые", value: "favorites" },
+      { label: "Черновики", value: "drafts" }
+    ];
+  }
   },
   methods: {
     // Устанавливаем активный фильтр
@@ -132,8 +141,10 @@ export default {
         this.filteredItems = this.items.filter(idea => idea.likes.includes(this.userData.id));
       } else if (this.activeFilter === "drafts") {
         this.filteredItems = this.items.filter(idea => idea.status === 'draft' && idea.owner === this.userData.id);
-      }
-    },
+      }else {
+      this.filteredItems = []; // Если роль неизвестна, ничего не показываем
+    }
+  },
     async fetchIdeas() {
       try {
         const response = await api.get("/ideas/");

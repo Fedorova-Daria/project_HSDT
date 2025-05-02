@@ -76,14 +76,11 @@
           </button>
 
           <!-- Выпадающее меню уведомлений -->
-          <Notifications
-            v-if="showNotifications"
-            :showNotifications="showNotifications"
-            :notifications="notifications"
-            @close="showNotifications = false"
-            @markAllRead="markAllAsRead"
-            @notificationClick="handleNotificationClick"
-          />
+<Notifications
+  v-if="showNotifications"
+  :showNotifications="showNotifications"
+  @close="showNotifications = false"
+/>
         </div>
 
         <!-- Аватарка -->
@@ -125,8 +122,8 @@ export default {
       isDarkTheme: false,
       isDropdownOpen: false,
       localSelectedInstitute: Cookies.get("institute") || "TYIU",
-      showNotifications: false,
-      notifications: [],
+      showNotifications: false, // Управляет видимостью меню уведомлений
+    notifications: [], // Хранение списка уведомлений
       user: {}, // Здесь будем хранить данные пользователя
       institutes: ["ВШЦТ", "АРХИД", "ИПТИ", "СТРОИН", "ТИУ"],
       instituteMap: { 
@@ -230,6 +227,34 @@ export default {
 },
   },
   methods: {
+    toggleNotifications() {
+    this.showNotifications = !this.showNotifications;
+
+    // Добавляем уведомление при открытии
+    if (this.showNotifications) {
+      this.notifications.push({
+        id: Date.now(),
+        title: "Вас пригласили в команду",
+        message: 'Вас пригласили в команду "Тест"',
+        read: false,
+        time: new Date(),
+        type: "system",
+      });
+    }
+  },
+    handleNotificationClick(notification) {
+    console.log("Клик по уведомлению:", notification);
+    if (!notification.read) {
+      notification.read = true;
+    }
+    this.$router.push(notification.link);
+    this.showNotifications = false; // Закрываем меню после клика
+  },
+    markAllAsRead() {
+    this.notifications.forEach((notification) => {
+      notification.read = true;
+    });
+  },
     /**
      * Переключает тему и сохраняет выбор в localStorage.
      */
@@ -289,6 +314,7 @@ updateInstituteFromRoute() {
     console.error("Не удалось определить институт из маршрута.");
   }
 },
+
   goToProfile() {
     const latinInstitute = this.instituteMap[this.selectedInstitute] || this.selectedInstitute;
     this.$router.push(`/${latinInstitute}/profile`);

@@ -7,10 +7,11 @@ from core.serializers import TechnologySerializer  # если хочешь по�
 
 class AccountSerializer(serializers.ModelSerializer):
     university_group = serializers.PrimaryKeyRelatedField(queryset=UniversityGroup.objects.all(), required=False)
+    team = serializers.IntegerField(required=False, allow_null=True)
     class Meta:
         model = Account
         fields = ['id', 'email', 'username', 'password', 'first_name', 'last_name', 'company_name',
-                    'university_group', 'role', 'phone', 'bio', 'skills', 'avatar', 'created_at']
+                    'university_group', 'role', 'phone', 'bio', 'skills', 'avatar', 'created_at', 'team', 'institute']
         extra_kwargs = {
             'password': {'write_only': True}
         }

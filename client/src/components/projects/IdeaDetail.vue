@@ -143,7 +143,7 @@
        * Получаем данные пользователя из Cookies один раз.
        */
       currentUser() {
-        return JSON.parse(Cookies.get("userData") || "{}");
+        return JSON.parse(localStorage.getItem("userData") || "{}");
       },
       /**
      * Определяет, поставил ли пользователь лайк.
@@ -193,7 +193,7 @@
    * @param {String} ideaId - ID идеи.
    * @param {String} customerId - ID кастомера.
    */
-   async transferIdeaToProject(ideaId, customerId) {
+   async transferIdeaToProject(ideaId,) {
     try {
       // Шаг 1: Получаем данные идеи из API `/ideas/{ideaId}/`
       const ideaResponse = await api.get(`/ideas/${ideaId}/`);
@@ -201,15 +201,13 @@
 
       // Формируем объект проекта
       const projectData = {
-        title: ideaData.title || "Название проекта отсутствует",
-        description: ideaData.description || "Нет описания",
-        status: ideaData.status || "Draft",
-        visible: true,
-        duration: ["semester", "year"].includes(ideaData.duration) ? ideaData.duration : "semester",
-        customer: customerId,
-        selected_team: null,
-        skills_required: ideaData.technologies?.map((tech) => tech.id).filter(Boolean) || [],
-      };
+  title: ideaData.title || "Название проекта отсутствует",
+  description: ideaData.description || "Нет описания",
+  status: ideaData.status || "Draft",
+  owner: ideaData.owner,
+  initiator: this.currentUser?.id || null,  // ✅ Используем `this.currentUser`
+  skills_required: ideaData.technologies?.map((tech) => tech.id).filter(Boolean) || [],
+};
 
       // Шаг 2: Создаём проект через API `/projects/`
       const projectResponse = await api.post(`/projects/`, projectData, {
@@ -244,7 +242,7 @@
   async handleIdeaToProject() {
     try {
       const customerId = this.currentUser.id; // ID текущего пользователя (кастомер)
-      const project = await this.transferIdeaToProject(this.ideaId, customerId);
+      const project = await this.transferIdeaToProject(this.ideaId);
       console.log("Проект создан и статус идеи обновлён:", project);
     } catch (error) {
       console.error("Ошибка при обработке переноса:", error);

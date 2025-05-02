@@ -54,6 +54,10 @@ class TeamViewSet(viewsets.ModelViewSet):
 
         team.members.add(user)
 
+        # Присваиваем команду пользователю
+        user.team = team
+        user.save()  # Сохраняем пользователя с привязанной командой
+
         # Отклоняем заявки во все команды
         TeamJoinRequest.objects.filter(user=user, status='pending').update(status='declined')
 
@@ -95,7 +99,10 @@ class TeamJoinRequestViewSet(viewsets.ModelViewSet):
         return TeamJoinRequest.objects.filter(user=user)
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        team = serializer.save(owner=self.request.user)
+        # Привязываем команду к пользователю
+        self.request.user.team = team
+        self.request.user.save()  # Сохраняем пользователя с привязанной командой
 
     @action(detail=True, methods=["post"])
     def cancel(self, request, pk=None):
@@ -123,6 +130,10 @@ class TeamJoinRequestViewSet(viewsets.ModelViewSet):
         join_request.save()
 
         team.members.add(join_request.user)
+
+        # Присваиваем команду пользователю
+        join_request.user.team = team
+        join_request.user.save()  # Сохраняем пользователя с привязанной командой
 
         TeamJoinRequest.objects.filter(
             user=join_request.user,
