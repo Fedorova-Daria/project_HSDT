@@ -87,16 +87,6 @@ class TeamUpdateSerializer(serializers.ModelSerializer):
 class TeamJoinRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeamJoinRequest
-        fields = ['id', 'team', 'user', 'message', 'status', 'created_at']
-        read_only_fields = ['status', 'created_at']
+        fields = "__all__"
+        read_only_fields = ("user", "status", "created_at")  # status пусть юзер тоже не задаёт
 
-    def validate(self, data):
-        user = self.context['request'].user
-
-        if user.teams.exists():
-            raise serializers.ValidationError("Вы уже состоите в команде.")
-
-        if TeamJoinRequest.objects.filter(user=user, team=data['team']).exists():
-            raise serializers.ValidationError("Вы уже отправили заявку в эту команду.")
-
-        return data

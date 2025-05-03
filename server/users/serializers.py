@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import Account
 from django.contrib.auth.hashers import make_password
 from core.models import UniversityGroup
-from core.serializers import TechnologySerializer  # если хочешь показывать скиллы
+from core.serializers import TechnologySerializer
 
 
 class AccountSerializer(serializers.ModelSerializer):

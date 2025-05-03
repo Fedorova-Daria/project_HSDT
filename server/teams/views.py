@@ -12,6 +12,8 @@ from .serializers import (
     TeamJoinRequestSerializer
 )
 
+from notifications.utils import *
+
 class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
 
@@ -99,10 +101,7 @@ class TeamJoinRequestViewSet(viewsets.ModelViewSet):
         return TeamJoinRequest.objects.filter(user=user)
 
     def perform_create(self, serializer):
-        team = serializer.save(owner=self.request.user)
-        # Привязываем команду к пользователю
-        self.request.user.team = team
-        self.request.user.save()  # Сохраняем пользователя с привязанной командой
+        serializer.save(user=self.request.user)
 
     @action(detail=True, methods=["post"])
     def cancel(self, request, pk=None):
@@ -131,14 +130,12 @@ class TeamJoinRequestViewSet(viewsets.ModelViewSet):
 
         team.members.add(join_request.user)
 
-        # Присваиваем команду пользователю
-        join_request.user.team = team
-        join_request.user.save()  # Сохраняем пользователя с привязанной командой
-
         TeamJoinRequest.objects.filter(
             user=join_request.user,
             status='pending'
         ).exclude(id=join_request.id).update(status='declined')
+
+        notify_team_join_accepted(request.user, team, join_request)
 
         return Response({"detail": "Участник добавлен в команду."})
 
