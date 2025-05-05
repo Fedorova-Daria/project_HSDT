@@ -11,6 +11,7 @@ import Ideas from "@/components/projects/Ideas.vue";
 import ProjectDetail from "@/components/projects/ProjectDetail.vue";
 import ideaDetail from "@/components/projects/IdeaDetail.vue";
 import AboutTYIU from "../components/university/AboutTYIU.vue"; // Страница About только для TYIU
+import Kanban from "@/components/in project/kanban.vue";
 import Cookies from "js-cookie";
 const routes = [
   {
@@ -47,6 +48,11 @@ const routes = [
     path: "/:institute/ideas/",
     name: "Ideas",
     component: Ideas,
+  },
+  {
+    path: "/:institute/project/:id/kanban",
+    name: "Kanban",
+    component: Kanban,
   },
   {
     path: "/:institute/project/:id",

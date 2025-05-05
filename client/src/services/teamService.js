@@ -24,59 +24,6 @@ export async function joinTeam(teamId) {
 }
 
 /**
- * Получает список заявок на вступление в команду.
- *
- * @param {string|number} teamId - Идентификатор команды.
- * @returns {Promise<Object>} - Объект с данными заявок.
- */
-export async function fetchJoinRequests(teamId) {
-  try {
-    const response = await api.get(`/teams/${teamId}/requests`);
-    console.log("Заявки на вступление:", response.data);
-    return response.data;
-  } catch (error) {
-    console.error("Ошибка получения заявок:", error);
-    throw error;
-  }
-}
-
-/**
- * Принимает заявку на вступление в команду.
- *
- * @param {string|number} teamId - Идентификатор команды.
- * @param {string|number} requestId - Идентификатор заявки.
- * @returns {Promise<Object>} - Объект с данными ответа от сервера.
- */
-export async function acceptRequest(teamId, requestId) {
-  try {
-    const response = await api.post(`/teams/${teamId}/accept/${requestId}`);
-    console.log("Заявка принята:", response.data);
-    return response.data;
-  } catch (error) {
-    console.error("Ошибка принятия заявки:", error);
-    throw error;
-  }
-}
-
-/**
- * Отклоняет заявку на вступление в команду.
- *
- * @param {string|number} teamId - Идентификатор команды.
- * @param {string|number} requestId - Идентификатор заявки.
- * @returns {Promise<Object>} - Объект с данными ответа от сервера.
- */
-export async function denyRequest(teamId, requestId) {
-  try {
-    const response = await api.post(`/teams/${teamId}/deny/${requestId}`);
-    console.log("Заявка отклонена:", response.data);
-    return response.data;
-  } catch (error) {
-    console.error("Ошибка отклонения заявки:", error);
-    throw error;
-  }
-}
-
-/**
  * Отправляет приглашение пользователю присоединиться к команде.
  *
  * @param {string|number} teamId - Идентификатор команды.
@@ -102,7 +49,7 @@ export async function inviteUser(teamId, userId) {
  */
 export async function deleteTeam(teamId) {
   try {
-    const response = await api.delete(`/teams/${teamId}/delete`);
+    const response = await api.delete(`/teams/${teamId}/`);
     console.log("Команда удалена:", response.data);
     return response.data;
   } catch (error) {

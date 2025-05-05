@@ -108,6 +108,9 @@
 <button class="text-white"  @click="openModal">
   Посмотреть заявки 
 </button>
+<button class="text-white"  @click="openKanban(idea)">
+  Доска
+</button>
 </div>
 <!-- Дочерний компонент - модальное окно -->
 <RespondedTeams
@@ -129,6 +132,7 @@ import { createProjectApplication } from "@/services/projectRequests.js";
 import UserService from "@/composables/storage";
 
 export default {
+  inject: ["globalState"], // Подключаем глобальное состояние
   name: "ProjectDetails",
   components: { Header, RespondedTeams },
   props: {
@@ -153,6 +157,13 @@ export default {
     };
   },
   computed: {
+    selectedInstitute() {
+      return this.globalState.institute; // Глобальное состояние для чтения
+    },
+    instituteStyle() {
+      const style = instituteStyles[this.selectedInstitute]; // Используем глобальное состояние
+      return style || { buttonOffColor: "#ccc" }; // Дефолтный стиль
+    },
     /**
      * Получаем данные текущего пользователя из Cookies.
      */
@@ -196,6 +207,14 @@ export default {
     },
   },
   methods: {
+    openKanban(idea) {
+      const institute = this.selectedInstitute; // Используем selectedInstitute из data()
+      if (institute) {
+        this.$router.push({ path: `/${institute}/project/${idea.id}/kanban` });
+      } else {
+        console.error("Институт не выбран");
+      }
+    },
     async handleDeleteProject(ideaId) {
     try {
       const confirmation = confirm("Вы уверены, что хотите удалить проект? Это действие необратимо.");

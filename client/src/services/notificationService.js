@@ -12,12 +12,21 @@ export const notificationService = {
     }
   },
   
-  markAsRead: async (notificationId) => {
+  markAsReading: async (notificationId) => {
     try {
-      const response = await api.patch(`/notifications/`, { read: true });
+      const response = await api.patch(`/notifications/${notificationId}/`, { status: 'reading' }); // Изменяем статус на 'reading'
       return response.data;
     } catch (error) {
-      console.error('Ошибка при пометке уведомления как прочитанное:', error);
+      console.error('Ошибка при изменении статуса уведомления на "reading":', error);
+      throw error;
+    }
+  },
+  getNotificationById: async (notificationId) => {
+    try {
+      const response = await api.get(`/notifications/${notificationId}/`);
+      return response.data;
+    } catch (error) {
+      console.error('Ошибка при загрузке данных уведомления:', error);
       throw error;
     }
   }

@@ -48,13 +48,23 @@
     <div v-else class="px-4 py-6 text-center">
       <p class="text-gray-400 text-sm">Нет новых уведомлений</p>
     </div>
+
+    <!-- Модальное окно -->
+  <NotificationModal
+    :show="isModalOpen"
+    :notification="selectedNotification"
+    @close="closeModal"
+  />
+
   </div>
 </template>
 
 <script>
 import { notificationService } from "@/services/notificationService";
+import NotificationModal from "@/components/NotificationModal.vue";
 
 export default {
+  components: {NotificationModal},
   props: {
     showNotifications: Boolean,
   },
@@ -62,6 +72,8 @@ export default {
     return {
       notifications: [],
       pollingInterval: null,  // для автообновления
+      isModalOpen: false,
+      selectedNotification: null,
     };
   },
   computed: {
@@ -72,7 +84,7 @@ export default {
   mounted() {
     this.loadNotifications();
     // Устанавливаем автообновление уведомлений каждые 30 секунд
-    this.pollingInterval = setInterval(this.loadNotifications, 30000);
+    this.pollingInterval = setInterval(this.loadNotifications, 300000);
   },
   beforeUnmount() {
     clearInterval(this.pollingInterval);
@@ -114,14 +126,18 @@ export default {
         console.error("Ошибка при отметке всех как прочитанных:", error);
       }
     },
-    handleNotificationClick(notification) {
-      if (!notification.read) {
-        this.markAsRead(notification.id);
+    async handleNotificationClick(notification) {
+      // Запрашиваем подробности уведомления по id
+      try {
+        const detailedNotification = await notificationService.getNotificationById(notification.id);
+        this.selectedNotification = detailedNotification;
+        this.isModalOpen = true;
+      } catch (error) {
+        console.error("Ошибка при загрузке данных уведомления:", error);
       }
-      if (notification.link) {
-        this.$router.push(notification.link);
-      }
-      this.$emit("notificationClick", notification);
+    },
+    closeModal() {
+      this.isModalOpen = false;
     },
     getNotificationIcon(type) {
       const icons = {

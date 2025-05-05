@@ -1,18 +1,16 @@
 import api from "@/composables/auth";
+import axios from "axios";
 // Получить все заявки на вступление
 export const fetchJoinRequestsByTeam = async (teamId) => {
   try {
-    // Запрос заявок, фильтруя по конкретной команде
-    const response = await api.get(`/team-join-requests/`, {
-      params: { team: teamId }, // Передаём параметр фильтрации
-    });
-
+    const response = await api.get(`/team-join-requests/team/${teamId}/`);
     return response.data;
   } catch (error) {
     console.error(`Ошибка при загрузке заявок для команды ${teamId}:`, error.response?.data || error);
     return [];
   }
 };
+
   
   // Отправить заявку на вступление (нужно передать project_id или team_id, в зависимости от реализации)
   export const createJoinRequest = async (payload) => {
@@ -22,7 +20,7 @@ export const fetchJoinRequestsByTeam = async (teamId) => {
   
   // Получить конкретную заявку по ID
   export const getJoinRequestById = async (id) => {
-    const response = await api.get(`/team-join-requests/${id}/`);
+    const response = await api.get(`/team-join-requests/${id}`);
     return response.data;
   };
   

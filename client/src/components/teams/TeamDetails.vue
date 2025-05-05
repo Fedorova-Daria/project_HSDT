@@ -40,7 +40,7 @@
 <path d="M11.7 0.7C11.3134 0.3134 10.6866 0.313401 10.3 0.7L4.2 6.8L2.1 4.7C1.7134 4.3134 1.0866 4.3134 0.7 4.7V4.7C0.313401 5.0866 0.3134 5.7134 0.699999 6.1L2.78579 8.18579C3.56683 8.96683 4.83316 8.96683 5.61421 8.18579L11.7 2.1C12.0866 1.7134 12.0866 1.0866 11.7 0.7V0.7Z" fill="white"/>
 </svg>
 </button>
-    <button class="h-6 w-6"><svg width="22" height="22" viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <button @click="handleDeleteTeam(teamId)" class="h-6 w-6"><svg width="22" height="22" viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M5.5 1H8.5C8.63261 1 8.75979 1.05268 8.85355 1.14645C8.94732 1.24021 9 1.36739 9 1.5V2.5H5V1.5C5 1.36739 5.05268 1.24021 5.14645 1.14645C5.24021 1.05268 5.36739 1 5.5 1ZM10 2.5V1.5C10 1.10218 9.84196 0.720644 9.56066 0.43934C9.27936 0.158035 8.89782 0 8.5 0L5.5 0C5.10218 0 4.72064 0.158035 4.43934 0.43934C4.15804 0.720644 4 1.10218 4 1.5V2.5H0.5C0.367392 2.5 0.240215 2.55268 0.146447 2.64645C0.0526784 2.74021 0 2.86739 0 3C0 3.13261 0.0526784 3.25979 0.146447 3.35355C0.240215 3.44732 0.367392 3.5 0.5 3.5H1.038L1.891 14.16C1.93122 14.6612 2.15875 15.1289 2.52827 15.4698C2.8978 15.8108 3.38219 16.0001 3.885 16H10.115C10.6178 16.0001 11.1022 15.8108 11.4717 15.4698C11.8412 15.1289 12.0688 14.6612 12.109 14.16L12.962 3.5H13.5C13.6326 3.5 13.7598 3.44732 13.8536 3.35355C13.9473 3.25979 14 3.13261 14 3C14 2.86739 13.9473 2.74021 13.8536 2.64645C13.7598 2.55268 13.6326 2.5 13.5 2.5H10ZM11.958 3.5L11.112 14.08C11.0919 14.3306 10.9781 14.5644 10.7934 14.7349C10.6086 14.9054 10.3664 15.0001 10.115 15H3.885C3.6336 15.0001 3.3914 14.9054 3.20664 14.7349C3.02188 14.5644 2.90811 14.3306 2.888 14.08L2.042 3.5H11.958ZM4.471 4.5C4.60333 4.49235 4.73329 4.53756 4.8323 4.6257C4.93131 4.71383 4.99127 4.83767 4.999 4.97L5.499 13.47C5.50425 13.6008 5.45802 13.7284 5.37022 13.8255C5.28242 13.9225 5.16006 13.9813 5.02941 13.9892C4.89876 13.997 4.77024 13.9533 4.67144 13.8675C4.57265 13.7816 4.51145 13.6605 4.501 13.53L4 5.03C3.99594 4.96431 4.00489 4.89847 4.02633 4.83625C4.04777 4.77403 4.08129 4.71665 4.12495 4.66741C4.16862 4.61817 4.22158 4.57804 4.28079 4.54931C4.34 4.52058 4.4043 4.50382 4.47 4.5H4.471ZM9.529 4.5C9.5947 4.50382 9.659 4.52058 9.71821 4.54931C9.77742 4.57804 9.83038 4.61817 9.87405 4.66741C9.91771 4.71665 9.95123 4.77403 9.97267 4.83625C9.99411 4.89847 10.0031 4.96431 9.999 5.03L9.499 13.53C9.49633 13.5964 9.48043 13.6617 9.45224 13.7219C9.42405 13.7821 9.38413 13.8361 9.33481 13.8807C9.28549 13.9254 9.22777 13.9597 9.16503 13.9817C9.10228 14.0037 9.03578 14.013 8.9694 14.009C8.90302 14.005 8.8381 13.9878 8.77845 13.9585C8.7188 13.9291 8.6656 13.8881 8.62199 13.8379C8.57837 13.7877 8.5452 13.7293 8.52443 13.6661C8.50365 13.603 8.49569 13.5363 8.501 13.47L9.001 4.97C9.00873 4.83767 9.06869 4.71383 9.1677 4.6257C9.26671 4.53756 9.39667 4.49235 9.529 4.5ZM7 4.5C7.13261 4.5 7.25979 4.55268 7.35355 4.64645C7.44732 4.74021 7.5 4.86739 7.5 5V13.5C7.5 13.6326 7.44732 13.7598 7.35355 13.8536C7.25979 13.9473 7.13261 14 7 14C6.86739 14 6.74021 13.9473 6.64645 13.8536C6.55268 13.7598 6.5 13.6326 6.5 13.5V5C6.5 4.86739 6.55268 4.74021 6.64645 4.64645C6.74021 4.55268 6.86739 4.5 7 4.5Z" fill="white"/>
 </svg>
 </button>
@@ -144,7 +144,8 @@
 
     <ul>
       <li v-for="request in joinRequests" :key="request.id">
-        <span>{{ request.user.name }}</span>
+        <span>{{ request.user }}</span>
+        <span>{{ request.message }}</span>
         <button @click="acceptJoinRequest(request.id)">Принять</button>
         <button @click="cancelJoinRequest(request.id)">Отклонить</button>
       </li>
@@ -158,10 +159,10 @@
 import api from "@/composables/auth.js"; // axios-инстанс с интерсепторами
 import Header from "@/components/header.vue";
 import Cookies from "js-cookie"; 
-
+import { deleteTeam } from "@/services/teamService";
 import {
   fetchJoinRequestsByTeam,
-  createJoinRequest,
+  acceptJoinRequest,
   cancelJoinRequestDelete,
   getJoinRequestById,
   cancelJoinRequestPost
@@ -206,7 +207,7 @@ export default {
      * Получает данные текущего пользователя из Cookies.
      */
     currentUser() {
-      return JSON.parse(Cookies.get("userData") || "{}");
+      return JSON.parse(localStorage.getItem("userData") || "{}");
     },
     /**
      * Определяет, является ли текущий пользователь владельцем команды.
@@ -239,6 +240,22 @@ export default {
     this.fetchJoinRequests();  // Загружаем заявки при монтировании компонента
   },
   methods: {
+    async handleDeleteTeam(teamId) {
+    try {
+      const confirmation = confirm("Вы уверены, что хотите удалить проект? Это действие необратимо.");
+      if (!confirmation) return; // Если пользователь отменил действие, ничего не происходит
+
+      // Вызываем метод из `projects.js`
+      await deleteTeam(teamId);
+
+      // Уведомление об успехе и перенаправление
+      this.$toast.success("Проект успешно удалён!");
+      this.$router.push("/teams"); // Перенаправление на список проектов после удаления
+    } catch (error) {
+      console.error("Ошибка при удалении проекта:", error.response?.data || error);
+      this.$toast.error("Не удалось удалить проект. Попробуйте позже.");
+    }
+  },
 // Метод для получения заявок
 async fetchJoinRequests() {
       try {
@@ -249,12 +266,37 @@ async fetchJoinRequests() {
       }
     },
      // Метод для принятия заявки
-      async acceptJoinRequest(requestId) {
+    async acceptJoinRequest(requestId) {
       try {
-        await acceptJoinRequest(requestId);  // Принять заявку
-        this.fetchJoinRequests();  // Перезагружаем заявки
-      } catch (error) {
-        console.error('Ошибка при принятии заявки', error);
+        // Преобразуем requestId в число, если это строка
+      const id = parseInt(requestId, 10);
+      if (isNaN(id)) {
+        throw new Error("Неверный ID заявки");
+      }
+        // 1) принимаем заявку на сервере
+        const response = await api.post(`/team-join-requests/${id}/accept/`);
+        console.log(response.data);
+        
+        // 2) находим объект заявки
+        const jr = this.joinRequests.find(r => r.id === requestId);
+        if (!jr) throw new Error("Заявка не найдена в локальном списке");
+
+        const applicantUserId = jr.user; // ID того, кто отправил заявку
+        const teamName = this.team.name; // название команды
+
+        // 3) шлём уведомление
+        await api.post(`/notifications/`, {
+          notification_type: "Accept_team",
+          message: `Ваша заявка на вступление в команду "${teamName}" была принята.`,
+          user: applicantUserId,
+          status: "nonreading",
+        });
+
+        // 4) перезагружаем список заявок
+        await this.fetchJoinRequests();
+        return response.data;
+      } catch (err) {
+        console.error("Ошибка при принятии заявки или отправке уведомления:", err);
       }
     },
 
@@ -262,41 +304,65 @@ async fetchJoinRequests() {
     async cancelJoinRequest(requestId) {
       try {
         await cancelJoinRequestDelete(requestId);  // Отклонить заявку
+
+        // 2) находим объект заявки
+        const jr = this.joinRequests.find(r => r.id === requestId);
+        if (!jr) throw new Error("Заявка не найдена в локальном списке");
+
+        const applicantUserId = jr.user; // ID того, кто отправил заявку
+        const teamName = this.team.name; // название команды
+
+        // 3) шлём уведомление
+        await api.post(`/notifications/`, {
+          notification_type: "Cancel_team",
+          message: `Ваша заявка на вступление в команду "${teamName}" была отклонена.`,
+          user: applicantUserId,
+          status: "nonreading",
+        });
+
+
         this.fetchJoinRequests();  // Перезагружаем заявки
       } catch (error) {
         console.error('Ошибка при отклонении заявки', error);
       }
     },
-    async sendJoinRequest() {
-  try {
-    // Преобразуем teamId в целое число
-    const teamId = parseInt(this.teamId, 10);
-    
-    // Проверяем, что преобразование прошло успешно
-    if (isNaN(teamId)) {
-      console.error('teamId должен быть целым числом');
-      return;
-    }
-    const requestData = {
-      team: teamId,
-      message: 'Хочу присоединиться к вашей команде!',
-    };
+  async sendJoinRequest() {
+    try {
+      // 1) парсим ID команды
+      const teamId = parseInt(this.teamId, 10);
+      if (isNaN(teamId)) {
+        console.error("teamId должен быть целым числом");
+        return;
+      } 
 
-    console.log('Данные запроса:', requestData);  // Логируем данные перед отправкой
-    // Отправляем запрос
-    const newRequest = await createJoinRequest({
-      team: teamId,
-      message: 'Хочу присоединиться к вашей команде!',
-    });
-    
-    // Если запрос успешен, сохраняем данные
-    this.joinRequestId = newRequest.id;
-    this.requestStatus = newRequest.status;
-  } catch (err) {
-    console.error('Ошибка при отправке заявки:', err);
-  }
-},
-    async cancelJoinRequest() {
+      // 2) создаём заявку на вступление
+      const requestData = {
+        team: teamId,
+        message: "Хочу присоединиться к вашей команде!",
+      };
+      console.log("Заявка отправлена:", requestData);
+      const { data: joinReq } = await api.post("/team-join-requests/", requestData);
+      console.log("Заявка отправлена:", joinReq);
+
+      // 3) отправляем уведомление владельцу команды
+      // В this.team.owner должно быть ID тим-лида (если это не так — подгрузите его заранее)
+      const ownerId = this.team.owner;     
+      const teamName = this.team.name;
+
+      await api.post("/notifications/", {
+        notification_type: "team_request",
+        message: `Пользователь ${this.currentUser.firt_name} отправил заявку на вступление в команду "${teamName}".`,
+        user: ownerId,
+        status: "nonreading",
+      });
+      console.log("Уведомление тим-лиду отправлено");
+
+    } catch (error) {
+      console.error("Ошибка при отправке заявки или уведомления:", error.response || error);
+      this.errorMessage = "Не удалось отправить заявку или уведомление.";
+    }
+  },
+      async cancelJoinRequest() {
       try {
         if (this.joinRequestId) {
           await cancelJoinRequestPost(this.joinRequestId);

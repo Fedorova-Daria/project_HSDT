@@ -128,22 +128,19 @@ export default {
           payload.append('name', this.newTeam.name);
           payload.append('description', this.newTeam.description);
           // Передаём owner как строку (либо числовой ID)
-          payload.append('avatar', this.newTeam.avatar);
-          headers['Content-Type'] = 'multipart/form-data';
         } else {
           payload = {
             name: this.newTeam.name,
             description: this.newTeam.description,
-            avatar: null,
           };
         }
   
         // Обратите внимание: URL с завершающим слэшем
-        const response = await api.post('/teams/', payload, { headers });
+        const response = await api.post('/teams/', payload);
         console.log("Команда успешно создана:", response.data);
         this.$emit('teamCreated', response.data);
         // Очищаем форму
-        this.newTeam = { name: "", description: "", avatar: null, avatarPreview: null};
+        this.newTeam = { name: "", description: ""};
         this.closeCreateModal();
       } catch (error) {
         console.error("Ошибка при создании команды:", error.response?.data || error.message);
