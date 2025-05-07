@@ -1,18 +1,45 @@
 <template>
   <div class="bg-lightBackground dark:bg-darkBackground">
-    <header class="flex items-center justify-between px-8 py-4 border-b border-dynamic">
+    <header
+      class="flex items-center justify-between px-8 py-4 border-b border-dynamic"
+    >
       <!-- Логотип слева -->
       <div class="flex items-center">
-        <h1 :style="{ color: instituteStyle?.textColor }" class="font-display text-3xl">
+        <h1
+          :style="{ color: instituteStyle?.textColor }"
+          class="font-display text-3xl"
+        >
           <div class="relative">
-            <button @click="toggleDropdown" class="flex items-center px-4 py-2 rounded-lg">
+            <button
+              @click="toggleDropdown"
+              class="flex items-center px-4 py-2 rounded-lg"
+            >
               {{ selectedInstitute }}
-              <svg xmlns="http://www.w3.org/2000/svg" class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="ml-2 w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </button>
-            <ul v-if="isDropdownOpen" class="absolute left-0 w-50 mt-2 bg-card text-dynamic rounded-lg shadow-lg z-10">
-              <li v-for="inst in institutes" :key="inst" @click="changeInstitute(inst)" class="py-2 px-4 cursor-pointer hover:bg-zinc-600 rounded-lg">
+            <ul
+              v-if="isDropdownOpen"
+              class="absolute left-0 w-50 mt-2 bg-card text-dynamic rounded-lg shadow-lg z-10"
+            >
+              <li
+                v-for="inst in institutes"
+                :key="inst"
+                @click="changeInstitute(inst)"
+                class="py-2 px-4 cursor-pointer hover:bg-zinc-600 rounded-lg"
+              >
                 {{ inst }}
               </li>
             </ul>
@@ -20,49 +47,54 @@
         </h1>
       </div>
 
-
       <!-- Навигация -->
       <nav class="flex items-center gap-10">
-
         <label class="switch">
-  <input
-    id="checkbox"
-    type="checkbox"
-    :checked="isDarkTheme" 
-    @change="toggleTheme"
-  />
-  <span class="slider">
-    <div class="star star_1"></div>
-    <div class="star star_2"></div>
-    <div class="star star_3"></div>
-    <svg viewBox="0 0 16 16" class="cloud_1 cloud">
-      <path
-        transform="matrix(.77976 0 0 .78395-299.99-418.63)"
-        fill="#fff"
-        d="m391.84 540.91c-.421-.329-.949-.524-1.523-.524-1.351 0-2.451 1.084-2.485 2.435-1.395.526-2.388 1.88-2.388 3.466 0 1.874 1.385 3.423 3.182 3.667v.034h12.73v-.006c1.775-.104 3.182-1.584 3.182-3.395 0-1.747-1.309-3.186-2.994-3.379.007-.106.011-.214.011-.322 0-2.707-2.271-4.901-5.072-4.901-2.073 0-3.856 1.202-4.643 2.925"
-      ></path>
-    </svg>
-  </span>
-</label>
+          <input
+            id="checkbox"
+            type="checkbox"
+            :checked="isDarkTheme"
+            @change="toggleTheme"
+          />
+          <span class="slider">
+            <div class="star star_1"></div>
+            <div class="star star_2"></div>
+            <div class="star star_3"></div>
+            <svg viewBox="0 0 16 16" class="cloud_1 cloud">
+              <path
+                transform="matrix(.77976 0 0 .78395-299.99-418.63)"
+                fill="#fff"
+                d="m391.84 540.91c-.421-.329-.949-.524-1.523-.524-1.351 0-2.451 1.084-2.485 2.435-1.395.526-2.388 1.88-2.388 3.466 0 1.874 1.385 3.423 3.182 3.667v.034h12.73v-.006c1.775-.104 3.182-1.584 3.182-3.395 0-1.747-1.309-3.186-2.994-3.379.007-.106.011-.214.011-.322 0-2.707-2.271-4.901-5.072-4.901-2.073 0-3.856 1.202-4.643 2.925"
+              ></path>
+            </svg>
+          </span>
+        </label>
 
         <router-link
-  v-for="item in menuItems"
-  :key="item.name"
-  :to="`/${instituteMap[selectedInstitute] || selectedInstitute}${item.link}`"
-  class="relative text-lg font-medium transition-colors duration-300 group text-dynamic"
-  :style="{ '--hover-color': instituteStyle?.textColor }"
->
-  {{ item.name }}
-  <span
-    class="absolute left-1/2 bottom-[-5px] h-[3px] rounded-full transition-all duration-300 w-0 group-hover:w-full group-hover:left-0"
-    :style="{ backgroundColor: instituteStyle?.textColor }"
-    :class="{ 'w-2/3 left-1/6': $route.path === `/${instituteMap[selectedInstitute] || selectedInstitute}${item.link}` }"
-  ></span>
-</router-link>
-
+          v-for="item in menuItems"
+          :key="item.name"
+          :to="`/${instituteMap[selectedInstitute] || selectedInstitute}${
+            item.link
+          }`"
+          class="relative text-lg font-medium transition-colors duration-300 group text-dynamic"
+          :style="{ '--hover-color': instituteStyle?.textColor }"
+        >
+          {{ item.name }}
+          <span
+            class="absolute left-1/2 bottom-[-5px] h-[3px] rounded-full transition-all duration-300 w-0 group-hover:w-full group-hover:left-0"
+            :style="{ backgroundColor: instituteStyle?.textColor }"
+            :class="{
+              'w-2/3 left-1/6':
+                $route.path ===
+                `/${instituteMap[selectedInstitute] || selectedInstitute}${
+                  item.link
+                }`,
+            }"
+          ></span>
+        </router-link>
 
         <!-- Кнопка уведомлений -->
-        <div class="relative ">
+        <div class="relative">
           <button class="relative p-1" @click="toggleNotifications">
             <img src="/notificate.svg" alt="notification" class="w-6" />
             <span
@@ -76,46 +108,46 @@
           </button>
 
           <!-- Выпадающее меню уведомлений -->
-<Notifications
-  v-if="showNotifications"
-  :showNotifications="showNotifications"
-  @close="showNotifications = false"
-/>
+          <Notifications
+            v-if="showNotifications"
+            :showNotifications="showNotifications"
+            @close="showNotifications = false"
+          />
         </div>
 
         <!-- Аватарка -->
         <div
-      class="relative w-12 h-12 rounded-full overflow-hidden cursor-pointer"
-      @click="goToProfile"
-      :style="avatarStyle"
-    >
-      <!-- Если аватарка есть – покажем её, иначе инициалы -->
-      <img
-        v-if="userAvatar"
-        :src="userAvatar"
-        alt="User Avatar"
-        class="object-cover w-full h-full rounded-full border-2 border-zinc-400"
-      />
-      <span
-  v-else
-  class="flex items-center justify-center w-full h-full text-dynamic font-semibold text-xl rounded-full border-2 border-zinc-400"
->
-  {{ userInitials }}
-</span>
-    </div>
+          class="relative w-12 h-12 rounded-full overflow-hidden cursor-pointer"
+          @click="goToProfile"
+          :style="avatarStyle"
+        >
+          <!-- Если аватарка есть – покажем её, иначе инициалы -->
+          <img
+            v-if="userAvatar"
+            :src="userAvatar"
+            alt="User Avatar"
+            class="object-cover w-full h-full rounded-full border-2 border-zinc-400"
+          />
+          <span
+            v-else
+            class="flex items-center justify-center w-full h-full text-dynamic font-semibold text-xl rounded-full border-2 border-zinc-400"
+          >
+            {{ userInitials }}
+          </span>
+        </div>
       </nav>
     </header>
   </div>
 </template>
 
 <script>
-import { instituteStyles } from '@/assets/instituteStyles.js'; // Импортируем карту стилей
+import { instituteStyles } from "@/assets/instituteStyles.js"; // Импортируем карту стилей
 import Notifications from "@/components/notific.vue";
 import Cookies from "js-cookie";
 
 export default {
   name: "Header",
-  inject: ["globalState"], 
+  inject: ["globalState"],
   components: { Notifications },
   data() {
     return {
@@ -123,41 +155,53 @@ export default {
       isDropdownOpen: false,
       localSelectedInstitute: Cookies.get("institute") || "TYIU",
       showNotifications: false, // Управляет видимостью меню уведомлений
-    notifications: [], // Хранение списка уведомлений
+      notifications: [], // Хранение списка уведомлений
       user: {}, // Здесь будем хранить данные пользователя
       institutes: ["ВШЦТ", "АРХИД", "ИПТИ", "СТРОИН", "ТИУ"],
-      instituteMap: { 
-        "ВШЦТ": "HSDT",
-        "АРХИД": "ARCHID",
-        "ИПТИ": "IPTI",
-        "СТРОИН": "STROIN",
-        "ТИУ": "TYIU",
+      instituteMap: {
+        ВШЦТ: "HSDT",
+        АРХИД: "ARCHID",
+        ИПТИ: "IPTI",
+        СТРОИН: "STROIN",
+        ТИУ: "TYIU",
       },
       reverseInstituteMap: {
-        "HSDT": "ВШЦТ",
-        "ARCHID": "АРХИД",
-        "IPTI": "ИПТИ",
-        "STROIN": "СТРОИН",
-        "TYIU": "ТИУ",
+        HSDT: "ВШЦТ",
+        ARCHID: "АРХИД",
+        IPTI: "ИПТИ",
+        STROIN: "СТРОИН",
+        TYIU: "ТИУ",
       },
-      
     };
   },
   computed: {
     menuItems() {
-    const latinInstitute = this.instituteMap[this.localSelectedInstitute] || this.localSelectedInstitute;
-    if (!latinInstitute) {
-      console.error(`Ошибка: Латинское название для "${this.localSelectedInstitute}" не найдено.`);
-      return [];
-    }
-    return latinInstitute === "TYIU"
-      ? [{ name: "О нас", link: "/about" }, { name: "Идеи", link: "/ideas" }]
-      : [{ name: "Биржа", link: "/rialto" }, { name: "Команды", link: "/teams" }, { name: "Идеи", link: "/ideas" }];
-  },
-  instituteStyle() {
-    const latinInstitute = this.instituteMap[this.localSelectedInstitute] || this.localSelectedInstitute;
-    return instituteStyles[latinInstitute] || instituteStyles["TYIU"];
-  },
+      const latinInstitute =
+        this.instituteMap[this.localSelectedInstitute] ||
+        this.localSelectedInstitute;
+      if (!latinInstitute) {
+        console.error(
+          `Ошибка: Латинское название для "${this.localSelectedInstitute}" не найдено.`
+        );
+        return [];
+      }
+      return latinInstitute === "TYIU"
+        ? [
+            { name: "О нас", link: "/about" },
+            { name: "Идеи", link: "/ideas" },
+          ]
+        : [
+            { name: "Биржа", link: "/rialto" },
+            { name: "Команды", link: "/teams" },
+            { name: "Идеи", link: "/ideas" },
+          ];
+    },
+    instituteStyle() {
+      const latinInstitute =
+        this.instituteMap[this.localSelectedInstitute] ||
+        this.localSelectedInstitute;
+      return instituteStyles[latinInstitute] || instituteStyles["TYIU"];
+    },
     unreadNotificationsCount() {
       return this.notifications.filter((n) => !n.read).length;
     },
@@ -198,7 +242,9 @@ export default {
       const splitName = this.userName.split(" ");
       if (splitName.length > 1) {
         // Берём первую букву первого и последнего слова
-        return (splitName[0].charAt(0) + splitName[splitName.length - 1].charAt(0)).toUpperCase();
+        return (
+          splitName[0].charAt(0) + splitName[splitName.length - 1].charAt(0)
+        ).toUpperCase();
       }
       // Если одно слово – первые две буквы
       return this.userName.substring(0, 2).toUpperCase();
@@ -211,58 +257,58 @@ export default {
         return {
           backgroundImage: `url(${this.userAvatar})`,
           backgroundSize: "cover",
-          backgroundPosition: "center"
+          backgroundPosition: "center",
         };
       }
       // Если аватарки нет, создаём фон (можно сделать градиент, используя длину или хэш имени)
       // Здесь для примера просто задаём фиксированный градиент.
       return {
-        background: "linear-gradient(45deg, #ff9a9e, #fad0c4)"
-      }
+        background: "linear-gradient(45deg, #ff9a9e, #fad0c4)",
+      };
     },
     avatarStyle() {
-  const colors = this.instituteStyle?.avatarColors || ["#ccc"]; // Дефолтный цвет
-  const colorIndex = this.userName.length % colors.length;
-  return { backgroundColor: colors[colorIndex] };
-},
+      const colors = this.instituteStyle?.avatarColors || ["#ccc"]; // Дефолтный цвет
+      const colorIndex = this.userName.length % colors.length;
+      return { backgroundColor: colors[colorIndex] };
+    },
   },
   methods: {
     toggleNotifications() {
-    this.showNotifications = !this.showNotifications;
+      this.showNotifications = !this.showNotifications;
 
-    // Добавляем уведомление при открытии
-    if (this.showNotifications) {
-      this.notifications.push({
-        id: Date.now(),
-        title: "Вас пригласили в команду",
-        message: 'Вас пригласили в команду "Тест"',
-        read: false,
-        time: new Date(),
-        type: "system",
-      });
-    }
-  },
+      // Добавляем уведомление при открытии
+      if (this.showNotifications) {
+        this.notifications.push({
+          id: Date.now(),
+          title: "Вас пригласили в команду",
+          message: 'Вас пригласили в команду "Тест"',
+          read: false,
+          time: new Date(),
+          type: "system",
+        });
+      }
+    },
     handleNotificationClick(notification) {
-    console.log("Клик по уведомлению:", notification);
-    if (!notification.read) {
-      notification.read = true;
-    }
-    this.$router.push(notification.link);
-    this.showNotifications = false; // Закрываем меню после клика
-  },
+      console.log("Клик по уведомлению:", notification);
+      if (!notification.read) {
+        notification.read = true;
+      }
+      this.$router.push(notification.link);
+      this.showNotifications = false; // Закрываем меню после клика
+    },
     markAllAsRead() {
-    this.notifications.forEach((notification) => {
-      notification.read = true;
-    });
-  },
+      this.notifications.forEach((notification) => {
+        notification.read = true;
+      });
+    },
     /**
      * Переключает тему и сохраняет выбор в localStorage.
      */
     toggleTheme() {
-    this.isDarkTheme = !this.isDarkTheme;
-    localStorage.setItem("theme", this.isDarkTheme ? "dark" : "light");
-    document.documentElement.classList.toggle("dark", this.isDarkTheme);
-  },
+      this.isDarkTheme = !this.isDarkTheme;
+      localStorage.setItem("theme", this.isDarkTheme ? "dark" : "light");
+      document.documentElement.classList.toggle("dark", this.isDarkTheme);
+    },
     /**
      * Применяет текущую тему, добавляя соответствующий класс к элементу <html>.
      */
@@ -281,13 +327,13 @@ export default {
     },
     checkInstitute() {
       const userData = JSON.parse(Cookies.get("userData") || "{}");
-  const institute = userData.institute || "TYIU"; // Получаем институт, если он указан, иначе используем TYIU
+      const institute = userData.institute || "TYIU"; // Получаем институт, если он указан, иначе используем TYIU
 
-  if (institute === "TYIU") {
-    this.$router.push("/TYIU/about"); // Перенаправление на страницу TYIU/about
-  }
-},
-changeInstitute(inst) {
+      if (institute === "TYIU") {
+        this.$router.push("/TYIU/about"); // Перенаправление на страницу TYIU/about
+      }
+    },
+    changeInstitute(inst) {
       const newInstituteLat = this.instituteMap[inst] || inst;
       if (!newInstituteLat) {
         console.error(`Ошибка: Латинское название для "${inst}" не найдено.`);
@@ -298,36 +344,41 @@ changeInstitute(inst) {
       let userData = JSON.parse(Cookies.get("userData") || "{}");
       userData.institute = newInstituteLat;
       Cookies.set("userData", JSON.stringify(userData));
-      const routePath = newInstituteLat === "TYIU" ? "/TYIU/about" : `/${newInstituteLat}/rialto`;
+      const routePath =
+        newInstituteLat === "TYIU"
+          ? "/TYIU/about"
+          : `/${newInstituteLat}/rialto`;
       this.$router.push(routePath);
       this.isDropdownOpen = false;
     },
-updateInstituteFromRoute() {
-  const instituteFromRoute = this.$route.params.institute;
-  const institute = this.reverseInstituteMap[instituteFromRoute] || instituteFromRoute;
+    updateInstituteFromRoute() {
+      const instituteFromRoute = this.$route.params.institute;
+      const institute =
+        this.reverseInstituteMap[instituteFromRoute] || instituteFromRoute;
 
-  if (institute) {
-    console.log("Обновление из маршрута:", institute);
-    this.localSelectedInstitute = this.instituteMap[institute] || institute; // Локальное состояние
-    this.globalState.institute = this.instituteMap[institute] || institute; // Глобальное состояние
-  } else {
-    console.error("Не удалось определить институт из маршрута.");
-  }
-},
+      if (institute) {
+        console.log("Обновление из маршрута:", institute);
+        this.localSelectedInstitute = this.instituteMap[institute] || institute; // Локальное состояние
+        this.globalState.institute = this.instituteMap[institute] || institute; // Глобальное состояние
+      } else {
+        console.error("Не удалось определить институт из маршрута.");
+      }
+    },
 
-  goToProfile() {
-    const latinInstitute = this.instituteMap[this.selectedInstitute] || this.selectedInstitute;
-    this.$router.push(`/${latinInstitute}/profile`);
-  }
+    goToProfile() {
+      const latinInstitute =
+        this.instituteMap[this.selectedInstitute] || this.selectedInstitute;
+      this.$router.push(`/${latinInstitute}/profile`);
+    },
   },
   watch: {
-  "$route.fullPath": "updateInstituteFromRoute", // Теперь следим за полным путём
-},
-created() {
-  const userData = JSON.parse(Cookies.get("userData") || "{}");
-  const institute = userData.institute || "TYIU";
+    "$route.fullPath": "updateInstituteFromRoute", // Теперь следим за полным путём
+  },
+  created() {
+    const userData = JSON.parse(Cookies.get("userData") || "{}");
+    const institute = userData.institute || "TYIU";
 
-// Если данные пользователя (например, имя, фамилия, аватар) сохранены в localStorage,
+    // Если данные пользователя (например, имя, фамилия, аватар) сохранены в localStorage,
     // получаем их и преобразуем из JSON.
     const storedUser = localStorage.getItem("userData");
     if (storedUser) {
@@ -337,20 +388,20 @@ created() {
       this.user = {};
     }
 
-// При загрузке читаем сохранённую тему из localStorage или устанавливаем светлую по умолчанию
-const savedTheme = localStorage.getItem("theme") || "light";
+    // При загрузке читаем сохранённую тему из localStorage или устанавливаем светлую по умолчанию
+    const savedTheme = localStorage.getItem("theme") || "light";
     this.isDarkTheme = savedTheme === "dark";
     this.applyTheme();
 
-  console.log("Институт из Cookies:", institute);
+    console.log("Институт из Cookies:", institute);
 
-  // Синхронизируем глобальное состояние
-  this.globalState.institute = institute;
+    // Синхронизируем глобальное состояние
+    this.globalState.institute = institute;
 
-  // Устанавливаем `selectedInstitute` для локального отображения
-  this.selectedInstitute = this.reverseInstituteMap[institute] || institute;
-  this.updateInstituteFromRoute();
-},
+    // Устанавливаем `selectedInstitute` для локального отображения
+    this.selectedInstitute = this.reverseInstituteMap[institute] || institute;
+    this.updateInstituteFromRoute();
+  },
 };
 </script>
 
@@ -451,7 +502,7 @@ const savedTheme = localStorage.getItem("theme") || "light";
   opacity: 1;
 }
 
-  .group:hover {
-    color: var(--hover-color);
-  }
+.group:hover {
+  color: var(--hover-color);
+}
 </style>
