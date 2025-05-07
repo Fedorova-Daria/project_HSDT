@@ -35,6 +35,7 @@
               <li>
                 <a
                   href="#"
+                  @click.prevent="showStatsModal = true"
                   class="flex items-center p-2 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-100 dark:hover:bg-gray-700 group text-sm"
                 >
                   <svg
@@ -117,10 +118,10 @@
       </div>
 
       <div class="h-full overflow-hidden p-3 pt-16 w-4/5 m-auto">
-        <h1 class="text-white text-7xl"> Kanban-доска</h1>
+        <h1 class="text-white text-7xl">Kanban-доска</h1>
         <!-- Описание канбан-доски -->
         <div class="">
-          <p class=" text-white text-2xl mt-4">
+          <p class="text-white text-2xl mt-4">
             Это канбан-доска для планирования и работы над проектными задачами.
             Вы можете создавать колонки, перемещать карточки и организовывать
             спринты.
@@ -566,6 +567,159 @@
           </div>
         </div>
       </div>
+
+      <!-- Модальное окно статистики команды -->
+      <div
+        v-if="showStatsModal"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      >
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold dark:text-white">
+              Статистика команды
+            </h3>
+            <button
+              @click="showStatsModal = false"
+              class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <div class="space-y-4">
+            <!-- Название команды -->
+            <div>
+              <label
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >Название команды</label
+              >
+              <div class="p-3 bg-gray-100 dark:bg-gray-700 rounded-md">
+                <p class="font-medium">Dream Team</p>
+              </div>
+            </div>
+
+            <!-- Члены команды -->
+            <div>
+              <label
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >Участники команды</label
+              >
+              <div class="space-y-2">
+                <div
+                  v-for="(member, index) in teamMembers"
+                  :key="index"
+                  class="flex items-center p-3 bg-gray-100 dark:bg-gray-700 rounded-md"
+                >
+                  <img
+                    :src="member.avatar"
+                    class="w-8 h-8 rounded-full mr-3"
+                    :alt="member.name"
+                  />
+                  <div>
+                    <p class="font-medium">{{ member.name }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                      {{ member.role }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Тимлид -->
+            <div>
+              <label
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >Тимлид</label
+              >
+              <div
+                class="flex items-center p-3 bg-indigo-50 dark:bg-indigo-900 rounded-md"
+              >
+                <img
+                  :src="teamLead.avatar"
+                  class="w-8 h-8 rounded-full mr-3"
+                  :alt="teamLead.name"
+                />
+                <div>
+                  <p class="font-medium">{{ teamLead.name }}</p>
+                  <p class="text-xs text-indigo-600 dark:text-indigo-300">
+                    Team Lead
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Оценка команды -->
+            <div class="pt-4">
+              <button
+                @click="showRating = !showRating"
+                class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+              >
+                Поставить оценку
+              </button>
+
+              <div v-if="showRating" class="mt-4">
+                <p
+                  class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Оцените работу команды:
+                </p>
+                <div class="flex items-center space-x-1">
+                  <button
+                    v-for="star in 5"
+                    :key="star"
+                    @click="setRating(star)"
+                    class="focus:outline-none"
+                  >
+                    <svg
+                      :class="[
+                        'h-8 w-8',
+                        star <= currentRating
+                          ? 'text-yellow-400 fill-current'
+                          : 'text-gray-300 dark:text-gray-500 fill-current',
+                      ]"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <p
+                  v-if="currentRating > 0"
+                  class="mt-2 text-sm text-gray-600 dark:text-gray-400"
+                >
+                  Вы поставили: {{ currentRating }} звезд{{
+                    currentRating > 1 ? "ы" : "а"
+                  }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 flex justify-end">
+            <button
+              @click="showStatsModal = false"
+              class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+            >
+              Закрыть
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -586,6 +740,35 @@ export default {
   },
   data() {
     return {
+      showStatsModal: false,
+      showRating: false,
+      currentRating: 0,
+      teamMembers: [
+        {
+          name: "Даша",
+          role: "Frontend разработчик",
+          avatar:
+            "https://images.unsplash.com/photo-1506755855567-92ff770e8d00?auto=format&fit=facearea&facepad=2.5&h=144&w=144&q=80",
+        },
+        {
+          name: "Саша",
+          role: "Backend разработчик",
+          avatar:
+            "https://images.unsplash.com/photo-1511367461989-f85a21fda167?auto=format&fit=facearea&facepad=2.5&h=144&w=144&q=80",
+        },
+        {
+          name: "Маша",
+          role: "Дизайнер",
+          avatar:
+            "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=facearea&facepad=2.5&h=144&w=144&q=80",
+        },
+      ],
+      teamLead: {
+        name: "Алексей",
+        role: "Team Lead",
+        avatar:
+          "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=facearea&facepad=2.5&h=144&w=144&q=80",
+      },
       dropdownOpen: {},
       showAddColumnForm: false,
       newColumnTitle: "",
@@ -639,15 +822,11 @@ export default {
       ],
     };
   },
-  computed: {
-    formattedTaskDate() {
-      if (!this.newTask.date) return "";
-      const date = new Date(this.newTask.date);
-      const options = { day: "numeric", month: "short" };
-      return date.toLocaleDateString("ru-RU", options);
-    },
-  },
   methods: {
+    setRating(rating) {
+      this.currentRating = rating;
+      // Здесь можно добавить сохранение оценки (например, через API)
+    },
     toggleDropdown(columnId) {
       this.dropdownOpen[columnId] = !this.dropdownOpen[columnId];
     },
@@ -748,7 +927,6 @@ export default {
             task.date = this.editingTask.date;
             task.description = this.editingTask.description;
 
-            // Обновляем отображаемую дату
             if (task.date) {
               const date = new Date(task.date);
               const options = { day: "numeric", month: "short" };
@@ -758,6 +936,14 @@ export default {
         }
         this.closeEditModal();
       }
+    },
+  },
+  computed: {
+    formattedTaskDate() {
+      if (!this.newTask.date) return "";
+      const date = new Date(this.newTask.date);
+      const options = { day: "numeric", month: "short" };
+      return date.toLocaleDateString("ru-RU", options);
     },
   },
 };
