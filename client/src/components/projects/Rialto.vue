@@ -32,7 +32,7 @@
         <option>Остальные стеки...</option>
       </select>
 
-      <button v-if="userRole === 'CU'"
+      <button
         @click="openModal"
         class="rounded-md px-4 py-2 transition ml-5 h-10 text-white"
         :style="{ backgroundColor: currentBgColor }"

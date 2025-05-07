@@ -116,10 +116,11 @@
         </aside>
       </div>
 
-      <div class="h-full overflow-hidden p-3 pt-16">
+      <div class="h-full overflow-hidden p-3 pt-16 w-4/5 m-auto">
+        <h1 class="text-white text-7xl"> Kanban-доска</h1>
         <!-- Описание канбан-доски -->
-        <div class="mb-4 p-4 bg-white dark:bg-gray-700 rounded-lg shadow">
-          <p class="text-gray-700 dark:text-gray-300">
+        <div class="">
+          <p class=" text-white text-2xl mt-4">
             Это канбан-доска для планирования и работы над проектными задачами.
             Вы можете создавать колонки, перемещать карточки и организовывать
             спринты.
@@ -127,7 +128,7 @@
         </div>
 
         <!-- Кнопка добавления новой колонки -->
-        <div class="mb-4">
+        <div class="mb-4 flex justify-end">
           <button
             v-if="!showAddColumnForm"
             @click="showAddColumnForm = true"
