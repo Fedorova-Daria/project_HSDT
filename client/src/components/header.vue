@@ -137,8 +137,144 @@
         </div>
       </nav>
     </header>
+
+
+
+
+
+
+
+
+
+
+
+    
+
+    
+    <!-- 1. Приглашение в команду -->
+<div class="fixed inset-0 bg-transparent flex items-center justify-center p-4 z-50">
+  <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">Поздравляем! Вас пригласили в команду!</h2>
+    <p class="text-gray-600 mb-4">Вас пригласили в команду:</p>
+    
+    <div class="bg-gray-50 p-4 rounded-lg mb-4 text-center">
+      <img src="https://via.placeholder.com/80" class="w-20 h-20 rounded-full mx-auto mb-3">
+      <h3 class="text-xl font-semibold mb-1">Команда разработчиков</h3>
+      <p class="text-sm text-gray-500 mb-3">Участников: 5</p>
+      <div class="flex flex-wrap justify-center gap-2 mb-3">
+        <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">Vue.js</span>
+        <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">Tailwind</span>
+      </div>
+      <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">Подробнее</button>
+    </div>
+    
+    <div class="flex flex-col gap-3">
+      <button class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Принять приглашение</button>
+      <button class="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg">Отклонить</button>
+    </div>
+  </div>
+</div>
+
+<!-- 2. Вам кинули заявку в команду -->
+<div class="fixed inset-0 bg-transparent flex items-center justify-center p-4 z-50">
+  <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">Заявка в команду</h2>
+    <p class="text-gray-600 mb-4">В вашу команду хочет вступить:</p>
+    
+    <div class="bg-gray-50 p-4 rounded-lg mb-4 text-center">
+      <img src="https://via.placeholder.com/80" class="w-20 h-20 rounded-full mx-auto mb-3">
+      <h3 class="text-xl font-semibold mb-3">Алексей Иванов</h3>
+      <div class="flex flex-wrap justify-center gap-2 mb-3">
+        <span class="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">React</span>
+        <span class="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">TypeScript</span>
+      </div>
+      <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">Подробнее</button>
+    </div>
+    
+    <div class="flex flex-col gap-3">
+      <button class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Принять</button>
+      <button class="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg">Отклонить</button>
+      <button class="text-blue-600 hover:text-blue-800 text-sm font-medium mt-1">Рассмотреть все заявки</button>
+    </div>
+  </div>
+</div>
+
+<!-- 3. Заявка в проект (для заказчика) -->
+<div class="fixed inset-0 bg-transparent flex items-center justify-center p-4 z-50">
+  <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">Заявка в проект</h2>
+    <p class="text-gray-600 mb-4">Над вашим проектом хочет работать:</p>
+    
+    <div class="space-y-4 mb-4">
+      <div class="bg-gray-50 p-4 rounded-lg">
+        <h4 class="font-semibold text-lg mb-2">Интернет-магазин</h4>
+        <p class="text-gray-600 text-sm mb-3 line-clamp-2">Разработка современного интернет-магазина с использованием Vue.js и Node.js...</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">Vue.js</span>
+          <span class="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">Node.js</span>
+        </div>
+      </div>
+      
+      <div class="bg-gray-50 p-4 rounded-lg text-center">
+        <h4 class="font-semibold mb-2">Команда: DevTeam</h4>
+        <img src="https://via.placeholder.com/80" class="w-20 h-20 rounded-full mx-auto mb-3">
+        <div class="flex flex-wrap justify-center gap-2">
+          <span class="px-3 py-1 bg-orange-100 text-orange-800 text-sm rounded-full">PHP</span>
+          <span class="px-3 py-1 bg-orange-100 text-orange-800 text-sm rounded-full">Laravel</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="flex flex-col gap-3">
+      <button class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Принять</button>
+      <button class="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg">Отклонить</button>
+      <button class="text-blue-600 hover:text-blue-800 text-sm font-medium mt-1">Рассмотреть все заявки</button>
+    </div>
+  </div>
+</div>
+
+<!-- 4. Принятие заявки в проект (для студента) -->
+<div class="fixed inset-0 bg-transparent flex items-center justify-center p-4 z-50">
+  <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">Заявка в проект</h2>
+    <p class="text-gray-600 mb-4">Поздравляем! Вашу заявку принял проект <span class="font-semibold">Интернет-магазин</span></p>
+    
+    <div class="bg-gray-50 p-4 rounded-lg mb-4">
+      <h4 class="font-semibold text-lg mb-2">Интернет-магазин</h4>
+      <p class="text-gray-600 text-sm mb-3 line-clamp-2">Разработка современного интернет-магазина с использованием Vue.js и Node.js...</p>
+      <div class="flex flex-wrap gap-2">
+        <span class="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">Vue.js</span>
+        <span class="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">Node.js</span>
+      </div>
+    </div>
+    
+    <button class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Перейти к проекту</button>
+  </div>
+</div>
+
+<!-- 5. Принятие в команду -->
+<div class="fixed inset-0 bg-transparent flex items-center justify-center p-4 z-50">
+  <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">Заявка в команду</h2>
+    <p class="text-gray-600 mb-4">Поздравляем! Вас приняли в команду <span class="font-semibold">Web разработчики</span></p>
+    
+    <div class="bg-gray-50 p-4 rounded-lg mb-4 text-center">
+      <img src="https://via.placeholder.com/80" class="w-20 h-20 rounded-full mx-auto mb-3">
+      <h3 class="text-xl font-semibold mb-1">Web разработчики</h3>
+      <p class="text-sm text-gray-500 mb-3">Участников: 5</p>
+      <div class="flex flex-wrap justify-center gap-2">
+        <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">Vue.js</span>
+        <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">Tailwind</span>
+      </div>
+    </div>
+    
+    <button class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Перейти к команде</button>
+  </div>
+</div>
   </div>
 </template>
+
+
 
 <script>
 import { instituteStyles } from "@/assets/instituteStyles.js"; // Импортируем карту стилей
@@ -406,6 +542,125 @@ export default {
 </script>
 
 <style scoped>
+
+/* Общие стили модальных окон */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 90%;
+}
+
+.info-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+/* Стили канбан-доски */
+.kanban-container {
+  padding: 2rem;
+}
+
+.columns-container {
+  display: flex;
+  gap: 1.5rem;
+  overflow-x: auto;
+  padding: 1rem 0;
+}
+
+.column {
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 1rem;
+  min-width: 300px;
+}
+
+.task-card {
+  background: white;
+  padding: 1rem;
+  margin: 0.5rem 0;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  cursor: pointer;
+}
+
+.task-modal {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 400px;
+  background: white;
+  box-shadow: -2px 0 8px rgba(0,0,0,0.1);
+  padding: 2rem;
+}
+
+.edit-textarea {
+  width: 100%;
+  height: 150px;
+  padding: 0.5rem;
+  margin: 1rem 0;
+}
+
+/* Общие стили элементов */
+.btn-primary {
+  background: #4CAF50;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  background: #f44336;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin-bottom: 1rem;
+}
+
+.skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.skill-tag {
+  background: #f0f0f0;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+
+
+
 /* Theme Switch */
 /* The switch - the box around the slider */
 .switch {
