@@ -4,7 +4,7 @@
 
     <div class="flex-1 overflow-auto custom-scrollbar-horizontal">
       <!-- Компактная кнопка для раскрытия панели -->
-      <div class="fixed left-0 top-1/2 transform -translate-y-1/2 z-50 group">
+      <div class="fixed left-0 top-30 transform -translate-y-1/2 z-50 group">
         <div
           class="w-10 h-10 flex items-center justify-center rounded-r-md bg-indigo-600 hover:bg-indigo-700 cursor-pointer transition-colors shadow-md"
         >
@@ -118,7 +118,6 @@
       </div>
 
       <div class="h-full overflow-hidden p-3 pt-16 w-4/5 m-auto">
-        <h1 class="text-white text-7xl">Kanban-доска</h1>
         <!-- Описание канбан-доски -->
         <div class="">
           <p class="text-white text-2xl mt-4">
@@ -129,111 +128,178 @@
         </div>
 
         <!-- Кнопка добавления новой колонки -->
-        <div class="mb-4 flex justify-end">
+        <div class="mb-4 flex justify-end relative" ref="dropdownWrapper">
           <button
-            v-if="!showAddColumnForm"
-            @click="showAddColumnForm = true"
-            class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors flex items-center"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5 mr-2"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-              />
+            @click="toggleDropdownn"
+            class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800" type="button">Добавить колонку <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
             </svg>
-            Добавить колонку
           </button>
 
           <!-- Форма добавления новой колонки -->
-          <div
-            v-else
-            class="p-3 bg-white dark:bg-gray-700 rounded-md shadow mb-4"
-          >
-            <input
-              v-model="newColumnTitle"
-              @keyup.enter="addColumn"
-              placeholder="Введите название колонки"
-              class="w-full px-3 py-2 mb-2 rounded border border-gray-300 dark:border-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-gray-600"
-              v-focus
-            />
-            <div class="flex space-x-2">
-              <button
-                @click="addColumn"
-                class="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
-              >
-                Добавить
-              </button>
-              <button
-                @click="showAddColumnForm = false"
-                class="px-3 py-1 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
-              >
-                Отмена
-              </button>
-            </div>
+          <div v-if="showDropdown"
+          ref="dropdownButton"
+            class="z-10 bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-44 dark:bg-gray-700 absolute top-full mr-1.5">
+              <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
+                <li>
+                  <a  @click="prepareColumn('default')" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Добавить обычную</a>
+                </li>
+                <li>
+                  <a  @click="prepareColumn('completed')" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Добавить финальную</a>
+                </li>
+                <li>
+                </li>
+              </ul>
           </div>
+          <div v-if="creatingColumn" class="absolute top-full right-0 mt-14 w-64">
+    <input
+      v-model="newColumnTitle"
+      @keyup.enter="createColumn"
+      @blur="cancelCreatingColumn"
+      placeholder="Введите название колонки"
+      class="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring text-white bg-zinc-700"
+      autofocus
+    />
+  </div>
         </div>
 
-        <!-- Горизонтально прокручиваемая область колонок -->
+
         <div class="overflow-x-auto pb-4">
-          <div class="inline-flex space-x-3">
-            <!-- Перетаскиваемые колонки -->
-            <draggable
-              v-model="columns"
-              group="columns"
-              item-key="id"
-              class="flex space-x-3"
-              animation="200"
-              :move="onMoveColumn"
+    <div class="inline-flex space-x-3">
+      <!-- Перетаскиваемые колонки -->
+      <draggable
+        v-model="columns"
+        group="columns"
+        item-key="id"
+        class="flex space-x-3"
+        animation="200"
+        :move="onMoveColumn"
+        @end="onDragEndColumn(boardId)"
+      >
+        <template #item="{ element }">
+          <div
+            class="flex-shrink-0 pb-3 flex flex-col w-80 bg-white dark:bg-zinc-700 rounded-md shadow"
+            :style="{ height: '600px' }"
+          >
+            <!-- Заголовок колонки с редактированием -->
+            <div
+              class="flex justify-between items-center p-2 border-b border-gray-200 dark:border-zinc-600"
             >
-              <template #item="{ element }">
-                <div
-                  class="flex-shrink-0 pb-3 flex flex-col w-80 bg-white dark:bg-gray-700 rounded-md shadow"
-                  :style="{ height: 'auto' }"
-                >
-                  <!-- Заголовок колонки с редактированием -->
-                  <div
-                    class="flex justify-between items-center p-2 border-b border-gray-200 dark:border-gray-600"
+              <input
+                v-if="element.editing"
+                v-model="element.title"
+                @blur="saveColumnTitle(element)"
+                @keyup.enter="saveColumnTitle(element)"
+                class="w-full px-2 py-1 text-lg font-semibold bg-white dark:bg-zinc-600 rounded border border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                v-focus
+              />
+              <h3
+                v-else
+                class="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 text-lg cursor-text"
+                @dblclick="editColumnTitle(element)"
+              >
+                {{ element.title }}
+                <span v-if="element.locked" class="ml-1 text-indigo-500">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4 inline"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
                   >
-                    <input
-                      v-if="element.editing"
-                      v-model="element.title"
-                      @blur="saveColumnTitle(element)"
-                      @keyup.enter="saveColumnTitle(element)"
-                      class="w-full px-2 py-1 text-lg font-semibold bg-white dark:bg-gray-600 rounded border border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                      v-focus
+                    <path
+                      fill-rule="evenodd"
+                      d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                      clip-rule="evenodd"
                     />
-                    <h3
-                      v-else
-                      class="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 text-lg cursor-text"
-                      @dblclick="editColumnTitle(element)"
-                    >
-                      {{ element.title }}
-                      <span v-if="element.locked" class="ml-1 text-indigo-500">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          class="h-4 w-4 inline"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fill-rule="evenodd"
-                            d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                            clip-rule="evenodd"
-                          />
-                        </svg>
-                      </span>
-                    </h3>
+                  </svg>
+                </span>
+              </h3>
+              <div class="relative">
+                <button
+                  @click.stop="toggleDropdown(element.id)"
+                  class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none p-1"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"
+                    />
+                  </svg>
+                </button>
+                <!-- Выпадающее меню -->
+                <div
+                  v-if="dropdownOpen[element.id]"
+                  :ref="'dropdown_' + element.id"
+                  class="absolute right-0 mt-1 w-32 bg-white dark:bg-gray-600 rounded shadow-md py-1 z-10 border border-gray-200 dark:border-gray-500"
+                >
+                  <button
+                    @click="editColumnTitle(element)"
+                    class="block w-full text-left px-3 py-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-500"
+                  >
+                    Редактировать
+                  </button>
+                  <button
+                    @click="deleteColumn(element.id)"
+                    class="block w-full text-left px-3 py-1 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-500"
+                  >
+                    Удалить
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+
+            <!-- Задачи внутри колонки -->
+            <draggable
+              v-model="element.tasks"
+              :group="{
+                name: 'tasks',
+                pull: element.locked ? false : true,
+                put: true,
+              }"
+              item-key="id"
+              class="flex-1 min-h-0 overflow-y-auto custom-scrollbar px-3 pb-1 space-y-3"
+              animation="200"
+              @end="onDragEnd"
+              :data-column-id="element.id" 
+            >
+              <template #item="{ element: task }">
+                <div
+                  class="block p-3 rounded-md bg-white dark:bg-zinc-600 shadow cursor-pointer hover:shadow-md transition-shadow mt-2"
+                  @click="openModal(task)"
+                >
+        
+                  <!-- Редактируемый заголовок задачи -->
+                  <div v-if="task.editing">
+                    <textarea
+                      v-model="task.title"
+                      @blur="saveTask(task)"
+                      @input="adjustTextAreaHeight"
+                      @keydown.enter="saveTask(task)"
+                      class="w-full p-1 border rounded resize-none text-white"
+                      rows="1"
+                      autofocus
+                    />
+                  </div>
+
+                  <!-- Если не в режиме редактирования, отображаем обычный заголовок -->
+                  <div v-else @dblclick="editTask(task)" class="flex justify-between">
+                    <p
+                    class="text-sm font-medium text-gray-900 dark:text-gray-100 leading-snug"
+                    :style="{ width: '225px' }"
+                    :class="{ 'line-through text-gray-500 dark:text-zinc-400': task.column_type === 'completed' }"
+                  >
+                    {{ task.title }}
+                  </p>
+
+                    <!-- Кнопка для выпадающего меню -->
                     <div class="relative">
                       <button
-                        @click="toggleDropdown(element.id)"
+                        @click.stop="toggleDropdownTask(task.id)"
                         class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none p-1"
                       >
                         <svg
@@ -250,29 +316,18 @@
 
                       <!-- Выпадающее меню -->
                       <div
-                        v-if="dropdownOpen[element.id]"
+                        v-if="showDropdownTask === task.id"
+                        :ref="'dropdown_' + task.id"
                         class="absolute right-0 mt-1 w-32 bg-white dark:bg-gray-600 rounded shadow-md py-1 z-10 border border-gray-200 dark:border-gray-500"
                       >
                         <button
-                          @click="editColumnTitle(element)"
+                          @click="editTaskTitle(task.id)"
                           class="block w-full text-left px-3 py-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-500"
                         >
                           Редактировать
                         </button>
                         <button
-                          @click="toggleLockColumn(element)"
-                          class="block w-full text-left px-3 py-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-500"
-                        >
-                          {{ element.locked ? "Открепить" : "Закрепить" }}
-                        </button>
-                        <button
-                          @click="archiveList(element.id)"
-                          class="block w-full text-left px-3 py-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-500"
-                        >
-                          Архивировать
-                        </button>
-                        <button
-                          @click="deleteColumn(element.id)"
+                          @click="deleteTask(task.id)"
                           class="block w-full text-left px-3 py-1 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-500"
                         >
                           Удалить
@@ -281,444 +336,94 @@
                     </div>
                   </div>
 
-                  <!-- Задачи внутри колонки -->
-                  <draggable
-                    v-model="element.tasks"
-                    :group="{
-                      name: 'tasks',
-                      pull: element.locked ? false : true,
-                      put: true,
-                    }"
-                    item-key="title"
-                    class="flex-1 min-h-0 overflow-y-auto custom-scrollbar px-3 pb-1 space-y-3"
-                    animation="200"
-                  >
-                    <template #item="{ element: task }">
-                      <div
-                        class="block p-3 rounded-md bg-white dark:bg-gray-600 shadow cursor-pointer hover:shadow-md transition-shadow"
-                        @click="openTaskModal(task, element)"
-                      >
-                        <div class="flex justify-between">
-                          <p
-                            class="text-sm font-medium text-gray-900 dark:text-gray-100 leading-snug"
-                          >
-                            {{ task.title }}
-                          </p>
-                          <img
-                            class="h-6 w-6 object-cover rounded-full"
-                            :src="task.avatar"
-                          />
-                        </div>
-                        <div class="flex items-baseline justify-between mt-2">
-                          <div class="text-sm text-gray-600 dark:text-gray-300">
-                            <time :datetime="task.date">{{
-                              task.displayDate
-                            }}</time>
-                          </div>
-                          <span
-                            class="px-2 py-1 inline-flex items-center bg-indigo-100 dark:bg-indigo-900 rounded text-xs font-medium text-indigo-800 dark:text-indigo-200"
-                          >
-                            <svg
-                              class="h-2 w-2 text-indigo-500 dark:text-indigo-300 mr-2"
-                              viewBox="0 0 8 8"
-                              fill="currentColor"
-                            >
-                              <circle cx="4" cy="4" r="3" />
-                            </svg>
-                            {{ task.label }}
-                          </span>
-                        </div>
-                        <div
-                          v-if="task.description"
-                          class="mt-2 text-xs text-gray-500 dark:text-gray-400 line-clamp-2"
-                        >
-                          {{ task.description }}
-                        </div>
-                      </div>
-                    </template>
-                  </draggable>
-
-                  <!-- Кнопка добавления задачи -->
-                  <div class="px-3 py-2">
-                    <button
-                      @click="showAddTaskModal(element.id)"
-                      class="w-full flex items-center justify-center text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                  <!-- Остальная информация о задаче -->
+                  <div class="flex items-baseline justify-end mt-2">
+                    <span
+                      class="px-2 py-1 inline-flex items-center bg-indigo-100 dark:bg-indigo-900 rounded text-xs font-medium text-indigo-800 dark:text-indigo-200"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-4 w-4 mr-1"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                        />
+                      <svg class="h-2 w-2 text-indigo-500 dark:text-indigo-300 mr-2" viewBox="0 0 8 8" fill="currentColor">
+                        <circle cx="4" cy="4" r="3" />
                       </svg>
-                      Добавить задачу
-                    </button>
+                      {{ getMemberFullName(task.assigned_to) }}
+                    </span>
                   </div>
                 </div>
               </template>
             </draggable>
-          </div>
+
+            <!-- Модальное окно -->
+    <transition name="slide">
+      <div v-if="localTask" class="fixed right-0 top-0 h-full w-200 bg-white dark:bg-zinc-700 shadow-lg z-50 p-6 overflow-y-auto">
+        <!-- Заголовок -->
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold text-gray-900 dark:text-zinc-100">
+            <input
+              v-model="localTask.title"
+              class="w-170 px-2 py-1 text-lg font-semibold bg-white dark:bg-zinc-700 rounded border border-zinc-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+          </h2>
+          <button @click="closeModal" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+            ✖
+          </button>
+        </div>
+
+        <!-- Описание задачи -->
+        <textarea
+          v-model="localTask.message"
+          class="w-[700px] h-[650px] p-2 border rounded resize-none bg-gray-100 dark:bg-zinc-700 text-gray-900 border-zinc-700 dark:text-gray-100"
+          placeholder="Введите описание задачи..."
+        ></textarea>
+
+        <!-- Выбор исполнителя -->
+        <div class="mt-4">
+          <label class="block text-zinc-700 dark:text-zinc-300 font-medium mb-2">Назначить исполнителя:</label>
+          <select v-model="localTask.assigned_to" class="w-full p-2 border rounded bg-gray-100 border-zinc-400 dark:bg-zinc-600 text-white">
+            <option v-for="member in teamMembers" :key="member.id" :value="member.id">
+              {{ member.full_name }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Кнопки -->
+        <div class="flex justify-end space-x-3 mt-4">
+          <button @click="saveTask(localTask)" class="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600">
+            Сохранить
+          </button>
+          <button @click="closeModal" class="px-4 py-2 bg-gray-300 text-zinc-700 rounded hover:bg-gray-400">
+            Закрыть
+          </button>
         </div>
       </div>
+    </transition>
 
-      <!-- Модальное окно для добавления задачи -->
-      <div
-        v-if="showTaskModal"
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-      >
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
-          <h3 class="text-lg font-semibold mb-4 dark:text-white">
-            Добавить задачу
-          </h3>
-
-          <div class="space-y-4">
-            <div>
-              <label
-                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                >Название</label
-              >
-              <input
-                v-model="newTask.title"
-                class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-gray-700"
-                placeholder="Введите название задачи"
-              />
-            </div>
-
-            <div>
-              <label
-                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                >Исполнитель</label
-              >
-              <select
-                v-model="newTask.label"
-                class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-gray-700"
-              >
-                <option value="Даша">Даша</option>
-                <option value="Саша">Саша</option>
-                <option value="Маша">Маша</option>
-              </select>
-            </div>
-
-            <div>
-              <label
-                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                >Дата</label
-              >
-              <input
-                v-model="newTask.date"
-                type="date"
-                class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-gray-700"
-              />
-            </div>
-
-            <div>
-              <label
-                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                >Описание</label
-              >
-              <textarea
-                v-model="newTask.description"
-                class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-gray-700"
-                placeholder="Детальное описание задачи"
-                rows="3"
-              ></textarea>
-            </div>
-          </div>
-
-          <div class="mt-6 flex justify-end space-x-3">
-            <button
-              @click="showTaskModal = false"
-              class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-            >
-              Отмена
-            </button>
-            <button
-              @click="addTask"
-              class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
-            >
-              Добавить
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Модальное окно для редактирования задачи (справа) -->
-      <div v-if="showEditModal" class="fixed inset-0 z-50 overflow-hidden">
-        <div
-          class="absolute inset-0 bg-black bg-opacity-50"
-          @click="closeEditModal"
-        ></div>
-        <div class="absolute inset-y-0 right-0 max-w-full flex">
-          <div class="relative w-screen max-w-md">
-            <div
-              class="h-full flex flex-col bg-white dark:bg-gray-800 shadow-xl"
-            >
-              <div class="flex-1 overflow-y-auto">
-                <div class="p-6">
-                  <div class="flex items-start justify-between">
-                    <h2
-                      class="text-lg font-medium text-gray-900 dark:text-white"
-                    >
-                      Редактирование задачи
-                    </h2>
-                    <button
-                      type="button"
-                      class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
-                      @click="closeEditModal"
-                    >
-                      <span class="sr-only">Close</span>
-                      <svg
-                        class="h-6 w-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-
-                  <div class="mt-6 space-y-6">
-                    <div>
-                      <label
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                        >Название</label
-                      >
-                      <input
-                        v-model="editingTask.title"
-                        class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-gray-700"
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                        >Исполнитель</label
-                      >
-                      <select
-                        v-model="editingTask.label"
-                        class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-gray-700"
-                      >
-                        <option value="Даша">Даша</option>
-                        <option value="Саша">Саша</option>
-                        <option value="Маша">Маша</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                        >Дата</label
-                      >
-                      <input
-                        v-model="editingTask.date"
-                        type="date"
-                        class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-gray-700"
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                        >Описание</label
-                      >
-                      <textarea
-                        v-model="editingTask.description"
-                        class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-gray-700"
-                        rows="6"
-                        placeholder="Детальное описание задачи..."
-                      ></textarea>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                class="flex-shrink-0 px-4 py-4 flex justify-end border-t border-gray-200 dark:border-gray-700"
-              >
-                <button
-                  type="button"
-                  class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-                  @click="closeEditModal"
-                >
-                  Отмена
-                </button>
-                <button
-                  type="submit"
-                  class="ml-4 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
-                  @click="saveTaskChanges"
-                >
-                  Сохранить
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Модальное окно статистики команды -->
-      <div
-        v-if="showStatsModal"
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-      >
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
-          <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-semibold dark:text-white">
-              Статистика команды
-            </h3>
-            <button
-              @click="showStatsModal = false"
-              class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
-
-          <div class="space-y-4">
-            <!-- Название команды -->
-            <div>
-              <label
-                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                >Название команды</label
-              >
-              <div class="p-3 bg-gray-100 dark:bg-gray-700 rounded-md">
-                <p class="font-medium">Dream Team</p>
-              </div>
-            </div>
-
-            <!-- Члены команды -->
-            <div>
-              <label
-                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                >Участники команды</label
-              >
-              <div class="space-y-2">
-                <div
-                  v-for="(member, index) in teamMembers"
-                  :key="index"
-                  class="flex items-center p-3 bg-gray-100 dark:bg-gray-700 rounded-md"
-                >
-                  <img
-                    :src="member.avatar"
-                    class="w-8 h-8 rounded-full mr-3"
-                    :alt="member.name"
-                  />
-                  <div>
-                    <p class="font-medium">{{ member.name }}</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">
-                      {{ member.role }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Тимлид -->
-            <div>
-              <label
-                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                >Тимлид</label
-              >
-              <div
-                class="flex items-center p-3 bg-indigo-50 dark:bg-indigo-900 rounded-md"
-              >
-                <img
-                  :src="teamLead.avatar"
-                  class="w-8 h-8 rounded-full mr-3"
-                  :alt="teamLead.name"
-                />
-                <div>
-                  <p class="font-medium">{{ teamLead.name }}</p>
-                  <p class="text-xs text-indigo-600 dark:text-indigo-300">
-                    Team Lead
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Оценка команды -->
-            <div class="pt-4">
+            <!-- Кнопка добавления задачи -->
+            <div class="px-3 py-2">
               <button
-                @click="showRating = !showRating"
-                class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+                class="w-full flex items-center justify-center text-zinc-200 hover:text-gray-700 dark:hover:text-zinc-300 p-2 rounded hover:bg-zinc-100 dark:hover:bg-zinc-600 transition-colors"
+                @click="addTaskToColumn(element)"
               >
-                Поставить оценку
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 mr-1"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
+                </svg>
+                Добавить задачу
               </button>
-
-              <div v-if="showRating" class="mt-4">
-                <p
-                  class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                >
-                  Оцените работу команды:
-                </p>
-                <div class="flex items-center space-x-1">
-                  <button
-                    v-for="star in 5"
-                    :key="star"
-                    @click="setRating(star)"
-                    class="focus:outline-none"
-                  >
-                    <svg
-                      :class="[
-                        'h-8 w-8',
-                        star <= currentRating
-                          ? 'text-yellow-400 fill-current'
-                          : 'text-gray-300 dark:text-gray-500 fill-current',
-                      ]"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                      />
-                    </svg>
-                  </button>
-                </div>
-                <p
-                  v-if="currentRating > 0"
-                  class="mt-2 text-sm text-gray-600 dark:text-gray-400"
-                >
-                  Вы поставили: {{ currentRating }} звезд{{
-                    currentRating > 1 ? "ы" : "а"
-                  }}
-                </p>
-              </div>
             </div>
           </div>
-
-          <div class="mt-6 flex justify-end">
-            <button
-              @click="showStatsModal = false"
-              class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-            >
-              Закрыть
-            </button>
-          </div>
-        </div>
+        </template>
+      </draggable>
+    </div>
+  </div>
       </div>
     </div>
   </div>
@@ -727,6 +432,8 @@
 <script>
 import draggable from "vuedraggable";
 import Header from "@/components/header.vue";
+import api from "@/composables/auth.js";  
+import { nextTick } from "vue"; // Импортируем nextTick
 
 export default {
   name: "CompactBacklog",
@@ -740,211 +447,354 @@ export default {
   },
   data() {
     return {
-      showStatsModal: false,
-      showRating: false,
-      currentRating: 0,
-      teamMembers: [
-        {
-          name: "Даша",
-          role: "Frontend разработчик",
-          avatar:
-            "https://images.unsplash.com/photo-1506755855567-92ff770e8d00?auto=format&fit=facearea&facepad=2.5&h=144&w=144&q=80",
-        },
-        {
-          name: "Саша",
-          role: "Backend разработчик",
-          avatar:
-            "https://images.unsplash.com/photo-1511367461989-f85a21fda167?auto=format&fit=facearea&facepad=2.5&h=144&w=144&q=80",
-        },
-        {
-          name: "Маша",
-          role: "Дизайнер",
-          avatar:
-            "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=facearea&facepad=2.5&h=144&w=144&q=80",
-        },
-      ],
-      teamLead: {
-        name: "Алексей",
-        role: "Team Lead",
-        avatar:
-          "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=facearea&facepad=2.5&h=144&w=144&q=80",
-      },
+      localTask: null, // Локальная копия задачи
+      selectedTask: null, // Хранит выбранную задачу
+      teamMembers: [], // Список участников команды
+      teamId: null,
+      creatingColumn: false,
+      newColumnTitle: '',
+      newColumnType: '', // default или completed
+      showDropdownTask: null,
+      columns: [],
+      showDropdown: false,
       dropdownOpen: {},
-      showAddColumnForm: false,
-      newColumnTitle: "",
       showTaskModal: false,
-      showEditModal: false,
-      currentColumnId: null,
-      editingTask: null,
-      newTask: {
-        title: "",
-        label: "Даша",
-        date: new Date().toISOString().split("T")[0],
-        description: "",
-        avatar:
-          "https://images.unsplash.com/photo-1506755855567-92ff770e8d00?auto=format&fit=facearea&facepad=2.5&h=144&w=144&q=80",
-      },
-      columns: [
-        {
-          id: "backlog",
-          title: "Backlog",
-          editing: false,
-          locked: false,
-          tasks: [
-            {
-              title: "Работать сообща",
-              avatar:
-                "https://images.unsplash.com/photo-1506755855567-92ff770e8d00?auto=format&fit=facearea&facepad=2.5&h=144&w=144&q=80",
-              date: "2020-08-10",
-              displayDate: "10 авг",
-              label: "Даша",
-              description: "Совместная работа над проектом с командой",
-            },
-          ],
-        },
-        {
-          id: "in-progress",
-          title: "In Progress",
-          editing: false,
-          locked: false,
-          tasks: [
-            {
-              title: "Сделать красивый фронт",
-              avatar:
-                "https://images.unsplash.com/photo-1511367461989-f85a21fda167?auto=format&fit=facearea&facepad=2.5&h=144&w=144&q=80",
-              date: "2020-08-11",
-              displayDate: "11 авг",
-              label: "Даша",
-              description: "Разработка пользовательского интерфейса",
-            },
-          ],
-        },
-      ],
+      editingTask: null, // Для отслеживания редактируемой задачи
     };
   },
+  mounted() {
+    this.fetchBoardData();
+    document.addEventListener('click', this.handleClickOutside);
+  },
+  beforeUnmount() {
+    document.removeEventListener('click', this.handleClickOutside);
+  },
   methods: {
-    setRating(rating) {
-      this.currentRating = rating;
-      // Здесь можно добавить сохранение оценки (например, через API)
-    },
-    toggleDropdown(columnId) {
-      this.dropdownOpen[columnId] = !this.dropdownOpen[columnId];
-    },
-    editColumnTitle(column) {
-      column.editing = true;
-      this.dropdownOpen[column.id] = false;
-    },
-    saveColumnTitle(column) {
-      column.editing = false;
-      if (!column.title.trim()) {
-        column.title = "Без названия";
+    async deleteColumn(columnId) {
+    // Найти индекс колонки
+    const columnIndex = this.columns.findIndex(col => col.id === columnId);
+    if (columnIndex === -1) return;
+
+    // Сохранить колонку перед удалением (на случай ошибки)
+    const deletedColumn = this.columns[columnIndex];
+
+    // Удалить колонку из UI
+    this.columns.splice(columnIndex, 1);
+
+    try {
+      await api.delete(`/kanban/columns/${columnId}/`);
+      console.log("✅ Колонка удалена:", columnId);
+    } catch (error) {
+      console.error("❌ Ошибка при удалении колонки:", error);
+      // Вернуть колонку обратно в UI, если запрос не удался
+      this.columns.splice(columnIndex, 0, deletedColumn);
+    }
+  },
+    getMemberFullName(memberId) {
+    const member = this.teamMembers.find((m) => m.id === memberId);
+    return member ? member.full_name : "";
+  },
+    async fetchTeamMembers() {
+      try {
+        const response = await api.get(`/teams/${this.teamId}`);
+        this.teamMembers = response.data.members; // Загружаем список участников
+      } catch (error) {
+        console.error("❌ Ошибка при загрузке участников команды:", error);
       }
     },
-    toggleLockColumn(column) {
-      column.locked = !column.locked;
-      this.dropdownOpen[column.id] = false;
+    openModal(task) {
+    if (task.editing) {
+      console.log("🟢 Заголовок редактируется, модальное окно не открываем.");
+      return;
+    }
+    this.localTask = { ...task }; // Создаем копию задачи
+  },
+    async saveTask(task) {
+      try {
+        await api.patch(`/kanban/tasks/${task.id}/`, {
+          title: task.title,
+          message: task.message,
+          assigned_to: task.assigned_to,
+        });
+        task.editing = false;
+        console.log("✅ Задача обновлена:", task);
+
+        // Обновляем задачу в списке
+        const column = this.columns.find((col) => col.tasks.some((t) => t.id === task.id));
+        if (column) {
+          const taskIndex = column.tasks.findIndex((t) => t.id === task.id);
+          column.tasks[taskIndex] = task;
+        }
+
+        this.closeModal();
+      } catch (error) {
+        console.error("❌ Ошибка при обновлении задачи:", error);
+      }
     },
-    archiveList(columnId) {
-      console.log(`Archive column ${columnId}`);
-      this.dropdownOpen[columnId] = false;
+    closeModal() {
+      this.localTask = null; // Закрываем модальное окно
     },
-    deleteColumn(columnId) {
-      this.columns = this.columns.filter((col) => col.id !== columnId);
-      this.dropdownOpen[columnId] = false;
+    toggleDropdownn() {
+      this.showDropdown = !this.showDropdown;
+      this.creatingColumn = false;
     },
+    toggleDropdown(id) {
+    // Закрываем все, открываем только текущий
+    this.dropdownOpen = { [id]: !this.dropdownOpen[id] };
+  },
+    toggleDropdownTask(taskId) {
+      this.showDropdownTask = this.showDropdownTask === taskId ? null : taskId;
+    },
+    
+    async fetchBoardData() {
+  try {
+    const response = await api.get("/kanban/boards/1");
+    console.log("✅ Response from /kanban/boards/:", response.data);
+    this.columns = response.data.columns;
+    this.boardId = response.data.id; // сохраняем ID доски
+    this.teamId = response.data.team;
+
+    // Добавляем column_type в каждую задачу
+    this.columns.forEach(column => {
+        column.tasks.forEach(task => {
+          task.column_type = column.column_type; // Добавляем тип колонки в задачу
+        });
+      });
+  
+    await this.fetchTeamMembers();
+  } catch (error) {
+    console.error("❌ Error fetching board data:", error);
+    console.log("Full error:", error.response);
+  }
+},
+prepareColumn(type) {
+    this.newColumnType = type;
+    this.creatingColumn = true;
+    this.showDropdown = false;
+    this.$nextTick(() => {
+      // Автофокус на input
+      const input = this.$el.querySelector('input[autofocus]');
+      if (input) input.focus();
+    });
+  },
+  async createColumn() {
+  if (!this.newColumnTitle.trim()) return;
+
+  const newOrder = this.columns.length;
+
+  const data = {
+    title: this.newColumnTitle,
+    column_type: this.newColumnType,
+    order: newOrder,
+    board: this.boardId,
+  };
+
+  try {
+    const response = await api.post('/kanban/columns/', data);
+    this.columns.push(response.data); // добавляем в список
+    this.newColumnTitle = '';
+    this.creatingColumn = false;
+  } catch (error) {
+    console.error("❌ Ошибка при создании колонки:", error);
+  }
+},
+  cancelCreatingColumn() {
+    this.creatingColumn = false;
+  },
     onMoveColumn(evt) {
       const { from, to } = evt;
       return !to || to.nodeName !== "DIV" || to.contains(from);
     },
-    addColumn() {
-      if (this.newColumnTitle.trim()) {
-        const newId = "col-" + Date.now();
-        this.columns.push({
-          id: newId,
-          title: this.newColumnTitle,
-          editing: false,
-          locked: false,
-          tasks: [],
-        });
-        this.newColumnTitle = "";
-        this.showAddColumnForm = false;
-      }
-    },
-    showAddTaskModal(columnId) {
-      this.currentColumnId = columnId;
-      this.newTask = {
-        title: "",
-        label: "Даша",
-        date: new Date().toISOString().split("T")[0],
-        description: "",
-        avatar:
-          "https://images.unsplash.com/photo-1506755855567-92ff770e8d00?auto=format&fit=facearea&facepad=2.5&h=144&w=144&q=80",
-      };
-      this.showTaskModal = true;
-    },
-    addTask() {
-      if (this.newTask.title.trim()) {
-        const column = this.columns.find(
-          (col) => col.id === this.currentColumnId
-        );
-        if (column) {
-          column.tasks.push({
-            title: this.newTask.title,
-            avatar: this.newTask.avatar,
-            date: this.newTask.date,
-            displayDate: this.formattedTaskDate,
-            label: this.newTask.label,
-            description: this.newTask.description,
-          });
-          this.showTaskModal = false;
-        }
-      }
-    },
-    openTaskModal(task, column) {
-      this.editingTask = {
-        ...task,
-        originalTask: task,
-        columnId: column.id,
-      };
-      this.showEditModal = true;
-    },
-    closeEditModal() {
-      this.showEditModal = false;
-      this.editingTask = null;
-    },
-    saveTaskChanges() {
-      if (this.editingTask) {
-        const column = this.columns.find(
-          (col) => col.id === this.editingTask.columnId
-        );
-        if (column) {
-          const task = column.tasks.find(
-            (t) => t.title === this.editingTask.originalTask.title
-          );
-          if (task) {
-            task.title = this.editingTask.title;
-            task.label = this.editingTask.label;
-            task.date = this.editingTask.date;
-            task.description = this.editingTask.description;
-
-            if (task.date) {
-              const date = new Date(task.date);
-              const options = { day: "numeric", month: "short" };
-              task.displayDate = date.toLocaleDateString("ru-RU", options);
-            }
-          }
-        }
-        this.closeEditModal();
-      }
-    },
+    editTask(task) {
+    task.editing = true;
+    this.editingTask = task;  // Сохраняем редактируемую задачу
   },
-  computed: {
-    formattedTaskDate() {
-      if (!this.newTask.date) return "";
-      const date = new Date(this.newTask.date);
-      const options = { day: "numeric", month: "short" };
-      return date.toLocaleDateString("ru-RU", options);
+  async addTaskToColumn(column) {
+  try {
+    const maxOrder = column.tasks.length > 0
+      ? Math.max(...column.tasks.map(task => task.order))
+      : -1;
+    const nextOrder = maxOrder + 1;
+
+    const response = await api.post("/kanban/tasks/", {
+      title: "Новая задача",
+      message: "",
+      order: nextOrder,
+      column: column.id,
+      assigned_to: null
+    });
+
+    const newTask = {
+      ...response.data,
+      editing: true // для режима редактирования
+    };
+
+    // Добавляем в конец массива тасков
+    column.tasks.push(newTask);
+  } catch (error) {
+    console.error("Ошибка при создании задачи", error);
+  }
+},
+
+async onDragEnd(event) {
+  await nextTick();
+
+  // Проверяем структуру event
+  console.log("Drag event:", event);
+
+  // Получаем задачу, которая была перемещена
+  const task = event.item.__draggable_context.element; // Новый способ получения задачи
+  if (!task) {
+    console.error("❌ Ошибка: не удалось получить задачу из события.");
+    return;
+  }
+
+  // Получаем ID новой колонки
+  const newColumnId = event.to.getAttribute("data-column-id"); // Получаем ID из атрибута
+  if (!newColumnId) {
+    console.error("❌ Ошибка: не удалось определить новую колонку.");
+    return;
+  }
+
+  // Получаем новую колонку
+  const newColumn = this.columns.find((col) => col.id == newColumnId);
+  if (!newColumn) {
+    console.error("❌ Ошибка: колонка не найдена.");
+    return;
+  }
+
+  // Обновляем тип колонки внутри задачи
+  task.column_type = newColumn.column_type; // UI обновляется мгновенно
+
+  // Обновляем порядок задач в новой колонке
+  const updatedTasks = newColumn.tasks.map((task, index) => ({
+    id: task.id,
+    order: index,
+    columnId: newColumnId,
+    title: task.title,
+    label: task.label,
+    assigned_to: task.assigned_to || null,
+  }));
+
+  console.log("Обновленные задачи:", updatedTasks);
+
+  try {
+    await Promise.all(
+      updatedTasks.map(async (task) => {
+        try {
+          await api.post(`/kanban/tasks/${task.id}/reorder/`, {
+            order: task.order,
+            column: task.columnId,
+            title: task.title,
+            label: task.label,
+            assigned_to: task.assigned_to || null,
+          });
+          console.log(`✅ Задача ${task.id} обновлена.`);
+        } catch (error) {
+          console.error(`❌ Ошибка при обновлении задачи ${task.id}:`, error);
+        }
+      })
+    );
+  } catch (error) {
+    console.error("❌ Ошибка при обновлении задач:", error);
+  }
+},
+    async onDragEndColumn(boardId) {
+  // Ждем обновления DOM
+  await nextTick();
+
+  // Используем this.columns вместо element
+  const updatedColumns = this.columns.map((column, index) => ({
+    order: index,
+    title: column.title,
+    board: boardId,
+    id: column.id,
+    column_type: column.column_type,
+  }));
+
+  console.log("Измененные колонки:", updatedColumns);
+
+  try {
+    await Promise.all(
+      updatedColumns.map(async (column) => {
+        try {
+          await api.post(`/kanban/columns/${column.id}/reorder/`, {
+            order: column.order,
+            title: column.title,
+            board: column.board,
+            column_type: column.column_type,
+          });
+          console.log(`✅ Колонка ${column.id} обновлена.`);
+        } catch (error) {
+          console.error(`❌ Ошибка при обновлении колонки ${column.id}:`, error);
+        }
+      })
+    );
+  } catch (error) {
+    console.error("❌ Ошибка при обновлении колонок:", error);
+  }
+},
+async deleteTask(taskId) {
+    // Найти колонку, содержащую задачу
+    const column = this.columns.find(col => col.tasks.some(task => task.id === taskId));
+    if (!column) return;
+
+    // Найти индекс задачи
+    const taskIndex = column.tasks.findIndex(task => task.id === taskId);
+    if (taskIndex === -1) return;
+
+    // Сохранить задачу перед удалением (на случай ошибки)
+    const deletedTask = column.tasks[taskIndex];
+
+    // Удалить задачу из UI
+    column.tasks.splice(taskIndex, 1);
+
+    try {
+      await api.delete(`/kanban/tasks/${taskId}/`);
+      console.log("✅ Задача удалена:", taskId);
+    } catch (error) {
+      console.error("❌ Ошибка при удалении задачи:", error);
+      // Вернуть задачу обратно в UI, если запрос не удался
+      column.tasks.splice(taskIndex, 0, deletedTask);
+    }
+  },
+  // Изменяем высоту textarea
+  adjustTextAreaHeight(event) {
+    const textarea = event.target;
+    textarea.style.height = 'auto'; // сбрасываем высоту
+    textarea.style.height = `${textarea.scrollHeight}px`; // устанавливаем новую высоту
+  },
+  // Обработка клика вне задачи, чтобы не создавалась новая задача
+  handleClickOutside(event) {
+  if (this.showDropdownTask !== null) {
+    const refName = 'dropdown_' + this.showDropdownTask;
+    const dropdown = this.$refs[refName];
+    const button = this.$refs.dropdownButton;
+
+    // иногда $refs возвращает массив, особенно с v-for
+    const dropdownEl = Array.isArray(dropdown) ? dropdown[0] : dropdown;
+
+    if (dropdownEl && !dropdownEl.contains(event.target)) {
+      this.showDropdownTask = null;
+    }
+    if (dropdown && !dropdown.contains(event.target) && button && !button.contains(event.target)) {
+      this.showDropdown  = false; // Закрываем меню
+    }
+  }
+},
+handleClickOutside(event) {
+      const dropdown = this.$refs.dropdownWrapper;
+      if (dropdown && !dropdown.contains(event.target)) {
+        this.showDropdown = false;
+      }
     },
+  cancelCreation() {
+    // Логика для отмены создания задачи
+    if (this.editingTask) {
+      this.editingTask.editing = false;
+      this.editingTask = null;
+    }
+  },
   },
 };
 </script>

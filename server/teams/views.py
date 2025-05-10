@@ -56,10 +56,6 @@ class TeamViewSet(viewsets.ModelViewSet):
 
         team.members.add(user)
 
-        # Присваиваем команду пользователю
-        user.team = team
-        user.save()  # Сохраняем пользователя с привязанной командой
-
         # Отклоняем заявки во все команды
         TeamJoinRequest.objects.filter(user=user, status='pending').update(status='declined')
 

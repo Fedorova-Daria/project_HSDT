@@ -40,6 +40,7 @@ urlpatterns = [
     path('api/', include('projects.urls')),
     path('api/', include('teams.urls')),
     path('api/', include('notifications.urls')),
+    path('api/', include('kanban.urls')),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]

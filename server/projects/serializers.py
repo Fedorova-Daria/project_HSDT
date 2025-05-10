@@ -4,14 +4,14 @@ from rest_framework import serializers
 from .models import Project, Idea, ProjectApplication
 from users.serializers import AccountShortSerializer
 from core.serializers import TechnologySerializer
-
+from teams.models import Team
 
 class ProjectSerializer(serializers.ModelSerializer):
     initiator = AccountShortSerializer(read_only=True)
     owner = AccountShortSerializer(read_only=True)
     expert_likes = AccountShortSerializer(many=True, read_only=True)
     workers = AccountShortSerializer(many=True, read_only=True)
-    teams = AccountShortSerializer(many=True, read_only=True)
+    teams = serializers.PrimaryKeyRelatedField(queryset=Team.objects.all(), many=True)
     favorites = AccountShortSerializer(many=True, read_only=True)
     experts_voted = AccountShortSerializer(many=True, read_only=True)
     skills_required = TechnologySerializer(many=True, read_only=True)
