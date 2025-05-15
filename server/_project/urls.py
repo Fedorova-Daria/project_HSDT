@@ -23,13 +23,13 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
 schema_view = get_schema_view(
-   openapi.Info(
-      title="Project API",
-      default_version='v1',
-      description="Документация для студентов и заказчиков",
-   ),
-   public=True,
-   permission_classes=[permissions.AllowAny],
+    openapi.Info(
+        title="Project API",
+        default_version='v1',
+        description="Документация для студентов и заказчиков",
+    ),
+    public=True,
+    permission_classes=[permissions.AllowAny],
 )
 
 
@@ -41,6 +41,7 @@ urlpatterns = [
     path('api/', include('teams.urls')),
     path('api/', include('notifications.urls')),
     path('api/', include('kanban.urls')),
+    path('api/', include('offers.urls')),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
