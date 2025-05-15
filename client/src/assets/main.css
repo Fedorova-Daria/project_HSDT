@@ -10,11 +10,11 @@ body {
 }
 /* Светлая тема */
 .light-theme {
-  --color-background: #ffffff;/* Светлый фон */
+  --color-background: #ffffff; /* Светлый фон */
   --text-color: #000000; /* Чёрный текст на светлой теме */
-  --color-bgg: #a8a8a8; 
+  --color-bgg: #a8a8a8;
   --text-h2: #777777;
-  --color-card: #F6F6F6; /* Светлый цвет для карточек */
+  --color-card: #f6f6f6; /* Светлый цвет для карточек */
   --color-border: #b6b6b6; /* Светлый цвет для бордера */
   --color-green: #28a745; /* Зеленый */
   --color-red: #dc3545; /* Красный */
@@ -24,9 +24,9 @@ body {
 
 /* Тёмная тема */
 .dark-theme {
-   --text-color: #ffffff; /* Белый текст на тёмной теме */
+  --text-color: #ffffff; /* Белый текст на тёмной теме */
   --color-background: #141414;
-  --text-h2: #D1D6E0;
+  --text-h2: #d1d6e0;
   --color-bgg: #222222; /* Тёмный фон */
   --color-card: #292929; /* Матовый тёмный цвет */
   --color-border: #232323; /* Тёмный бордер */
@@ -44,7 +44,9 @@ body {
 }
 
 /* Общие стили */
-body, .card, button {
+body,
+.card,
+button {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -60,4 +62,21 @@ body, .card, button {
 .border-dynamic {
   border: 1px solid var(--color-border);
   transition: border-color 0.3s ease-in-out; /* Плавный переход */
+}
+.light-theme {
+  --switch-bg: #2a2a2a;
+  --switch-checked-bg: #00a6ff;
+}
+
+.dark-theme {
+  --switch-bg: #3a3a3a;
+  --switch-checked-bg: #0088cc;
+}
+
+.slider {
+  background-color: var(--switch-bg);
+}
+
+.switch input:checked + .slider {
+  background-color: var(--switch-checked-bg);
 }

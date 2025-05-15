@@ -12,7 +12,7 @@
           <div class="relative">
             <button
               @click="toggleDropdown"
-              class="flex items-center px-4 py-2 rounded-lg"
+              class="flex items-center px-4 py-2 rounded-lg transition hover:shadow-lg"
             >
               {{ selectedInstitute }}
               <svg
@@ -121,7 +121,6 @@
           @click="goToProfile"
           :style="avatarStyle"
         >
-          <!-- Если аватарка есть – покажем её, иначе инициалы -->
           <img
             v-if="userAvatar"
             :src="userAvatar"
@@ -140,12 +139,12 @@
   </div>
 </template>
 
-
-
 <script>
-import { instituteStyles } from "@/assets/instituteStyles.js"; // Импортируем карту стилей
+import { instituteStyles } from "@/assets/instituteStyles.js";
 import Notifications from "@/components/notific.vue";
 import Cookies from "js-cookie";
+
+/** @typedef {'ВШЦТ'|'АРХИД'|'ИПТИ'|'СТРОИН'|'ТИУ'} Institute */
 
 export default {
   name: "Header",
@@ -155,10 +154,10 @@ export default {
     return {
       isDarkTheme: false,
       isDropdownOpen: false,
-      localSelectedInstitute: Cookies.get("institute") || "TYIU",
-      showNotifications: false, // Управляет видимостью меню уведомлений
-      notifications: [], // Хранение списка уведомлений
-      user: {}, // Здесь будем хранить данные пользователя
+      selectedInstitute: Cookies.get("institute") || "TYIU",
+      showNotifications: false,
+      notifications: [],
+      user: {},
       institutes: ["ВШЦТ", "АРХИД", "ИПТИ", "СТРОИН", "ТИУ"],
       instituteMap: {
         ВШЦТ: "HSDT",
@@ -178,83 +177,79 @@ export default {
   },
   computed: {
     menuItems() {
-      const latinInstitute =
-        this.instituteMap[this.localSelectedInstitute] ||
-        this.localSelectedInstitute;
-      if (!latinInstitute) {
-        console.error(
-          `Ошибка: Латинское название для "${this.localSelectedInstitute}" не найдено.`
-        );
-        return [];
-      }
-      return latinInstitute === "TYIU"
-        ? [
-            { name: "О нас", link: "/about" },
-            { name: "Идеи", link: "/ideas" },
-          ]
-        : [
-            { name: "Биржа", link: "/rialto" },
-            { name: "Команды", link: "/teams" },
-            { name: "Идеи", link: "/ideas" },
-          ];
+      const routeMap = {
+        TYIU: [
+          { name: "О нас", link: "/about" },
+          { name: "Идеи", link: "/ideas" },
+        ],
+        HSDT: [
+          { name: "Биржа", link: "/rialto" },
+          { name: "Команды", link: "/teams" },
+          { name: "Идеи", link: "/ideas" },
+        ],
+        ARCHID: [
+          { name: "Биржа", link: "/rialto" },
+          { name: "Команды", link: "/teams" },
+          { name: "Идеи", link: "/ideas" },
+        ],
+        IPTI: [
+          { name: "Биржа", link: "/rialto" },
+          { name: "Команды", link: "/teams" },
+          { name: "Идеи", link: "/ideas" },
+        ],
+        STROIN: [
+          { name: "Биржа", link: "/rialto" },
+          { name: "Команды", link: "/teams" },
+          { name: "Идеи", link: "/ideas" },
+        ],
+      };
+      return routeMap[this.instituteMap[this.selectedInstitute]] || [];
     },
     instituteStyle() {
-      const latinInstitute =
-        this.instituteMap[this.localSelectedInstitute] ||
-        this.localSelectedInstitute;
-      return instituteStyles[latinInstitute] || instituteStyles["TYIU"];
+      return (
+        instituteStyles[this.instituteMap[this.selectedInstitute]] ||
+        instituteStyles["TYIU"]
+      );
     },
     unreadNotificationsCount() {
       return this.notifications.filter((n) => !n.read).length;
     },
     userName() {
       try {
-        const storedUser = localStorage.getItem("userData");
-        if (storedUser) {
-          const user = JSON.parse(storedUser);
-          // Если у пользователя есть отдельные поля first_name, last_name,
-          // можно объединить их либо взять просто user.name
-          return user.first_name && user.last_name
-            ? `${user.first_name} ${user.last_name}`
-            : user.name || "";
-        }
-        return "";
+        const storedUser = localStorage.getItem("userData") || "{}";
+        const user = JSON.parse(storedUser);
+        return (
+          user?.name ||
+          `${user?.first_name || ""} ${user?.last_name || ""}`.trim() ||
+          "Гость"
+        );
       } catch (e) {
         console.error("Ошибка чтения userData:", e);
-        return "";
+        return "Гость";
       }
     },
-    // Вычисляемое свойство для аватара пользователя
     userAvatar() {
       try {
-        const storedUser = localStorage.getItem("userData");
-        if (storedUser) {
-          const user = JSON.parse(storedUser);
-          return user.avatar || "";
-        }
-        return "";
+        const storedUser = localStorage.getItem("userData") || "{}";
+        const user = JSON.parse(storedUser);
+        return user?.avatar || "";
       } catch (e) {
         return "";
       }
     },
-    // Вычисляемое свойство для инициалов пользователя,
-    // если аватара нет (используем userName для генерации)
     userInitials() {
       if (!this.userName) return "";
       const splitName = this.userName.split(" ");
-      if (splitName.length > 1) {
-        // Берём первую букву первого и последнего слова
-        return (
-          splitName[0].charAt(0) + splitName[splitName.length - 1].charAt(0)
-        ).toUpperCase();
-      }
-      // Если одно слово – первые две буквы
-      return this.userName.substring(0, 2).toUpperCase();
+      return splitName.length > 1
+        ? `${splitName[0][0]}${
+            splitName[splitName.length - 1][0]
+          }`.toUpperCase()
+        : this.userName.substring(0, 2).toUpperCase();
     },
-    // Вычисляемое свойство для стиля аватарки
     avatarStyle() {
-      // Если аватарка задана, можно вернуть стиль с background-image,
-      // но если нет, возвращаем, например, цвет фона, зависящий от имени.
+      const colors = this.instituteStyle?.avatarColors || ["#ccc"];
+      const colorIndex = this.userName.length % colors.length;
+
       if (this.userAvatar) {
         return {
           backgroundImage: `url(${this.userAvatar})`,
@@ -262,24 +257,17 @@ export default {
           backgroundPosition: "center",
         };
       }
-      // Если аватарки нет, создаём фон (можно сделать градиент, используя длину или хэш имени)
-      // Здесь для примера просто задаём фиксированный градиент.
+
       return {
+        backgroundColor: colors[colorIndex],
         background: "linear-gradient(45deg, #ff9a9e, #fad0c4)",
       };
-    },
-    avatarStyle() {
-      const colors = this.instituteStyle?.avatarColors || ["#ccc"]; // Дефолтный цвет
-      const colorIndex = this.userName.length % colors.length;
-      return { backgroundColor: colors[colorIndex] };
     },
   },
   methods: {
     toggleNotifications() {
       this.showNotifications = !this.showNotifications;
-
-      // Добавляем уведомление при открытии
-      if (this.showNotifications) {
+      if (this.showNotifications && this.notifications.length === 0) {
         this.notifications.push({
           id: Date.now(),
           title: "Вас пригласили в команду",
@@ -290,126 +278,68 @@ export default {
         });
       }
     },
-    handleNotificationClick(notification) {
-      console.log("Клик по уведомлению:", notification);
-      if (!notification.read) {
-        notification.read = true;
-      }
-      this.$router.push(notification.link);
-      this.showNotifications = false; // Закрываем меню после клика
-    },
-    markAllAsRead() {
-      this.notifications.forEach((notification) => {
-        notification.read = true;
-      });
-    },
-    /**
-     * Переключает тему и сохраняет выбор в localStorage.
-     */
     toggleTheme() {
       this.isDarkTheme = !this.isDarkTheme;
       localStorage.setItem("theme", this.isDarkTheme ? "dark" : "light");
-      document.documentElement.classList.toggle("dark", this.isDarkTheme);
-    },
-    /**
-     * Применяет текущую тему, добавляя соответствующий класс к элементу <html>.
-     */
-    applyTheme() {
-      const root = document.documentElement;
-      if (this.isDarkTheme) {
-        root.classList.add("dark-theme");
-        root.classList.remove("light-theme");
-      } else {
-        root.classList.add("light-theme");
-        root.classList.remove("dark-theme");
-      }
+      document.documentElement.classList.toggle("dark-theme", this.isDarkTheme);
+      document.documentElement.classList.toggle(
+        "light-theme",
+        !this.isDarkTheme
+      );
     },
     toggleDropdown() {
       this.isDropdownOpen = !this.isDropdownOpen;
     },
-    checkInstitute() {
-      const userData = JSON.parse(Cookies.get("userData") || "{}");
-      const institute = userData.institute || "TYIU"; // Получаем институт, если он указан, иначе используем TYIU
-
-      if (institute === "TYIU") {
-        this.$router.push("/TYIU/about"); // Перенаправление на страницу TYIU/about
-      }
-    },
+    /** @param {Institute} inst */
     changeInstitute(inst) {
-      const newInstituteLat = this.instituteMap[inst] || inst;
-      if (!newInstituteLat) {
-        console.error(`Ошибка: Латинское название для "${inst}" не найдено.`);
-        return;
-      }
-      this.localSelectedInstitute = newInstituteLat;
-      this.globalState.institute = newInstituteLat;
-      let userData = JSON.parse(Cookies.get("userData") || "{}");
-      userData.institute = newInstituteLat;
+      const routeMap = {
+        TYIU: "/about",
+        HSDT: "/rialto",
+        ARCHID: "/rialto",
+        IPTI: "/rialto",
+        STROIN: "/rialto",
+      };
+
+      const newInstitute = this.instituteMap[inst] || inst;
+      this.selectedInstitute = newInstitute;
+      this.globalState.institute = newInstitute;
+
+      const userData = JSON.parse(Cookies.get("userData") || "{}");
+      userData.institute = newInstitute;
       Cookies.set("userData", JSON.stringify(userData));
-      const routePath =
-        newInstituteLat === "TYIU"
-          ? "/TYIU/about"
-          : `/${newInstituteLat}/rialto`;
-      this.$router.push(routePath);
+
+      this.$router.push(`/${newInstitute}${routeMap[newInstitute]}`);
       this.isDropdownOpen = false;
     },
     updateInstituteFromRoute() {
-      const instituteFromRoute = this.$route.params.institute;
-      const institute =
-        this.reverseInstituteMap[instituteFromRoute] || instituteFromRoute;
-
-      if (institute) {
-        console.log("Обновление из маршрута:", institute);
-        this.localSelectedInstitute = this.instituteMap[institute] || institute; // Локальное состояние
-        this.globalState.institute = this.instituteMap[institute] || institute; // Глобальное состояние
-      } else {
-        console.error("Не удалось определить институт из маршрута.");
-      }
-    },
-
-    goToProfile() {
-      const latinInstitute =
+      const routeInstitute = this.$route.params.institute;
+      this.selectedInstitute =
+        this.reverseInstituteMap[routeInstitute] || routeInstitute;
+      this.globalState.institute =
         this.instituteMap[this.selectedInstitute] || this.selectedInstitute;
-      this.$router.push(`/${latinInstitute}/profile`);
+    },
+    goToProfile() {
+      this.$router.push(
+        `/${this.instituteMap[this.selectedInstitute]}/profile`
+      );
     },
   },
   watch: {
-    "$route.fullPath": "updateInstituteFromRoute", // Теперь следим за полным путём
+    "$route.fullPath": "updateInstituteFromRoute",
   },
   created() {
-    const userData = JSON.parse(Cookies.get("userData") || "{}");
-    const institute = userData.institute || "TYIU";
-
-    // Если данные пользователя (например, имя, фамилия, аватар) сохранены в localStorage,
-    // получаем их и преобразуем из JSON.
-    const storedUser = localStorage.getItem("userData");
-    if (storedUser) {
-      this.user = JSON.parse(storedUser);
-    } else {
-      // В качестве fallback можно получить данные из Cookies или задать пустой объект
-      this.user = {};
-    }
-
-    // При загрузке читаем сохранённую тему из localStorage или устанавливаем светлую по умолчанию
     const savedTheme = localStorage.getItem("theme") || "light";
     this.isDarkTheme = savedTheme === "dark";
-    this.applyTheme();
+    document.documentElement.classList.add(`${savedTheme}-theme`);
 
-    console.log("Институт из Cookies:", institute);
-
-    // Синхронизируем глобальное состояние
-    this.globalState.institute = institute;
-
-    // Устанавливаем `selectedInstitute` для локального отображения
-    this.selectedInstitute = this.reverseInstituteMap[institute] || institute;
+    const userData = JSON.parse(Cookies.get("userData") || "{}");
+    this.globalState.institute = userData.institute || "TYIU";
     this.updateInstituteFromRoute();
   },
 };
 </script>
 
 <style scoped>
-/* Theme Switch */
-/* The switch - the box around the slider */
 .switch {
   font-size: 10px;
   position: relative;
@@ -420,14 +350,12 @@ export default {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-/* Hide default HTML checkbox */
 .switch input {
   opacity: 0;
   width: 0;
   height: 0;
 }
 
-/* The slider */
 .slider {
   position: absolute;
   cursor: pointer;
@@ -435,10 +363,14 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #2a2a2a;
+  background-color: var(--switch-bg, #2a2a2a);
   transition: 0.4s;
   border-radius: 30px;
   overflow: hidden;
+}
+
+.switch input:checked + .slider {
+  background-color: var(--switch-checked-bg, #00a6ff);
 }
 
 .slider:before {
@@ -452,10 +384,6 @@ export default {
   transition: 0.4s;
   transition-timing-function: cubic-bezier(0.81, -0.04, 0.38, 1.5);
   box-shadow: inset 8px -4px 0px 0px #fff;
-}
-
-.switch input:checked + .slider {
-  background-color: #00a6ff;
 }
 
 .switch input:checked + .slider:before {
@@ -476,12 +404,10 @@ export default {
   left: 2.5em;
   top: 0.5em;
 }
-
 .star_2 {
   left: 2.2em;
   top: 1.2em;
 }
-
 .star_3 {
   left: 3em;
   top: 0.9em;
