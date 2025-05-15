@@ -14,8 +14,12 @@ from .serializers import (
 
 from notifications.utils import *
 
+
+
 class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = TeamFilter
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -86,9 +90,12 @@ class TeamViewSet(viewsets.ModelViewSet):
 
 
 class TeamJoinRequestViewSet(viewsets.ModelViewSet):
-    queryset = TeamJoinRequest.objects.all()
+    queryset = TeamJoinRequest.objects.all().order_by('-created_at')
     serializer_class = TeamJoinRequestSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = TeamJoinRequestFilter
+
 
     def get_queryset(self):
         user = self.request.user

@@ -16,7 +16,20 @@ from teams.models import Team
 from .models import Idea, Project, ProjectApplication, ProjectParticipantRating
 from .filters import ProjectFilter
 from django_filters.rest_framework import DjangoFilterBackend
+from .filters import TeamJoinRequestFilter
+from teams.models import TeamJoinRequest
 
+
+
+class TeamJoinRequestViewSet(viewsets.ModelViewSet):
+    queryset = TeamJoinRequest.objects.all().order_by('-created_at')
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = TeamJoinRequestFilter
+
+class TeamViewSet(viewsets.ModelViewSet):
+    queryset = Team.objects.all().order_by('-id')
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = TeamFilter
 
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all().order_by('-created_at')

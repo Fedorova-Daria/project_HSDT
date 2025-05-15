@@ -4,11 +4,16 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Board, Column, Task
 from .serializers import BoardSerializer, ColumnSerializer, TaskSerializer
+from django_filters.rest_framework import DjangoFilterBackend
+from .filters import TaskFilter
+from .models import Board
 
 class BoardViewSet(viewsets.ModelViewSet):
     queryset = Board.objects.all()
     serializer_class = BoardSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = BoardFilter
 
     def create(self, request, *args, **kwargs):
         # Получаем данные доски
