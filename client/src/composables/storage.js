@@ -93,7 +93,6 @@ class UserService {
             skills: response.data.skills || [],
             avatar: response.data.avatar || null,
             created_at: response.data.created_at,
-            team: response.data.team || null,
             institute: response.data.institute || this.defaultData.institute,
           };
           this.saveUserData(userData);

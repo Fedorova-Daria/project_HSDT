@@ -12,6 +12,7 @@ import ProjectDetail from "@/components/projects/ProjectDetail.vue";
 import ideaDetail from "@/components/projects/IdeaDetail.vue";
 import AboutTYIU from "../components/university/AboutTYIU.vue"; // Страница About только для TYIU
 import Kanban from "@/components/in project/kanban.vue";
+import Offers from "@/components/university/offers.vue";
 import Cookies from "js-cookie";
 const routes = [
   {
@@ -32,6 +33,11 @@ const routes = [
     path: "/:institute/rialto",
     name: "rialto",
     component: Rialto,
+  },
+  {
+    path: "/:institute/offers",
+    name: "offers",
+    component: Offers,
   },
   {
     path: "/:institute/teams",

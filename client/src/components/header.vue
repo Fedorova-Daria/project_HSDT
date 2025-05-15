@@ -190,7 +190,7 @@ export default {
       return latinInstitute === "TYIU"
         ? [
             { name: "О нас", link: "/about" },
-            { name: "Идеи", link: "/ideas" },
+            { name: "Предложения", link: "/offers" },
           ]
         : [
             { name: "Биржа", link: "/rialto" },

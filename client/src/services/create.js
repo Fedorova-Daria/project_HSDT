@@ -19,7 +19,7 @@ export const createIdeaOrProject = async (formData) => {
   };
   
    // Добавляем поле customer только для ролей 'CU' и 'EX'
-   if (userRole === 'CU' || userRole === 'EX') {
+  if (userRole === 'CU' || userRole === 'EX') {
     dataToSend.owner = owner;
   }
 
