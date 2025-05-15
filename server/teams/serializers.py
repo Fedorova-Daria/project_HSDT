@@ -54,6 +54,7 @@ class TeamListSerializer(serializers.ModelSerializer):
 
 
 class TeamDetailSerializer(serializers.ModelSerializer):
+    owner = serializers.PrimaryKeyRelatedField(read_only=True)
     owner_name = serializers.SerializerMethodField()
     members = AccountShortSerializer(many=True)
     skills = serializers.SerializerMethodField()
@@ -61,7 +62,7 @@ class TeamDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Team
-        fields = ['id', 'name', 'description', 'owner_name', 'status', 'skills', 'members']
+        fields = ['id', 'name', 'description', 'owner_name', 'status', 'skills', 'members', 'owner']
 
     def get_owner_name(self, obj):
         return f"{obj.owner.first_name} {obj.owner.last_name}"
