@@ -100,6 +100,10 @@ class IdeaViewSet(viewsets.ModelViewSet):
             return Idea.objects.all()
         return Idea.objects.filter(visible=True, status='open')
 
+    def perform_create(self, serializer):
+        # 👇 вот это добавь
+        serializer.save(owner=self.request.user)
+
     @action(detail=True, methods=['post'], url_path='like', permission_classes=[IsAuthenticated])
     def like(self, request, pk=None):
         idea = self.get_object()
