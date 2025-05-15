@@ -2,7 +2,7 @@ from django.db import models
 from users.models import Account
 from core.models import Technology
 from teams.models import Team
-
+from django.conf import settings
 
 class Project(models.Model):
     STATUS_CHOICES = [
@@ -11,6 +11,11 @@ class Project(models.Model):
         ('open', 'В поиске'),
         ('in_progress', 'В работе'),
         ('done', 'Сделан'),
+    ]
+
+    DURATION_CHOICES = [
+        ("semester", "1 семестр"),
+        ("year", "1 год"),
     ]
 
     title = models.CharField(max_length=255)
@@ -22,7 +27,7 @@ class Project(models.Model):
     owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='projects_owned')
     initiator = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='projects_initiated', blank=True, null=True)
 
-    teams = models.ManyToManyField(Team, related_name='projects', blank=True)  # Связь с командой
+    teams = models.ManyToManyField(Team, related_name='projects', blank=True)
     workers = models.ManyToManyField(Account, related_name='workers_projects', blank=True)
 
     favorites = models.ManyToManyField(Account, related_name="favorite_projects", blank=True)
@@ -37,11 +42,10 @@ class Project(models.Model):
     likes = models.ManyToManyField(Account, related_name="liked_projects", blank=True)
     expert_likes = models.ManyToManyField(Account, related_name="expert_liked_projects", blank=True)
 
-    duration = models.CharField(max_length=50, choices=[("semester", "1 семестр"), ("year", "1 год")],
-                                default="semester")
+    duration = models.CharField(max_length=50, choices=DURATION_CHOICES, default="semester")
 
     def check_approval(self):
-        if self.expert_likes.count() >= 3:
+        if self.expert_likes.count() >= self.votes_to_approve:
             self.approved = True
             self.visible = True
             self.status = "open"
@@ -49,6 +53,30 @@ class Project(models.Model):
 
     def __str__(self):
         return self.title
+    
+    def get_average_rating_for_user(self, user):
+        ratings = self.participant_ratings.filter(rated_user=user)
+        if ratings.exists():
+            return round(ratings.aggregate(models.Avg('rating'))['rating__avg'], 2)
+        return None
+
+
+
+class ProjectParticipantRating(models.Model):
+    project = models.ForeignKey('Project', on_delete=models.CASCADE, related_name='participant_ratings')
+    rated_user = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='ratings_received')
+    rated_by = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='ratings_given')
+
+    rating = models.PositiveSmallIntegerField()  # например, от 1 до 5
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.rated_by} → {self.rated_user} ({self.rating}) in {self.project}"
+
 
 
 class Idea(models.Model):

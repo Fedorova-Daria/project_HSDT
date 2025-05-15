@@ -1,10 +1,11 @@
 # projects/serializers.py
 
 from rest_framework import serializers
-from .models import Project, Idea, ProjectApplication
+from .models import Project, Idea, ProjectApplication, ProjectParticipantRating
 from users.serializers import AccountShortSerializer
 from core.serializers import TechnologySerializer
 from teams.models import Team
+from users.models import Account
 
 class ProjectSerializer(serializers.ModelSerializer):
     initiator = AccountShortSerializer(read_only=True)
@@ -61,3 +62,54 @@ class ProjectApplicationSerializer(serializers.ModelSerializer):
         read_only_fields = ('status', 'created_at')
 
 
+
+class ProjectParticipantRatingSerializer(serializers.ModelSerializer):
+    rated_by = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    class Meta:
+        model = ProjectParticipantRating
+        fields = ['id', 'project', 'rated_user', 'rated_by', 'rating', 'comment', 'created_at']
+        read_only_fields = ['id', 'created_at', 'rated_by']
+
+class RatedUserDataSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
+    average_rating = serializers.FloatField(allow_null=True)
+
+class ProjectParticipantDetailSerializer(serializers.Serializer):
+    workers = serializers.SerializerMethodField()
+    teams = serializers.SerializerMethodField()
+
+    def get_workers(self, project):
+        result = []
+        for user in project.workers.all():
+            ratings = ProjectParticipantRating.objects.filter(project=project, rated_user=user)
+            avg = round(sum(r.rating for r in ratings) / ratings.count(), 2) if ratings.exists() else None
+            result.append({
+                'id': user.id,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'average_rating': avg,
+            })
+        return result
+
+    def get_teams(self, project):
+        result = []
+        for team in project.teams.all():
+            team_data = {
+                'team_id': team.id,
+                'team_name': team.name,
+                'members': [],
+            }
+            for user in team.members.all():
+                ratings = ProjectParticipantRating.objects.filter(project=project, rated_user=user)
+                avg = round(sum(r.rating for r in ratings) / ratings.count(), 2) if ratings.exists() else None
+                team_data['members'].append({
+                    'id': user.id,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'average_rating': avg,
+                })
+            result.append(team_data)
+        return result

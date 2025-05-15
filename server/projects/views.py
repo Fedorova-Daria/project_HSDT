@@ -2,7 +2,7 @@
 
 from django.shortcuts import get_object_or_404
 
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
@@ -10,10 +10,10 @@ from rest_framework.views import APIView
 from rest_framework import status
 
 from .serializers import (ProjectSerializer, ProjectUpdateSerializer, ProjectUpdateStatusSerializer,
-                          IdeaSerializer, ProjectApplicationSerializer, IdeaEditSerializer)
+                        IdeaSerializer, ProjectApplicationSerializer, IdeaEditSerializer, ProjectParticipantRatingSerializer, ProjectParticipantDetailSerializer)
 from .permissions import IsStudent, IsOwnerOrReadOnly
 from teams.models import Team
-from .models import Idea, Project, ProjectApplication
+from .models import Idea, Project, ProjectApplication, ProjectParticipantRating
 from .filters import ProjectFilter
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -81,6 +81,26 @@ class ProjectViewSet(viewsets.ModelViewSet):
             project.save()
         return Response({'detail': 'Голос учтён'})
 
+class ProjectParticipantRatingViewSet(viewsets.ModelViewSet):
+    queryset = ProjectParticipantRating.objects.all()
+    serializer_class = ProjectParticipantRatingSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(rated_by=self.request.user)
+
+
+class ProjectParticipantsDetailsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        try:
+            project = Project.objects.get(pk=pk)
+        except Project.DoesNotExist:
+            return Response({'detail': 'Проект не найден'}, status=404)
+
+        serializer = ProjectParticipantDetailSerializer(project)
+        return Response(serializer.data)
 
 class IdeaViewSet(viewsets.ModelViewSet):
     queryset = Idea.objects.all()
