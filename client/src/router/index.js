@@ -12,6 +12,10 @@ import ProjectDetail from "@/components/projects/ProjectDetail.vue";
 import ideaDetail from "@/components/projects/IdeaDetail.vue";
 import AboutTYIU from "../components/university/AboutTYIU.vue"; // Страница About только для TYIU
 import Kanban from "@/components/in project/kanban.vue";
+import Statistic from "@/components/in project/statistics.vue";
+import info from "@/components/in project/info.vue";
+import Offers from "@/components/university/offers.vue";
+import OfferDetail from "@/components/university/offerDetail.vue";
 import Cookies from "js-cookie";
 const routes = [
   {
@@ -34,6 +38,11 @@ const routes = [
     component: Rialto,
   },
   {
+    path: "/:institute/offers",
+    name: "offers",
+    component: Offers,
+  },
+  {
     path: "/:institute/teams",
     name: "teams",
     component: Teams,
@@ -50,10 +59,23 @@ const routes = [
     component: Ideas,
   },
   {
-    path: "/:institute/project/:id/kanban",
-    name: "Kanban",
-    component: Kanban,
-  },
+  path: '/:institute/project/:ideaId/kanban',
+  name: 'Kanban',
+  component: Kanban,
+  props: true  // вот это!
+},
+  {
+  path: '/:institute/project/:ideaId/statistic',
+  name: 'Statistic',
+  component: Statistic,
+  props: true  // вот это!
+},
+  {
+  path: '/:institute/project/:ideaId/info',
+  name: 'info',
+  component: info,
+  props: true  // вот это!
+},
   {
     path: "/:institute/project/:id",
     name: "ProjectDetail",
@@ -65,6 +87,12 @@ const routes = [
     name: "ideaDetail",
     component: ideaDetail,
     props: route => ({ ideaId: route.params.id, institute: route.params.institute })  // Передаем параметры как пропсы
+  },
+  {
+    path: "/:institute/offer/:id",
+    name: "OfferDetail",
+    component: OfferDetail,
+    props: route => ({ offerId: route.params.id, institute: route.params.institute })  // Передаем параметры как пропсы
   },
   {
     path: "/TYIU/about",

@@ -3,7 +3,7 @@ import axios from "axios";
 // Получить все заявки на вступление
 export const fetchJoinRequestsByTeam = async (teamId) => {
   try {
-    const response = await api.get(`/team-join-requests/team/${teamId}/`);
+    const response = await api.get(`/team-join-requests/?team=${teamId}`);
     return response.data;
   } catch (error) {
     console.error(`Ошибка при загрузке заявок для команды ${teamId}:`, error.response?.data || error);

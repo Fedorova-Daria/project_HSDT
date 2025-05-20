@@ -177,33 +177,25 @@ export default {
   },
   computed: {
     menuItems() {
-      const routeMap = {
-        TYIU: [
-          { name: "О нас", link: "/about" },
-          { name: "Идеи", link: "/ideas" },
-        ],
-        HSDT: [
-          { name: "Биржа", link: "/rialto" },
-          { name: "Команды", link: "/teams" },
-          { name: "Идеи", link: "/ideas" },
-        ],
-        ARCHID: [
-          { name: "Биржа", link: "/rialto" },
-          { name: "Команды", link: "/teams" },
-          { name: "Идеи", link: "/ideas" },
-        ],
-        IPTI: [
-          { name: "Биржа", link: "/rialto" },
-          { name: "Команды", link: "/teams" },
-          { name: "Идеи", link: "/ideas" },
-        ],
-        STROIN: [
-          { name: "Биржа", link: "/rialto" },
-          { name: "Команды", link: "/teams" },
-          { name: "Идеи", link: "/ideas" },
-        ],
-      };
-      return routeMap[this.instituteMap[this.selectedInstitute]] || [];
+      const latinInstitute =
+        this.instituteMap[this.localSelectedInstitute] ||
+        this.localSelectedInstitute;
+      if (!latinInstitute) {
+        console.error(
+          `Ошибка: Латинское название для "${this.localSelectedInstitute}" не найдено.`
+        );
+        return [];
+      }
+      return latinInstitute === "TYIU"
+        ? [
+            { name: "О нас", link: "/about" },
+            { name: "Предложения", link: "/offers" },
+          ]
+        : [
+            { name: "Биржа", link: "/rialto" },
+            { name: "Команды", link: "/teams" },
+            { name: "Идеи", link: "/ideas" },
+          ];
     },
     instituteStyle() {
       return (

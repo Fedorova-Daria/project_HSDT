@@ -86,6 +86,51 @@ export async function toggleLike(
     }, 300);
   }
 }
+export async function toggleOfferLike(
+  offer,
+  event,
+  liked,
+  isAnimatingSetter,
+  getUserId,
+  retry = false
+) {
+  event.stopPropagation();
+  isAnimatingSetter(true);
+
+  try {
+    // исправлено: строка в кавычках
+    const response = await api.post(`/offers/${offer.id}/like/`, null, {
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const userId = getUserId();
+    if (liked) {
+      offer.likes = offer.likes.filter((id) => id !== userId);
+      localStorage.setItem(`liked_${offer.id}_${userId}`, "false");
+    } else {
+      offer.likes.push(userId);
+      localStorage.setItem(`liked_${offer.id}_${userId}`, "true");
+    }
+
+    offer.likes_count = response.data.likes_count;
+
+  } catch (error) {
+    console.error("Ошибка при обновлении лайка:", error);
+
+    if (error.response?.status === 403 && !retry) {
+      const newToken = await userService.refreshToken();
+      if (newToken) {
+        await toggleOfferLike(offer, event, liked, isAnimatingSetter, getUserId, true);
+      } else {
+        console.error("Не удалось обновить токен, требуется повторный вход.");
+      }
+    }
+  } finally {
+    setTimeout(() => {
+      isAnimatingSetter(false);
+    }, 300);
+  }
+}
 // Получить все проекты
 export const getAllProjects = async () => {
   const response = await api.get("/projects/");
