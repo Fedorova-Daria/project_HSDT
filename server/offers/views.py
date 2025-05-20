@@ -32,19 +32,19 @@ class OfferViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], url_path='like', permission_classes=[IsAuthenticated])
     def like(self, request, pk=None):
-        offers = self.get_object()
+        offer = self.get_object()  # лучше назвать offer (а не offers)
         user = request.user
 
-        if user in idea.likes.all():
-            offers.likes.remove(user)
+        if user in offer.likes.all():
+            offer.likes.remove(user)
             liked = False
         else:
-            offers.likes.add(user)
+            offer.likes.add(user)
             liked = True
 
         return Response({
             'liked': liked,
-            'likes_count': offers.likes.count(),
+            'likes_count': offer.likes.count(),
         })
 
 

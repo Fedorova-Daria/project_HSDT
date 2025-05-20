@@ -11,9 +11,9 @@ from .serializers import (
     TeamUpdateSerializer,
     TeamJoinRequestSerializer
 )
-
+from .filters import TeamJoinRequestFilter, TeamFilter
 from notifications.utils import *
-
+from django_filters.rest_framework import DjangoFilterBackend
 
 
 class TeamViewSet(viewsets.ModelViewSet):

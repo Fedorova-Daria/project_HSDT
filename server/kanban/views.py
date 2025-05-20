@@ -5,8 +5,7 @@ from rest_framework.response import Response
 from .models import Board, Column, Task
 from .serializers import BoardSerializer, ColumnSerializer, TaskSerializer
 from django_filters.rest_framework import DjangoFilterBackend
-from .filters import TaskFilter
-from .models import Board
+from .filters import BoardFilter
 
 class BoardViewSet(viewsets.ModelViewSet):
     queryset = Board.objects.all()

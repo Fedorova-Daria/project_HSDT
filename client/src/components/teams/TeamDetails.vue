@@ -90,7 +90,7 @@
         {{ member.full_name }}
       </td>
       <td class="p-3 border-t border-zinc-600">
-        {{ skills.length ? skills.join(", ") : "Нет навыков" }}
+        {{ member.skills.length ? skills.join(", ") : "Нет навыков" }}
       </td>
       <td class="p-3 border-t border-zinc-600">{{ member.total_rating }}</td>
       <td class="p-3 border-t border-zinc-600">

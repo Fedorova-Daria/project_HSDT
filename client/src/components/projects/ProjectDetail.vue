@@ -164,7 +164,7 @@
       </button>
 
       <button
-        @click="openKanban(idea)"
+        @click="openKanban"
         class="text-white w-90 ml-20 inline-flex items-center bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:outline-none focus:ring-purple-300 font-medium rounded-lg text-sm px-2 py-2 dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-800"
       >
         Работа над проектом
@@ -194,7 +194,7 @@ import UserService from "@/composables/storage";
 
 export default {
   inject: ["globalState"],
-  name: "ProjectDetails",
+  name: "ProjectDetail",
   components: { Header, RespondedTeams },
   props: {
     ideaId: {
@@ -257,14 +257,9 @@ export default {
     },
   },
   methods: {
-    openKanban(idea) {
-      const institute = this.selectedInstitute;
-      if (institute) {
-        this.$router.push({ path: `/${institute}/project/${idea.id}/kanban` });
-      } else {
-        console.error("Институт не выбран");
-      }
-    },
+    openKanban() {
+      this.$router.push(`/${this.selectedInstitute}/project/${this.ideaId}/kanban`);
+  },
     async handleDeleteProject(ideaId) {
       try {
         const confirmation = confirm(
