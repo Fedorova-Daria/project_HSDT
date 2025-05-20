@@ -10,19 +10,19 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('kanban', '0002_initial'),
+        ('offers', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='task',
-            name='assigned_to',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL),
+            model_name='offers',
+            name='likes',
+            field=models.ManyToManyField(blank=True, related_name='liked_offers', to=settings.AUTH_USER_MODEL),
         ),
         migrations.AddField(
-            model_name='task',
-            name='column',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='tasks', to='kanban.column'),
+            model_name='offers',
+            name='owner',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='offer', to=settings.AUTH_USER_MODEL),
         ),
     ]

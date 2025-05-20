@@ -18,13 +18,18 @@
             placeholder="Поиск..."
           />
         </div>
-        <select class="ml-5 h-10 py-2 px-3 border bg-white rounded-md focus:border-fiol duration-500">
-          <option value="" disabled selected class="text-gray-500">Сортировать по</option>
+        <select
+          class="ml-5 h-10 py-2 px-3 border bg-white rounded-md focus:border-fiol duration-500"
+        >
+          <option value="" disabled selected class="text-gray-500">
+            Сортировать по
+          </option>
           <option>По новизне</option>
           <option>По популярности</option>
         </select>
 
-        <button v-if="userRole === 'ST'"
+        <button
+          v-if="userRole === 'ST'"
           @click="openModal"
           class="bg-purple-600 text-white rounded-md px-4 py-2 hover:bg-purple-700 transition ml-5 h-10"
         >
@@ -32,36 +37,45 @@
         </button>
       </div>
       <!-- Фильтры с анимацией -->
-    <div class="flex justify-center space-x-6 relative mt-3">
-      <button
-        v-for="(filter, index) in filters"
-        :key="index"
-        @click="setFilter(filter.value)"
-        class="relative pb-1 text-lg font-medium transition-colors duration-300"
-        :class="{
-          'text-white': activeFilter === filter.value,
-          'text-zinc-200 opacity-70 hover:text-white': activeFilter !== filter.value
-        }"
-      >
-        {{ filter.label }}
-        <!-- Анимированная полоска -->
-        <span 
-          class="absolute left-1/2 bottom-0 h-0.5 bg-zinc-200 transition-all duration-300 rounded-lg"
-          :class="{ 'w-full left-0': activeFilter === filter.value, 'w-0': activeFilter !== filter.value }">
-        </span>
-      </button>
-    </div>
+      <div class="flex justify-center space-x-6 relative mt-3">
+        <button
+          v-for="(filter, index) in filters"
+          :key="index"
+          @click="setFilter(filter.value)"
+          class="relative pb-1 text-lg font-medium transition-colors duration-300"
+          :class="{
+            'text-white': activeFilter === filter.value,
+            'text-zinc-200 opacity-70 hover:text-white':
+              activeFilter !== filter.value,
+          }"
+        >
+          {{ filter.label }}
+          <!-- Анимированная полоска -->
+          <span
+            class="absolute left-1/2 bottom-0 h-0.5 bg-zinc-200 transition-all duration-300 rounded-lg"
+            :class="{
+              'w-full left-0': activeFilter === filter.value,
+              'w-0': activeFilter !== filter.value,
+            }"
+          >
+          </span>
+        </button>
+      </div>
 
-      <IdeasTable 
-        :items="filteredItems" 
+      <IdeasTable
+        :items="filteredItems"
         :userId="userData.id"
-        @toggle-like="updateLike" 
-        @open-idea="openIdea" 
+        @toggle-like="updateLike"
+        @open-idea="openIdea"
       />
     </div>
 
     <!-- Всплывающее окно -->
-    <IdeaModal v-if="isModalOpen" @close="closeModal" @submit="submitIdea(status)" />
+    <IdeaModal
+      v-if="isModalOpen"
+      @close="closeModal"
+      @submit="submitIdea(status)"
+    />
   </div>
 </template>
 
@@ -110,19 +124,19 @@ export default {
   created() {
     this.userRole = UserService.getUserRole(); // Устанавливаем значение из Cookies
     // Динамически формируем фильтры на основе роли
-  if (["CU", "EX"].includes(this.userRole)) {
-    this.filters = [
-      { label: "Все", value: "all" },
-      { label: "Любимые", value: "favorites" }
-    ]; 
-  } else if (this.userRole === "ST") {
-    this.filters = [
-      { label: "Все", value: "all" },
-      { label: "Мои", value: "my" },
-      { label: "Любимые", value: "favorites" },
-      { label: "Черновики", value: "drafts" }
-    ];
-  }
+    if (["CU", "EX"].includes(this.userRole)) {
+      this.filters = [
+        { label: "Все", value: "all" },
+        { label: "Любимые", value: "favorites" },
+      ];
+    } else if (this.userRole === "ST") {
+      this.filters = [
+        { label: "Все", value: "all" },
+        { label: "Мои", value: "my" },
+        { label: "Любимые", value: "favorites" },
+        { label: "Черновики", value: "drafts" },
+      ];
+    }
   },
   methods: {
     // Устанавливаем активный фильтр
@@ -136,15 +150,21 @@ export default {
       if (this.activeFilter === "all") {
         this.filteredItems = this.items;
       } else if (this.activeFilter === "my") {
-        this.filteredItems = this.items.filter(idea => idea.owner === this.userData.id);
+        this.filteredItems = this.items.filter(
+          (idea) => idea.owner === this.userData.id
+        );
       } else if (this.activeFilter === "favorites") {
-        this.filteredItems = this.items.filter(idea => idea.likes.includes(this.userData.id));
+        this.filteredItems = this.items.filter((idea) =>
+          idea.likes.includes(this.userData.id)
+        );
       } else if (this.activeFilter === "drafts") {
-        this.filteredItems = this.items.filter(idea => idea.status === 'draft' && idea.owner === this.userData.id);
-      }else {
-      this.filteredItems = []; // Если роль неизвестна, ничего не показываем
-    }
-  },
+        this.filteredItems = this.items.filter(
+          (idea) => idea.status === "draft" && idea.owner === this.userData.id
+        );
+      } else {
+        this.filteredItems = []; // Если роль неизвестна, ничего не показываем
+      }
+    },
     async fetchIdeas() {
       try {
         const response = await api.get("/ideas/");
@@ -192,23 +212,22 @@ export default {
   mounted() {
     this.fetchIdeas(); // Загружаем идеи при монтировании
 
-  // Загружаем данные пользователя, если они есть в cookies
-  const storedUser = Cookies.get("userData");
-  if (storedUser) {
-    try {
-      this.userData = JSON.parse(storedUser); // Пробуем распарсить userData
-    } catch (error) {
-      console.error("Ошибка при парсинге userData:", error);
-      this.userData = {}; // Если ошибка, устанавливаем пустой объект
+    // Загружаем данные пользователя, если они есть в cookies
+    const storedUser = Cookies.get("userData");
+    if (storedUser) {
+      try {
+        this.userData = JSON.parse(storedUser); // Пробуем распарсить userData
+      } catch (error) {
+        console.error("Ошибка при парсинге userData:", error);
+        this.userData = {}; // Если ошибка, устанавливаем пустой объект
+      }
+    } else {
+      console.warn("User data not found in cookies.");
+      this.userData = {}; // Если данных нет, устанавливаем пустой объект
     }
-  } else {
-    console.warn("User data not found in cookies.");
-    this.userData = {}; // Если данных нет, устанавливаем пустой объект
-  }
   },
 };
 </script>
-
 
 <style scoped>
 button span {
@@ -255,8 +274,9 @@ button span {
 
 /* Стили для карточек */
 .bg-card {
-  background-color: rgba(30, 30, 30, 0.8);
-  backdrop-filter: blur(5px);
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: all 0.2s ease;
 }
 
 /* Стили для кнопок */

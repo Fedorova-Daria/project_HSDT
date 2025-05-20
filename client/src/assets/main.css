@@ -23,7 +23,7 @@ body {
 }
 
 /* Тёмная тема */
-.dark-theme {
+.dark {
   --text-color: #ffffff; /* Белый текст на тёмной теме */
   --color-background: #141414;
   --text-h2: #d1d6e0;
@@ -68,7 +68,7 @@ button {
   --switch-checked-bg: #00a6ff;
 }
 
-.dark-theme {
+.dark {
   --switch-bg: #3a3a3a;
   --switch-checked-bg: #0088cc;
 }
@@ -79,4 +79,18 @@ button {
 
 .switch input:checked + .slider {
   background-color: var(--switch-checked-bg);
+}
+
+body {
+  transition: background-color 1s ease, color 1s ease;
+}
+
+:root {
+  --bg-color: #ffffff;
+  --text-color: #000000;
+}
+
+.dark {
+  --bg-color: #1a1a1a;
+  --text-color: #ffffff;
 }

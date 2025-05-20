@@ -42,8 +42,7 @@ class UserService {
   getStoredUserData() {
     return (
       safeParse(Cookies.get("userData")) ||
-      safeParse(localStorage.getItem("userData")) ||
-      { ...this.defaultData }
+      safeParse(localStorage.getItem("userData")) || { ...this.defaultData }
     );
   }
 
@@ -66,7 +65,7 @@ class UserService {
    */
   async getUserData() {
     let userData = this.getStoredUserData();
-  
+
     if (!userData.id) {
       const token = this.getAccessToken();
       if (!token) {
@@ -101,10 +100,10 @@ class UserService {
         console.error("Ошибка при получении данных о пользователе:", error);
       }
     }
-  
+
     return userData;
   }
-  
+
   /**
    * Обновляет значение института в сохранённых данных пользователя.
    *
@@ -147,7 +146,10 @@ class UserService {
       if (!refresh) {
         throw new Error("Refresh token отсутствует");
       }
-      const response = await axios.post(`${this.apiBaseUrl}/users/token/refresh/`, { refresh });
+      const response = await axios.post(
+        `${this.apiBaseUrl}/users/token/refresh/`,
+        { refresh }
+      );
       if (response.status === 200 && response.data) {
         const newAccessToken = response.data.access;
         // Если API возвращает новый refresh token – сохраняем его, иначе оставляем текущий
@@ -158,7 +160,10 @@ class UserService {
         throw new Error("Не удалось обновить токен");
       }
     } catch (error) {
-      console.error("Ошибка при обновлении токена:", error.response?.data || error.message);
+      console.error(
+        "Ошибка при обновлении токена:",
+        error.response?.data || error.message
+      );
       return null;
     }
   }
@@ -173,8 +178,8 @@ class UserService {
     if (!refreshToken) {
       console.error("Попытка сохранить refresh token: получено undefined");
     }
-    Cookies.set("access_token", accessToken, { expires: 7, sameSite: 'Lax' });
-    Cookies.set("refresh_token", refreshToken, { expires: 7, sameSite: 'Lax' });
+    Cookies.set("access_token", accessToken, { expires: 7, sameSite: "Lax" });
+    Cookies.set("refresh_token", refreshToken, { expires: 7, sameSite: "Lax" });
   }
 
   /**

@@ -113,7 +113,7 @@
 </template>
 
 <script>
-import toggleLike from "@/services/projects.js";
+import { toggleLike } from "@/services/projects.js";
 import Cookies from "js-cookie";
 import axios from "axios";
 import IdeaCard from "@/components/RialtoCard1.vue";

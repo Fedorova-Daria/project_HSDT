@@ -9,7 +9,10 @@ const app = createApp(App);
 document.addEventListener("DOMContentLoaded", () => {
   // Считываем сохранённую тему из LocalStorage
   const savedTheme = localStorage.getItem("theme") || "light";
-  document.documentElement.classList.toggle("dark-theme", savedTheme === "dark");
+  document.documentElement.classList.toggle(
+    "dark-theme",
+    savedTheme === "dark"
+  );
 
   // Привязываем переключатель к логике изменения темы
   const themeSwitch = document.getElementById("checkbox");
