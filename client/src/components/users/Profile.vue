@@ -1,7 +1,7 @@
 <template>
   <div class="relative min-h-screen overflow-hidden">
     <!-- Размытый фон с параллакс-эффектом -->
-    <img
+    <!--<img
       ref="backgroundImage"
       class="absolute top-0 left-0 h-full w-full object-cover filter blur-md transform-gpu scale-105 -z-10"
       src="/bgg.jpg"
@@ -9,10 +9,10 @@
         transform: `translate(${offsetX}px, ${offsetY}px) scale(1.05)`,
         transition: 'transform 0.5s cubic-bezier(0.13, 0.62, 0.23, 0.99)',
       }"
-    />
+    />-->
 
     <!-- Затемнение фона -->
-    <div class="absolute inset-0 bg-black opacity-60 -z-10"></div>
+    <!--<div class="absolute inset-0 bg-black opacity-60 -z-10"></div>-->
 
     <div class="min-h-screen text-white flex flex-col relative z-10">
       <!-- Хедер -->
@@ -22,7 +22,7 @@
       <div class="flex w-4/5 mx-auto mt-10 gap-6">
         <!-- Левый блок (Информация о пользователе) -->
         <div
-          class="w-1/4 bg-zinc-700/80 p-6 rounded-2xl shadow-lg backdrop-blur-sm"
+          class="w-1/4 bg-card p-6 rounded-2xl shadow-lg backdrop-blur-sm"
         >
           <div class="text-center">
             <img
@@ -44,20 +44,20 @@
             </div>
           </div>
 
-          <div class="mt-5">
-            <p class="text-sm flex justify-between text-white">
+          <div class="mt-5 text-dynamic">
+            <p class="text-sm flex justify-betwee">
               <strong>Почта:</strong>
             </p>
             <div
-              class="w-auto mt-2 bg-zinc-700/50 text-white text-sm rounded-lg p-2.5 border border-zinc-600"
+              class="w-auto mt-2 bg-zinc-700/50 text-sm rounded-lg p-2.5 border border-zinc-600"
             >
               {{ userData.email || "Не указано" }}
             </div>
-            <p class="text-sm mt-2 flex justify-between text-white">
+            <p class="text-sm mt-2 flex justify-between">
               <strong>Группа:</strong>
             </p>
             <div
-              class="w-auto mt-2 bg-zinc-700/50 text-white text-sm rounded-lg p-2.5 border border-zinc-600"
+              class="w-auto mt-2 bg-zinc-700/50 text-sm rounded-lg p-2.5 border border-zinc-600"
             >
               {{ userData.group?.name || "Не указано" }}
             </div>
@@ -65,11 +65,11 @@
 
           <!-- Блок биографии -->
           <div class="mt-5">
-            <p class="text-sm flex justify-between text-white">
+            <p class="text-sm flex justify-between text-dynamic">
               <strong>Биография:</strong>
             </p>
             <div
-              class="w-auto mt-2 bg-zinc-700/50 text-white text-sm rounded-lg p-2.5 border border-zinc-600 min-h-[100px]"
+              class="w-auto mt-2 bg-zinc-700/50 text-dynamic text-sm rounded-lg p-2.5 border border-zinc-600 min-h-[100px]"
             >
               {{ userData.bio || "Пока ничего не рассказал о себе" }}
             </div>
@@ -91,7 +91,7 @@
 
         <!-- Правый блок (Проекты, команды, стек технологий, оценки) -->
         <div
-          class="w-3/4 bg-zinc-700/80 p-6 rounded-2xl shadow-lg backdrop-blur-sm"
+          class="w-3/4 bg-card p-6 rounded-2xl shadow-lg backdrop-blur-sm"
         >
           <h2 class="text-2xl font-semibold mb-4">Информация о пользователе</h2>
 

@@ -29,6 +29,18 @@ class Account(AbstractUser):
         default=Role.STUDENT
     )
 
+    MODE_CHOICES = [
+            ('light', 'Светлая'),
+            ('dark', 'Тёмная'),
+        ]
+
+    mode = models.CharField(
+        max_length=10,
+        choices=MODE_CHOICES,
+        default='light',
+        verbose_name='Тема интерфейса'
+    )
+
     first_name = models.CharField(max_length=30, blank=True, null=True)
     last_name = models.CharField(max_length=30, blank=True, null=True)
 
@@ -57,3 +69,19 @@ class Account(AbstractUser):
             self.username = self.email  # Заполняем username email'ом
         super().save(*args, **kwargs)
 
+
+class UserActivity(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    
+    project = models.ForeignKey('projects.Project', on_delete=models.SET_NULL, null=True, blank=True)
+    team = models.ForeignKey('teams.Team', on_delete=models.SET_NULL, null=True, blank=True)
+
+    started_at = models.DateTimeField(auto_now_add=True)
+    ended_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.user} - {self.team or self.project} ({self.started_at})"
+
+    @property
+    def type(self):
+        return "team" if self.team else "project"

@@ -14,7 +14,7 @@
         <tr
           v-for="idea in items"
           :key="idea.id"
-          class="border-b border-zinc-700 hover:bg-card transition duration-200 text-center"
+          class="border-b border-zinc-700 bg-card transition duration-200 text-center"
         >
           <td class="px-6 py-4">{{ idea.id }}</td>
           <td class="px-6 py-4 font-medium">{{ idea.title }}</td>
@@ -30,12 +30,15 @@
           <td class="px-6 py-4 flex justify-end gap-2">
             <button
               @click="$emit('open-idea', idea)"
-              class="px-4 py-2 text-sm font-medium bg-buttonoff hover:bg-buttonon rounded-lg transition"
+              class="px-4 py-2 text-sm font-medium text-always-white rounded-lg transition"
+              :style="{ backgroundColor: hoverStates[idea.id] || instituteStyle.buttonOffColor }"
+              @mouseover="hoverStates[idea.id] = instituteStyle.buttonOnColor"
+              @mouseleave="hoverStates[idea.id] = instituteStyle.buttonOffColor"
             >
               Посмотреть
             </button>
             <div class="flex items-center gap-2 min-w-[80px] justify-end">
-              <h1 class="text-white font-semibold">{{ idea.likes_count || 0 }}</h1>
+              <h1 class="text-dynamic font-semibold">{{ idea.likes_count || 0 }}</h1>
               <img
       :src="isLiked(idea) ? '/liked.svg' : '/like.svg'"
       alt="like"
@@ -50,8 +53,16 @@
   </template>
   
   <script>
+import { instituteStyles } from "@/assets/instituteStyles.js";
 
   export default {
+    inject: ["globalState"],
+     data() {
+    return {
+      currentBgColor: "",
+      hoverStates: {}
+    };
+  },
     props: {
       items: Array, // Список идей
       userId: Number, // ID текущего пользователя
@@ -70,11 +81,21 @@
       return statusStyles[status] || statusStyles.unknown;
     },
     },
+    computed: {
+  
+    selectedInstitute() {
+      return this.globalState.institute; // Глобальное состояние для чтения
+    },
+    instituteStyle() {
+      const style = instituteStyles[this.selectedInstitute]; // Используем глобальное состояние
+      return style || { buttonOffColor: "#ccc" }; // Дефолтный стиль
+    },
+  },
   };
   </script>
   
   <style scoped>
-  .bg-card {
+  .bg-cards {
     background-color: rgba(30, 30, 30, 0.8);
     backdrop-filter: blur(5px);
   }

@@ -1,6 +1,6 @@
-from rest_framework import generics
-from .models import Account
-from .serializers import AccountSerializer
+from rest_framework import generics, views, permissions, response, status
+from .models import Account, UserActivity
+from .serializers import AccountSerializer, UserActivitySerializer
 from django.contrib.auth import authenticate, login
 from django.http import JsonResponse
 from django.contrib.auth.hashers import check_password
@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
-
+from rest_framework import viewsets
 
 def create_jwt_tokens(user):
     """
@@ -91,3 +91,28 @@ class AccountIDView(RetrieveAPIView):
     serializer_class = AccountSerializer
     lookup_field = "id"  # Будем искать юзера по ID
 
+
+class UserActivityViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = UserActivitySerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user_id = self.request.query_params.get('user_id')  # берем user_id из query параметров
+        if user_id:
+            return UserActivity.objects.filter(user_id=user_id)
+        else:
+            return UserActivity.objects.filter(user=self.request.user)  # по умолчанию по текущему юзеру
+        
+
+class UserModeToggleAPIView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        new_mode = request.data.get('mode')
+        if new_mode not in ['light', 'dark']:
+            return response.Response({'error': 'Неверный режим'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user.mode = new_mode
+        user.save()
+        return response.Response({'mode': user.mode}, status=status.HTTP_200_OK)

@@ -1,19 +1,29 @@
-from .models import Notification
 from teams.models import Team
 from projects.models import ProjectApplication
 
-def create_notification(user, notification_type, message, related_team_join_request=None, related_project_application=None):
-    Notification.objects.create(
+def create_notification(
+    user,  # кому отправляется
+    notification_type,
+    message=None,
+    related_team=None,
+    related_project=None,
+    related_team_join_request=None,
+    related_project_application=None
+):
+    from .models import Notification
+
+    return Notification.objects.create(
         user=user,
-        type=notification_type,
+        notification_type=notification_type,
         message=message,
+        related_team=related_team,
+        related_project=related_project,
         related_team_join_request=related_team_join_request,
-        related_project_application=related_project_application,
+        related_project_application=related_project_application
     )
 
 # 🔹 TEAM_REQUEST шаблоны
-
-def notify_team_join_requested(team_owner, join_request):
+"""def notify_team_join_requested(team_owner, join_request):
     create_notification(
         user=team_owner,
         notification_type=Notification.NotificationType.TEAM_REQUEST,
@@ -70,4 +80,4 @@ def notify_system(user, message):
         user=user,
         notification_type=Notification.NotificationType.SYSTEM,
         message=message
-    )
+    )"""

@@ -5,12 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ваш сайт</title>
     <script>
-      (function () {
-        const savedTheme = localStorage.getItem("theme") || "light";
-        document.documentElement.classList.add(savedTheme + "-theme"); // Добавляем суффикс
-        document.documentElement.setAttribute("data-theme", savedTheme);
-      })();
+      (function() {
+  try {
+    const userData = JSON.parse(localStorage.getItem('userData'));
+    const mode = userData && userData.mode ? userData.mode : 'light';
+    if (mode === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+    }
+  } catch (e) {
+    // Если что-то пойдет не так, оставляем светлую тему
+    document.documentElement.classList.remove('dark');
+    document.documentElement.classList.add('light');
+  }
+})();
     </script>
+    <style>
+  /* Минимальный светлый фон по умолчанию */
+  body {
+    background-color: white;
+    transition: background-color 0.3s ease;
+  }
+  /* Когда будет dark класс - переключаем фон */
+  .dark body {
+    background-color: #121212;
+  }
+</style>
   </head>
   <body>
     <div id="app"></div>

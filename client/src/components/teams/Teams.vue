@@ -1,10 +1,10 @@
 <template>
   <div>
     <!-- Размытый фон, который следует за курсором -->
-    <div class="blurred-bg" :style="bgStyle"></div>
+    <!-- <div class="blurred-bg" :style="bgStyle"></div> -->
 
     <Header />
-    <div class="p-6 w-4/5 mx-auto relative z-10">
+    <div class="p-6 w-4/5 mx-auto relative">
       <!-- Кнопка "Создать команду" -->
       <button
         class=" button mt-4 px-6 py-2 rounded-md transition-all transform hover:button:hover text-white"

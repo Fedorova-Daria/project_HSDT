@@ -15,7 +15,6 @@ from .filters import TeamJoinRequestFilter, TeamFilter
 from notifications.utils import *
 from django_filters.rest_framework import DjangoFilterBackend
 
-
 class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
     filter_backends = [DjangoFilterBackend]
@@ -138,7 +137,6 @@ class TeamJoinRequestViewSet(viewsets.ModelViewSet):
             status='pending'
         ).exclude(id=join_request.id).update(status='declined')
 
-        notify_team_join_accepted(request.user, team, join_request)
 
         return Response({"detail": "Участник добавлен в команду."})
 

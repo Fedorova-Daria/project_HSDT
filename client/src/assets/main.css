@@ -9,38 +9,50 @@ body {
   --font-display: "Unbounded", "sans-serif";
 }
 /* Светлая тема */
-.light-theme {
-  --color-background: #ffffff; /* Светлый фон */
-  --text-color: #000000; /* Чёрный текст на светлой теме */
-  --color-bgg: #a8a8a8;
-  --text-h2: #777777;
-  --color-card: #f6f6f6; /* Светлый цвет для карточек */
-  --color-border: #b6b6b6; /* Светлый цвет для бордера */
-  --color-green: #28a745; /* Зеленый */
-  --color-red: #dc3545; /* Красный */
-  --color-yellow: #ffc107; /* Желтый */
-  --color-blue: #007bff; /* Синий */
+.light {
+  --color-background: #ffffff; /* белый фон */
+  --text-color: #000000;       /* строго черный текст */
+  --text-colorinput: #202020;
+
+  /* Остальные цвета (карточки, бордеры, ховеры) */
+  --color-card: #fafafa;
+  --color-border: #cccccc;
+  --color-hover: #c5c5c5;
+  --color-input: #cccccc;
+
+  /* Свитч */
+  --switch-bg: #2a2a2a;
+  --switch-checked-bg: #00a6ff;
 }
 
 /* Тёмная тема */
 .dark {
-  --text-color: #ffffff; /* Белый текст на тёмной теме */
-  --color-background: #141414;
-  --text-h2: #d1d6e0;
-  --color-bgg: #222222; /* Тёмный фон */
-  --color-card: #292929; /* Матовый тёмный цвет */
-  --color-border: #232323; /* Тёмный бордер */
-  --color-green: #00c950; /* Зеленый */
-  --color-red: #ee4a4a; /* Красный */
-  --color-yellow: #f0b100; /* Желтый */
-  --color-blue: #2b7fff; /* Синий */
+  --color-background: #141414; /* тёмный фон */
+  --text-color: #ffffff;       /* строго белый текст */
+  --text-colorinput: #b4b4b4;
+
+  /* Остальные цвета (карточки, бордеры, ховеры) */
+  --color-card: #292929;
+  --color-border: #232323;
+  --color-hover: #6b6b6b;
+  --color-input: #383838;
+
+  /* Свитч */
+  --switch-bg: #3a3a3a;
+  --switch-checked-bg: #0088cc;
 }
 
-/* Стили для плашек/карточек */
+/* Стили для карточек */
 .bg-card {
   background-color: var(--color-card);
   border: 1px solid var(--color-border);
   transition: background-color 0.3s ease, color 0.3s ease;
+  z-index: 10;
+}
+
+.bg-input {
+  background-color: var(--color-input);
+  color: var(--text-colorinput)
 }
 
 /* Общие стили */
@@ -48,6 +60,7 @@ body,
 .card,
 button {
   transition: background-color 0.3s ease, color 0.3s ease;
+  color: var(--text-color) !important; /* принудительно задаём текст */
 }
 
 .text-dynamic {
@@ -55,42 +68,44 @@ button {
 }
 
 .texth2-dynamic {
-  color: var(--text-h2);
+  color: var(--text-color); /* убрал оттенки, чтобы был строго чёрный или белый */
+}
+
+.dropDown {
+  background-color: var(--color-card);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  color: var(--text-color) !important;
+  cursor: pointer;
+}
+
+.dropDown:hover {
+  background-color: var(--color-hover);
 }
 
 /* Стили бордера */
 .border-dynamic {
   border: 1px solid var(--color-border);
-  transition: border-color 0.3s ease-in-out; /* Плавный переход */
-}
-.light-theme {
-  --switch-bg: #2a2a2a;
-  --switch-checked-bg: #00a6ff;
+  transition: border-color 0.3s ease-in-out;
 }
 
-.dark {
-  --switch-bg: #3a3a3a;
-  --switch-checked-bg: #0088cc;
-}
-
+/* Свитч */
 .slider {
   background-color: var(--switch-bg);
+  transition: background-color 0.3s ease;
 }
 
 .switch input:checked + .slider {
   background-color: var(--switch-checked-bg);
 }
 
-body {
-  transition: background-color 1s ease, color 1s ease;
+.institute-text {
+  color: var(--institute-text-color) !important;
 }
 
-:root {
-  --bg-color: #ffffff;
-  --text-color: #000000;
+.text-always-white {
+  color: white !important;
 }
 
-.dark {
-  --bg-color: #1a1a1a;
-  --text-color: #ffffff;
+.text-always-black {
+  color: black !important;
 }

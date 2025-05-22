@@ -1,26 +1,47 @@
 <template>
   <div
-    class="idea-card border bg-card rounded-2xl p-5 shadow-lg cursor-pointer"
+    class="idea-card bg-card rounded-2xl p-5 shadow-lg cursor-pointer h-full flex flex-col justify-between"
   >
-    <div class="flex justify-between items-center mb-3">
-      <h1 class="text-2xl font-semibold text-dynamic">{{ idea.title }}</h1>
+    <!-- Верхняя часть -->
+    <div>
+      <div class="flex justify-between items-center mb-3">
+        <h1 class="text-2xl font-semibold text-dynamic">
+          {{ idea.title }}
+        </h1>
+      </div>
     </div>
 
-    <p class="texth2-dynamic mb-3 truncate-text">
-      {{ idea.description || "Описание отсутствует" }}
-    </p>
-
+    <!-- Нижняя часть -->
     <div class="mt-auto">
-      <h3 class="text-xl text-dynamic mb-3">
+      <div class="flex flex-wrap gap-2 mt-2 mb-4">
+    <!-- Выводим первые 10 технологий -->
+    <span
+      v-for="tech in idea.skills_required.slice(0, 10)"
+      :key="tech.id"
+      class="bg-gray-200 text-sl text-gray-700 px-2 py-1 rounded-full"
+    >
+      {{ tech.name }}
+    </span>
+
+    <!-- Если технологий больше 10, показываем +N -->
+    <span
+      v-if="idea.skills_required.length > 10"
+      class="bg-gray-300 text-sm text-gray-700 px-2 py-1 rounded-full cursor-default"
+    >
+      +{{ idea.skills_required.length - 10 }}
+    </span>
+  </div>
+
+      <h3 class="text-lg text-dynamic mb-1">
         Инициатор: {{ idea.initiator || "Неизвестный автор" }}
       </h3>
-    </div>
 
-    <div
-      v-if="userRole === 'EX' && userRole === 'CU'"
-      class="text-dynamic mt-2"
-    >
-      Голосов экспертов: {{ idea.expert_likes.length }}
+      <div
+        v-if="userRole === 'EX' || userRole === 'CU'"
+        class="text-sl text-dynamic"
+      >
+        Голосов экспертов: {{ idea.expert_likes.length }}
+      </div>
     </div>
   </div>
 </template>

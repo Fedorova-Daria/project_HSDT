@@ -1,17 +1,17 @@
 <template>
   <div class="relative min-h-screen overflow-hidden">
     <!-- Размытый фон с параллакс-эффектом -->
-    <ParallaxBackground />
+    <!-- <ParallaxBackground />-->
 
     <!-- Затемнение фона (увеличена прозрачность) -->
-    <div class="absolute inset-0 bg-black opacity-50 -z-10"></div>
+    <!--<div class="absolute inset-0 bg-black opacity-50 -z-10"></div>-->
 
     <Header />
 
     <div class="w-4/5 m-auto mt-6 text-white relative z-0">
       <div class="flex m-auto mt-5 text-zinc-700">
         <div class="relative">
-          <img class="absolute left-2 top-2" src="/search.svg" />
+          <img class="absolute left-2 top-2" src="/search.svg" /> 
           <input
             class="w-full max-w-md border bg-white rounded-md py-2 pl-10 pr-4 outline-none focus:border-purple-400 duration-500"
             type="text"
@@ -31,7 +31,10 @@
         <button
           v-if="userRole === 'ST'"
           @click="openModal"
-          class="bg-purple-600 text-white rounded-md px-4 py-2 hover:bg-purple-700 transition ml-5 h-10"
+          class="text-always-white rounded-md px-4 py-2 transition ml-5 h-10"
+          :style="{ backgroundColor: currentBgColor }"
+        @mouseover="currentBgColor = instituteStyle.buttonOnColor"
+        @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
         >
           Создать идею
         </button>
@@ -52,7 +55,8 @@
           {{ filter.label }}
           <!-- Анимированная полоска -->
           <span
-            class="absolute left-1/2 bottom-0 h-0.5 bg-zinc-200 transition-all duration-300 rounded-lg"
+            class="absolute left-1/2 bottom-0 h-0.5 transition-all duration-300 rounded-lg"
+            :style="{ backgroundColor: currentBgColor }"
             :class="{
               'w-full left-0': activeFilter === filter.value,
               'w-0': activeFilter !== filter.value,
@@ -95,6 +99,7 @@ export default {
   components: { IdeaModal, Header, IdeasTable, ParallaxBackground },
   data() {
     return {
+      currentBgColor: "",
       userRole: null,
       userData: {}, // Изначально пустой объект
       isAnimating: false,
@@ -225,6 +230,14 @@ export default {
       console.warn("User data not found in cookies.");
       this.userData = {}; // Если данных нет, устанавливаем пустой объект
     }
+  },
+  watch: {
+    instituteStyle: {
+      handler(newStyle) {
+        this.currentBgColor = newStyle.buttonOffColor;
+      },
+      immediate: true,
+    },
   },
 };
 </script>

@@ -8,17 +8,16 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.views import APIView
 from rest_framework import status
+from django.utils import timezone
 
 from .serializers import (ProjectSerializer, ProjectUpdateSerializer, ProjectUpdateStatusSerializer,
                         IdeaSerializer, ProjectApplicationSerializer, IdeaEditSerializer, ProjectParticipantRatingSerializer, ProjectParticipantDetailSerializer)
 from .permissions import IsStudent, IsOwnerOrReadOnly
 from teams.models import Team
 from .models import Idea, Project, ProjectApplication, ProjectParticipantRating
-from .filters import ProjectFilter
-from django_filters.rest_framework import DjangoFilterBackend
 from .filters import ProjectFilter, IdeaFilter
-
-
+from django_filters.rest_framework import DjangoFilterBackend
+from .filters import ProjectFilter
 
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all().order_by('-created_at')
@@ -146,10 +145,11 @@ class IdeaViewSet(viewsets.ModelViewSet):
         })
 
 
+
 class ProjectApplicationViewSet(viewsets.ModelViewSet):
     queryset = ProjectApplication.objects.all()
     serializer_class = ProjectApplicationSerializer
-    permission_classes = [permissions.IsAuthenticated]  # можно кастомизировать
+    permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -157,7 +157,8 @@ class ProjectApplicationViewSet(viewsets.ModelViewSet):
         if data['applicant_type'] == 'freelancer':
             serializer.save(freelancer=user)
         elif data['applicant_type'] == 'team':
-            # тут можно проверить, владеет ли юзер этой командой
+            serializer.save()
+        else:
             serializer.save()
 
     @action(detail=True, methods=['post'])
@@ -165,25 +166,21 @@ class ProjectApplicationViewSet(viewsets.ModelViewSet):
         app = self.get_object()
         project = app.project
 
-        #if project.owner != request.user:
-        #    return Response({'detail': 'Нет доступа'}, status=403)
-
         if app.status != 'pending':
-            return Response({'detail': 'Заявка уже обработана'}, status=400)
+            return Response({'detail': 'Заявка уже обработана'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Обработка по типу заявки
         if app.applicant_type == 'freelancer' and app.freelancer:
             if app.freelancer in project.workers.all():
-                return Response({'detail': 'Фрилансер уже в проекте'}, status=400)
+                return Response({'detail': 'Фрилансер уже в проекте'}, status=status.HTTP_400_BAD_REQUEST)
             project.workers.add(app.freelancer)
 
         elif app.applicant_type == 'team' and app.team:
             if app.team in project.teams.all():
-                return Response({'detail': 'Команда уже в проекте'}, status=400)
+                return Response({'detail': 'Команда уже в проекте'}, status=status.HTTP_400_BAD_REQUEST)
             project.teams.add(app.team)
 
         else:
-            return Response({'detail': 'Тип заявки или данные некорректны'}, status=400)
+            return Response({'detail': 'Тип заявки или данные некорректны'}, status=status.HTTP_400_BAD_REQUEST)
 
         app.status = 'accepted'
         app.save()
@@ -199,6 +196,7 @@ class ProjectApplicationViewSet(viewsets.ModelViewSet):
         app.status = 'rejected'
         app.save()
         return Response({'status': 'rejected'})
+    # Можно добавить уведомление об отклонении, если нужно
 
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
@@ -212,5 +210,4 @@ class ProjectApplicationViewSet(viewsets.ModelViewSet):
         app.save()
         return Response({'status': 'cancelled'})
     
-
 

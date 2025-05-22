@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'core',
     'projects',
-    'users',
+    'users.apps.UsersConfig',
     'teams',
     'rest_framework',
     'rest_framework_simplejwt',  # Подключаем JWT
@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'django_filters',
     'drf_yasg',
-    'notifications',
+    'notifications.apps.NotificationsConfig',
     'offers',
     'kanban',
 ]

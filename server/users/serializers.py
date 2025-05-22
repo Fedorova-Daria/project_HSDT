@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Account
+from .models import Account, UserActivity
 from django.contrib.auth.hashers import make_password
 from core.models import UniversityGroup
 from core.serializers import TechnologySerializer
@@ -10,7 +10,7 @@ class AccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
         fields = ['id', 'email', 'username', 'password', 'first_name', 'last_name', 'company_name',
-                    'university_group', 'role', 'phone', 'bio', 'skills', 'avatar', 'created_at', 'institute']
+                    'university_group', 'role', 'phone', 'bio', 'skills', 'avatar', 'created_at', 'mode']
         extra_kwargs = {
             'password': {'write_only': True}
         }
@@ -51,4 +51,24 @@ class AccountShortSerializer(serializers.ModelSerializer):
 
     def get_role_display(self, obj):
         return obj.get_role_display()
+    
+
+class UserActivitySerializer(serializers.ModelSerializer):
+    type = serializers.SerializerMethodField()
+    team_id = serializers.SerializerMethodField()
+    project_id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserActivity
+        fields = ["type", "team_id", "project_id", "started_at", "ended_at"]
+
+    def get_type(self, obj):
+        return "team" if obj.team else "project"
+
+    def get_team_id(self, obj):
+        return obj.team.id if obj.team else None
+
+    def get_project_id(self, obj):
+        return obj.project.id if obj.project else None
+    
 

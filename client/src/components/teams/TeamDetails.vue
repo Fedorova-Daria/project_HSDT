@@ -281,17 +281,6 @@ async fetchJoinRequests() {
         const jr = this.joinRequests.find(r => r.id === requestId);
         if (!jr) throw new Error("Заявка не найдена в локальном списке");
 
-        const applicantUserId = jr.user; // ID того, кто отправил заявку
-        const teamName = this.team.name; // название команды
-
-        // 3) шлём уведомление
-        await api.post(`/notifications/`, {
-          notification_type: "Accept_team",
-          message: `Ваша заявка на вступление в команду "${teamName}" была принята.`,
-          user: applicantUserId,
-          status: "nonreading",
-        });
-
         // 4) перезагружаем список заявок
         await this.fetchJoinRequests();
         return response.data;
@@ -308,18 +297,6 @@ async fetchJoinRequests() {
         // 2) находим объект заявки
         const jr = this.joinRequests.find(r => r.id === requestId);
         if (!jr) throw new Error("Заявка не найдена в локальном списке");
-
-        const applicantUserId = jr.user; // ID того, кто отправил заявку
-        const teamName = this.team.name; // название команды
-
-        // 3) шлём уведомление
-        await api.post(`/notifications/`, {
-          notification_type: "Cancel_team",
-          message: `Ваша заявка на вступление в команду "${teamName}" была отклонена.`,
-          user: applicantUserId,
-          status: "nonreading",
-        });
-
 
         this.fetchJoinRequests();  // Перезагружаем заявки
       } catch (error) {

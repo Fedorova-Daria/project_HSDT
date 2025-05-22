@@ -1,7 +1,7 @@
 <template>
   <div class="bg-lightBackground dark:bg-darkBackground">
     <header
-      class="flex items-center justify-between px-8 py-4 border-b border-dynamic"
+      class="flex items-center justify-between px-8 py-4 shadow-md rounded-4xl relative z-10"
     >
       <!-- Логотип слева -->
       <div class="flex items-center">
@@ -9,10 +9,10 @@
           :style="{ color: instituteStyle?.textColor }"
           class="font-display text-3xl"
         >
-          <div class="relative">
+          <div class="relative z-50">
             <button
               @click="toggleDropdown"
-              class="flex items-center px-4 py-2 rounded-lg transition hover:shadow-lg"
+              class="flex items-center institute-text px-4 py-2 rounded-lg transition hover:shadow-lg duration-300"
             >
               {{ selectedInstitute }}
               <svg
@@ -32,13 +32,13 @@
             </button>
             <ul
               v-if="isDropdownOpen"
-              class="absolute left-0 w-50 mt-2 bg-card text-dynamic rounded-lg shadow-lg z-10"
+              class="absolute left-0 w-50 mt-2 bg-card text-dynamic rounded-lg shadow-lg z-50"
             >
               <li
                 v-for="inst in institutes"
                 :key="inst"
                 @click="changeInstitute(inst)"
-                class="py-2 px-4 cursor-pointer hover:bg-zinc-600 rounded-lg"
+                class="py-2 px-4 cursor-pointer dropDown rounded-lg z-10"
               >
                 {{ inst }}
               </li>
@@ -53,7 +53,7 @@
           <input
             id="checkbox"
             type="checkbox"
-            :checked="isDarkTheme"
+            :checked="isDark"
             @change="toggleTheme"
           />
           <span class="slider">
@@ -143,6 +143,8 @@
 import { instituteStyles } from "@/assets/instituteStyles.js"; // Импортируем карту стилей
 import Notifications from "@/components/notific.vue";
 import Cookies from "js-cookie";
+import api from "@/composables/auth"; // Предварительно настроенный экземпляр axios
+import { useTheme } from "@/composables/useTheme";
 
 export default {
   name: "Header",
@@ -150,7 +152,7 @@ export default {
   components: { Notifications },
   data() {
     return {
-      isDarkTheme: false,
+      isDark: false,
       isDropdownOpen: false,
       localSelectedInstitute: Cookies.get("institute") || "TYIU",
       showNotifications: false, // Управляет видимостью меню уведомлений
@@ -172,6 +174,9 @@ export default {
         TYIU: "ТИУ",
       },
     };
+  },
+  mounted() {
+    this.initTheme();
   },
   computed: {
     menuItems() {
@@ -300,29 +305,34 @@ export default {
         notification.read = true;
       });
     },
-    /**
-     * Переключает тему и сохраняет выбор в localStorage.
-     */
-    toggleTheme() {
-      const html = document.documentElement;
-      const isDark = html.classList.contains("dark");
-      localStorage.setItem("theme", isDark ? "light" : "dark");
-      html.classList.toggle("dark");
-      this.isDarkTheme = !isDark;
-    },
-    /**
-     * Применяет текущую тему, добавляя соответствующий класс к элементу <html>.
-     */
-    applyTheme() {
-      const root = document.documentElement;
-      if (this.isDarkTheme) {
-        root.classList.add("dark-theme");
-        root.classList.remove("light-theme");
-      } else {
-        root.classList.add("light-theme");
-        root.classList.remove("dark-theme");
-      }
-    },
+    initTheme() {
+  const { applyTheme } = useTheme();
+  const userData = JSON.parse(localStorage.getItem("userData"));
+  if (userData && userData.mode) {
+    applyTheme(userData.mode);
+    this.isDark = userData.mode === "dark"; // 👈 вот это
+  }
+},
+
+    async toggleTheme() {
+  const userData = JSON.parse(localStorage.getItem("userData"));
+  if (!userData) return;
+
+  const newMode = userData.mode === "dark" ? "light" : "dark";
+
+  try {
+    await api.post("/users/change-theme/", { mode: newMode });
+    userData.mode = newMode;
+    localStorage.setItem("userData", JSON.stringify(userData));
+
+    const { applyTheme } = useTheme();
+    applyTheme(newMode);
+
+    this.isDark = newMode === "dark"; // 👈 вот это
+  } catch (error) {
+    console.error("Ошибка при смене темы:", error);
+  }
+},
     toggleDropdown() {
       this.isDropdownOpen = !this.isDropdownOpen;
     },
@@ -376,13 +386,6 @@ export default {
     "$route.fullPath": "updateInstituteFromRoute", // Теперь следим за полным путём
   },
   created() {
-    const savedTheme =
-      localStorage.getItem("theme") ||
-      (window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light");
-    document.documentElement.classList.add(savedTheme);
-
     const userData = JSON.parse(Cookies.get("userData") || "{}");
     const institute = userData.institute || "TYIU";
     // Если данные пользователя (например, имя, фамилия, аватар) сохранены в localStorage,
@@ -437,8 +440,34 @@ export default {
   overflow: hidden;
 }
 
+/* ТЁМНАЯ ТЕМА (input:checked) — луна, звезды */
 .switch input:checked + .slider {
-  background-color: var(--switch-checked-bg, #00a6ff);
+  background-color: var(--switch-bg, #2a2a2a); /* тёмный фон */
+}
+.switch input:checked + .slider:before {
+  transform: translateX(1.8em); /* КРУГ вправо */
+  box-shadow: inset 8px -4px 0px 0px #fff; /* луна */
+}
+.switch input:checked ~ .slider .star {
+  opacity: 1; /* звезды появляются */
+}
+.switch input:checked ~ .slider .cloud {
+  opacity: 0; /* облака исчезают */
+}
+
+/* СВЕТЛАЯ ТЕМА (input НЕ checked) — солнце, облака */
+.switch input:not(:checked) + .slider {
+  background-color: var(--switch-checked-bg, #00a6ff); /* светлый фон */
+}
+.switch input:checked + .slider:before {
+  transform: translateX(0); /* влево */
+  box-shadow: inset 8px -4px 0px 0px #fff; /* луна */
+}
+.switch input:not(:checked) ~ .slider .star {
+  opacity: 0; /* звезды исчезают */
+}
+.switch input:not(:checked) ~ .slider .cloud {
+  opacity: 1; /* облака появляются */
 }
 
 .slider:before {
@@ -451,12 +480,8 @@ export default {
   bottom: 0.5em;
   transition: 0.4s;
   transition-timing-function: cubic-bezier(0.81, -0.04, 0.38, 1.5);
-  box-shadow: inset 8px -4px 0px 0px #fff;
-}
-
-.switch input:checked + .slider:before {
-  transform: translateX(1.8em);
-  box-shadow: inset 15px -4px 0px 15px #ffcf48;
+  transform: translateX(1.8em); /* изначально СПРАВА */
+  box-shadow: inset 15px -4px 0px 15px #ffcf48; /* солнце */
 }
 
 .star {
@@ -481,10 +506,6 @@ export default {
   top: 0.9em;
 }
 
-.switch input:checked ~ .slider .star {
-  opacity: 0;
-}
-
 .cloud {
   width: 3.5em;
   position: absolute;
@@ -492,10 +513,6 @@ export default {
   left: -1.1em;
   opacity: 0;
   transition: all 0.4s;
-}
-
-.switch input:checked ~ .slider .cloud {
-  opacity: 1;
 }
 
 .group:hover {

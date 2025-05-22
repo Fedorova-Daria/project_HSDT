@@ -1,7 +1,7 @@
 <template>
   <div>
     <table class="w-full border-collapse shadow-lg rounded-lg overflow-hidden mt-5">
-      <thead class="bg-card text-white">
+      <thead class="bg-card text-dynamic">
         <tr>
           <th class="p-3 text-left w-10"></th>
           <th class="p-3 text-left ">Название команды</th>

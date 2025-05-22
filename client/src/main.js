@@ -3,28 +3,12 @@ import { createApp, reactive } from "vue";
 import App from "./App.vue";
 import router from "./router";
 import UserService from "@/composables/storage.js"; // Импортируем нужные функции
+import { useTheme } from "./composables/useTheme";
 
 const app = createApp(App);
 
-document.addEventListener("DOMContentLoaded", () => {
-  // Считываем сохранённую тему из LocalStorage
-  const savedTheme = localStorage.getItem("theme") || "light";
-  document.documentElement.classList.toggle(
-    "dark-theme",
-    savedTheme === "dark"
-  );
-
-  // Привязываем переключатель к логике изменения темы
-  const themeSwitch = document.getElementById("checkbox");
-  themeSwitch.checked = savedTheme === "dark";
-
-  themeSwitch.addEventListener("change", () => {
-    const isDark = themeSwitch.checked;
-    document.documentElement.classList.toggle("dark-theme", isDark);
-    document.documentElement.classList.toggle("light-theme", !isDark);
-    localStorage.setItem("theme", isDark ? "dark" : "light");
-  });
-});
+const { initTheme } = useTheme();
+initTheme(); // применяем тему до запуска приложения
 
 // Глобальное реактивное состояние
 const globalState = reactive({
