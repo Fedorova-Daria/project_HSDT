@@ -31,7 +31,7 @@
   <!-- Блок с иконками теперь прижат к низу -->
   <div>
 <div class="mt-auto flex justify-end gap-5">
-    <img @click="toggleEditing" class="w-6 h-6 cursor-pointer" src="/pencil1.svg"/>
+    <img @click="toggleEditing" class="w-6 h-6 cursor-pointer" src="/pencil_light.svg"/>
     <button
     v-if="isEditing"
     @click="saveAllChanges"

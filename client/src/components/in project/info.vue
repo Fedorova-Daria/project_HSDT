@@ -39,7 +39,7 @@
               v-if="isOwner"
               @click="toggleEditing"
               class="w-6 h-6 cursor-pointer"
-              src="/pencil1.svg"
+              src="/pencil_light.svg"
             />
             <button
               v-if="isEditing && isOwner"

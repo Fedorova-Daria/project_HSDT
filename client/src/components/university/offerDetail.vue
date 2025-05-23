@@ -44,7 +44,7 @@
       </div>
       
   <div class="mt-auto flex justify-end gap-5">
-      <img v-if="isOwner" @click="toggleEditing" class="w-6 h-6 cursor-pointer" src="/pencil1.svg"/>
+      <img v-if="isOwner" @click="toggleEditing" class="w-6 h-6 cursor-pointer" src="/pencil_light.svg"/>
       <button
       v-if="isEditing && isOwner"
       @click="saveAllChanges"
