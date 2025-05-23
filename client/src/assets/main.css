@@ -11,7 +11,7 @@ body {
 /* Светлая тема */
 .light {
   --color-background: #ffffff; /* белый фон */
-  --text-color: #000000;       /* строго черный текст */
+  --text-color: #000000; /* строго черный текст */
   --text-colorinput: #202020;
 
   /* Остальные цвета (карточки, бордеры, ховеры) */
@@ -28,7 +28,7 @@ body {
 /* Тёмная тема */
 .dark {
   --color-background: #141414; /* тёмный фон */
-  --text-color: #ffffff;       /* строго белый текст */
+  --text-color: #ffffff; /* строго белый текст */
   --text-colorinput: #b4b4b4;
 
   /* Остальные цвета (карточки, бордеры, ховеры) */
@@ -52,14 +52,14 @@ body {
 
 .bg-input {
   background-color: var(--color-input);
-  color: var(--text-colorinput)
+  color: var(--text-colorinput);
 }
 
 /* Общие стили */
 body,
 .card,
 button {
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.5s ease, color 0.5s ease;
   color: var(--text-color) !important; /* принудительно задаём текст */
 }
 
@@ -68,7 +68,9 @@ button {
 }
 
 .texth2-dynamic {
-  color: var(--text-color); /* убрал оттенки, чтобы был строго чёрный или белый */
+  color: var(
+    --text-color
+  ); /* убрал оттенки, чтобы был строго чёрный или белый */
 }
 
 .dropDown {
@@ -91,7 +93,7 @@ button {
 /* Свитч */
 .slider {
   background-color: var(--switch-bg);
-  transition: background-color 0.3s ease;
+  transition: background-color 0s ease;
 }
 
 .switch input:checked + .slider {
