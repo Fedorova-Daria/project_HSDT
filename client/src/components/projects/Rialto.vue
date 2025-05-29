@@ -384,8 +384,6 @@ export default {
 
 .flipper {
   transition: transform 0.6s ease-in-out;
-  transform-style: preserve-3d;
-  position: relative;
 }
 
 .flip-container:hover .flipper {
