@@ -8,7 +8,7 @@
       <div class="h-full overflow-hidden p-3 pt-16 w-4/5 m-auto">
         <!-- Описание канбан-доски -->
         <div class="">
-          <p class="text-white text-2xl mt-4">
+          <p class="text-2xl mt-4">
             Это канбан-доска для планирования и работы над проектными задачами.
             Вы можете создавать колонки, перемещать карточки и организовывать
             спринты.
@@ -19,7 +19,7 @@
         <div class="mb-4 flex justify-end relative" ref="dropdownWrapper">
           <button
             @click="toggleDropdownn"
-            class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800" type="button">Добавить колонку <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+            class="text-always-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800" type="button">Добавить колонку <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
             </svg>
           </button>
@@ -66,7 +66,7 @@
       >
         <template #item="{ element }">
           <div
-            class="flex-shrink-0 pb-3 flex flex-col w-80 bg-white dark:bg-zinc-700 rounded-md shadow"
+            class="flex-shrink-0 pb-3 flex flex-col w-80 bg-card rounded-md shadow"
             :style="{ height: '600px' }"
           >
             <!-- Заголовок колонки с редактированием -->
@@ -83,7 +83,7 @@
               />
               <h3
                 v-else
-                class="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200 text-lg cursor-text"
+                class="px-3 py-2 font-semibold text-lg cursor-text"
                 @dblclick="editColumnTitle(element)"
               >
                 {{ element.title }}
@@ -122,7 +122,7 @@
                 <div
                   v-if="dropdownOpen[element.id]"
                   :ref="'dropdown_' + element.id"
-                  class="absolute right-0 mt-1 w-32 bg-white dark:bg-gray-600 rounded shadow-md py-1 z-10 border border-gray-200 dark:border-gray-500"
+                  class="absolute right-0 mt-1 w-32 bg-input rounded shadow-md py-1 z-10 border border-gray-200 dark:border-gray-500"
                 >
                   <button
                     @click="editColumnTitle(element)"
@@ -132,7 +132,7 @@
                   </button>
                   <button
                     @click="deleteColumn(element.id)"
-                    class="block w-full text-left px-3 py-1 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-500"
+                    class="block w-full text-left px-3 py-1 text-sm text-red hover:bg-gray-100 dark:hover:bg-gray-500"
                   >
                     Удалить
                   </button>
@@ -157,7 +157,7 @@
             >
               <template #item="{ element: task }">
                 <div
-                  class="block p-3 rounded-md bg-white dark:bg-zinc-600 shadow cursor-pointer hover:shadow-md transition-shadow mt-2"
+                  class="block p-3 rounded-md bg-card shadow-lg cursor-pointer hover:shadow-ml transition-shadow mt-2"
                   @click="openModal(task)"
                 >
         
@@ -168,7 +168,7 @@
                       @blur="saveTask(task)"
                       @input="adjustTextAreaHeight"
                       @keydown.enter="saveTask(task)"
-                      class="w-full p-1 border rounded resize-none text-white"
+                      class="w-full p-1 border rounded resize-none"
                       rows="1"
                       autofocus
                     />
@@ -177,9 +177,9 @@
                   <!-- Если не в режиме редактирования, отображаем обычный заголовок -->
                   <div v-else @dblclick="editTask(task)" class="flex justify-between">
                     <p
-                    class="text-sm font-medium text-gray-900 dark:text-gray-100 leading-snug"
+                    class="text-sm font-medium leading-snug "
                     :style="{ width: '225px' }"
-                    :class="{ 'line-through text-gray-500 dark:text-zinc-400': task.column_type === 'completed' }"
+                    :class="{ 'line-through ': task.column_type === 'completed' }"
                   >
                     {{ task.title }}
                   </p>
@@ -241,13 +241,13 @@
 
             <!-- Модальное окно -->
     <transition name="slide">
-      <div v-if="localTask" class="fixed right-0 top-0 h-full w-200 bg-white dark:bg-zinc-700 shadow-lg z-50 p-6 overflow-y-auto">
+      <div v-if="localTask" class="fixed right-0 top-0 h-full w-200 bg-card shadow-lg z-50 p-6 overflow-y-auto">
         <!-- Заголовок -->
         <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-semibold text-gray-900 dark:text-zinc-100">
+          <h2 class="text-xl font-semibold">
             <input
               v-model="localTask.title"
-              class="w-170 px-2 py-1 text-lg font-semibold bg-white dark:bg-zinc-700 rounded border border-zinc-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              class="w-170 px-2 py-1 text-lg font-semibold bg-input rounded-md p-2 focus:outline-none focus:ring-0 focus:border-none"
             />
           </h2>
           <button @click="closeModal" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
@@ -258,14 +258,14 @@
         <!-- Описание задачи -->
         <textarea
           v-model="localTask.message"
-          class="w-[700px] h-[650px] p-2 border rounded resize-none bg-gray-100 dark:bg-zinc-700 text-gray-900 border-zinc-700 dark:text-gray-100"
+          class="w-[700px] h-[650px] resize-none bg-input rounded-md p-2 focus:outline-none focus:ring-0 focus:border-none"
           placeholder="Введите описание задачи..."
         ></textarea>
 
         <!-- Выбор исполнителя -->
         <div class="mt-4">
-          <label class="block text-zinc-700 dark:text-zinc-300 font-medium mb-2">Назначить исполнителя:</label>
-          <select v-model="localTask.assigned_to" class="w-full p-2 border rounded bg-gray-100 border-zinc-400 dark:bg-zinc-600 text-white">
+          <label class="block font-medium mb-2">Назначить исполнителя:</label>
+          <select v-model="localTask.assigned_to" class="w-full border bg-input bg-input rounded-md p-2 focus:outline-none focus:ring-0 focus:border-none">
             <option v-for="member in teamMembers" :key="member.id" :value="member.id">
               {{ member.full_name }}
             </option>
@@ -274,7 +274,7 @@
 
         <!-- Кнопки -->
         <div class="flex justify-end space-x-3 mt-4">
-          <button @click="saveTask(localTask)" class="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600">
+          <button @click="saveTask(localTask)" class="px-4 py-2 bg-indigo-500 text-always-white rounded hover:bg-indigo-600">
             Сохранить
           </button>
           <button @click="closeModal" class="px-4 py-2 bg-gray-300 text-zinc-700 rounded hover:bg-gray-400">
@@ -699,6 +699,9 @@ handleClickOutside(event) {
 </script>
 
 <style scoped>
+.text-red{
+  color: red !important;
+}
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
   height: 6px;

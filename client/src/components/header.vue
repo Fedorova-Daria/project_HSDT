@@ -96,7 +96,10 @@
         <!-- Кнопка уведомлений -->
         <div class="relative">
           <button class="relative p-1" @click="toggleNotifications">
-            <img src="/notificate.svg" alt="notification" class="w-6" />
+            <img 
+            :src="isDarkTheme ? '/notificate.svg' :'/notificate_dark.svg' "
+            alt="notification" 
+            class="w-6" />
             <span
               v-if="unreadNotificationsCount > 0"
               class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center"
@@ -153,6 +156,7 @@ export default {
   data() {
     return {
       isDark: false,
+      userData:null,
       isDropdownOpen: false,
       localSelectedInstitute: Cookies.get("institute") || "TYIU",
       showNotifications: false, // Управляет видимостью меню уведомлений
@@ -177,8 +181,16 @@ export default {
   },
   mounted() {
     this.initTheme();
+    this.fetchUserData();
   },
   computed: {
+    isDarkTheme() {
+    if (!this.userData) return false;
+    return this.userData.mode === 'dark';
+  },
+  pathFillColor() {
+      return this.isDarkTheme ? "white" : "black";
+    },
     menuItems() {
       const latinInstitute =
         this.instituteMap[this.localSelectedInstitute] ||
@@ -277,6 +289,11 @@ export default {
     },
   },
   methods: {
+    async fetchUserData() {
+      const response = await api.get('/users/me');
+      this.userData = response.data;
+      return response.data;
+    },
     toggleNotifications() {
       this.showNotifications = !this.showNotifications;
 
@@ -517,5 +534,9 @@ export default {
 
 .group:hover {
   color: var(--hover-color);
+}
+
+.dark-filter {
+  filter: invert(1);
 }
 </style>

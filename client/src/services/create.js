@@ -15,6 +15,8 @@ export const createIdeaOrProject = async (formData) => {
     title: formData.title,
     description: formData.description,
     status: formData.status,
+    semester: formData.semester,
+    institutes: formData.institutes,
     skills_required: (formData.technologies || []).map(Number),
   };
   

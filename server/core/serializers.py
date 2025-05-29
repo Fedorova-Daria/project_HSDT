@@ -1,7 +1,7 @@
 # core/serializers.py
 
 from rest_framework import serializers
-from .models import UniversityGroup, Technology
+from .models import UniversityGroup, Technology, Semester
 
 
 class GroupSerializer(serializers.ModelSerializer):
@@ -14,3 +14,7 @@ class TechnologySerializer(serializers.ModelSerializer):
         model = Technology
         fields = "__all__"
 
+class SemesterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Semester
+        fields = ['id', 'year', 'semester']

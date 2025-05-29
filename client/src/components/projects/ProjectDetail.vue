@@ -6,12 +6,13 @@
     >
       <button
         @click="goBack"
-        class="ml-auto bg-buttonoff hover:bg-buttonon text-white font-medium rounded-lg text-sm px-4 py-2 mt-5 duration-300 h-10"
+        :style="{ backgroundColor: currentBgColor }"
+        class="ml-auto font-medium rounded-lg text-sm px-4 py-2 mt-5 duration-300 h-10 w-14 items-center"
       >
         <svg
           width="13"
-          height="10"
-          viewBox="0 0 13 10"
+          height="13"
+          viewBox="0 0 17 13"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
@@ -27,20 +28,23 @@
         style="height: 300px"
       >
         <div class="flex-grow overflow-auto">
-          <h2 v-if="!isEditing" class="text-2xl font-semibold mb-4">
+          <h2 v-if="!isEditing" class="text-2xl font-semibold mb-4 ">
             {{ idea.title || "Загрузка..." }}
           </h2>
           <input
             v-else
             v-model="editedIdea.title"
-            class="w-full text-2xl bg-input rounded-md p-2"
+            class="w-full text-2xl bg-input rounded-md p-2 focus:outline-none focus:ring-0 focus:border-none"
           />
 
           <h3 class="text-xl font-semibold mb-2">
             Инициатор: {{ idea.initiator || "Неизвестный автор" }}
           </h3>
 
-          <p class="text-gray-400">
+          <h4 v-if="idea.initiator !== idea.owner?.full_name" class="text-xl mb-2">
+            Создал идею: {{ idea.owner?.full_name || "Неизвестный автор" }}
+          </h4>
+          <p class="opacity-70">
             Дата создания:
             {{ new Date(idea.created_at).toLocaleDateString("ru-RU") }}
           </p>
@@ -109,9 +113,9 @@
               class="w-7 h-7 cursor-pointer"
             >
               <svg
-                width="23"
-                height="23"
-                viewBox="0 0 12 9"
+                width="20"
+                height="20"
+                viewBox="0 0 13 9"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
@@ -123,12 +127,12 @@
             </button>
             <button
               v-if="isOwner"
-              @click="handleDeleteProject(ideaId)"
+              @click="showConfirmModal = true"
               class="h-6 w-6"
             >
               <svg
-                width="22"
-                height="22"
+                width="20"
+                height="20"
                 viewBox="0 0 14 16"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -139,6 +143,34 @@
                 />
               </svg>
             </button>
+
+
+            <!-- МОДАЛКА подтверждения удаления -->
+            <teleport to="body">
+            <div v-if="showConfirmModal" class="fixedd fixed inset-0 flex items-center justify-center bg-black z-100">
+              <div class="bg-card p-6 rounded-xl shadow-xl w-80 text-center">
+                <h2 class="text-lg font-semibold mb-3">Удалить проект?</h2>
+                <p class="text-sm opacity-60 mb-6">Вы действительно хотите удалить этот проект? Это действие необратимо.</p>
+                <div class="flex justify-center gap-4">
+                  <button
+                    @click="confirmDelete"
+                    class=" text-red px-4 py-2 rounded font-semibold"
+                  >
+                    Да, удалить
+                  </button>
+                  <button
+                    @click="showConfirmModal = false"
+                    class="bg-gray-300 hover:bg-gray-400 text-always-black px-4 py-2 rounded font-semibold"
+                  >
+                    Отмена
+                  </button>
+                </div>
+              </div>
+            </div>
+            </teleport>
+
+
+
           </div>
         </div>
       </div>
@@ -146,41 +178,45 @@
         class="w-3/4 mt-5 bg-card rounded-lg p-6 overflow-auto"
         style="height: auto; max-height: 100vh; overflow-y: auto"
       >
-        <h2 class="text-2xl text-white font-semibold mb-4">Описание идеи</h2>
-        <p v-if="!isEditing" class="text-gray-400">
+        <h2 class="text-2xl font-semibold mb-4">Описание идеи</h2>
+        <div v-if="isEditing">
+          <label for="status" class="font-semibold mb-3">Изменить статус:</label>
+          <select
+            id="status"
+            v-model="editedIdea.status"
+            @change="updateStatus"
+            class="w-full bg-input rounded-md p-2 mt-3 mb-3"
+          >
+            <option value="in_progress">В процессе</option>
+            <option value="open">Открытый</option>
+            <option value="done">Завершён</option>
+            <option value="draft">Приостановлен</option>
+          </select>
+        </div>
+        <p v-if="!isEditing" class="opacity-70">
           {{ idea.description }}
         </p>
         <textarea
           v-else
           v-model="editedIdea.description"
-          class="w-full bg-input rounded-md p-2"
+          class="w-full bg-input rounded-md p-2 focus:outline-none focus:ring-0 focus:border-none"
         ></textarea>
-        <div v-if="isEditing">
-          <label for="status">Статус:</label>
-          <select
-            id="status"
-            v-model="editedIdea.status"
-            @change="updateStatus"
-            class="w-full bg-input rounded-md p-2"
-          >
-            <option value="">Не задан</option>
-            <option value="active">Активный</option>
-            <option value="completed">Завершён</option>
-            <option value="paused">Приостановлен</option>
-          </select>
-        </div>
+        
       </div>
     </div>
 
-    <div class="w-4/5 m-auto flex flex-col gap-4 ml-53">
+    <div class="w-4/5 m-auto flex flex-col gap-4">
       <button
-        @click="submitApplication"
-        class="text-always-white w-88 ml-20 inline-flex items-center bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:outline-none focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-800"
+      :style="{ backgroundColor: currentBgColor }"
+        @mouseover="currentBgColor = instituteStyle.buttonOnColor"
+        @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
+        @click="handleSubmitJoinRequest"
+        class="text-always-white w-88 ml-20 inline-flex items-center gap--2 focus:outline-none font-medium rounded-lg text-sm px-2 py-2.5"
       >
         <svg
-          class="me-1 -ms-1 w-5 h-5"
+          class="me-1 -ms-1 w-10 h-10"
           fill="currentColor"
-          viewBox="0 0 20 20"
+          viewBox="0 -2 15 25"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -194,21 +230,113 @@
 
       <button
         @click="openModal"
-        class=" text-always-white w-88 ml-20 inline-flex items-center bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:outline-none focus:ring-purple-300 font-medium rounded-lg text-sm px-2 py-2.5 text-center dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-800"
+        :style="{ backgroundColor: currentBgColor }"
+        @mouseover="currentBgColor = instituteStyle.buttonOnColor"
+        @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
+        class=" text-always-white w-88 ml-20 inline-flex items-center focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-3 text-center"
       >
         Посмотреть заявки
       </button>
 
       <button
         @click="openKanban"
-        class="text-always-white w-88 ml-20 inline-flex items-center transition font-medium rounded-lg text-sm px-2 py-2.5 text-center"
+        class="text-always-white w-88 ml-20 inline-flex items-center transition font-medium rounded-lg text-sm px-5 py-3 text-center"
         :style="{ backgroundColor: currentBgColor }"
         @mouseover="currentBgColor = instituteStyle.buttonOnColor"
         @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
       >
         Работа над проектом
       </button>
+      <button v-if="userRole === 'EX'" @click="openRevisionModal(idea)"
+      class="text-always-white w-88 ml-20 inline-flex items-center transition font-medium rounded-lg text-sm px-5 py-3 text-center"
+        :style="{ backgroundColor: currentBgColor }"
+        @mouseover="currentBgColor = instituteStyle.buttonOnColor"
+        @mouseleave="currentBgColor = instituteStyle.buttonOffColor">
+  Отправить на доработку
+</button>
     </div>
+<div class="fixed bottom-8 right-8 z-50">
+    <!-- Ярлык чата -->
+    <div 
+      @mouseenter="openChat"
+      @mouseleave="tryCloseChat"
+      class="bg-zinc-600 text-always-white px-6 py-3 rounded-xl cursor-pointer shadow-lg transition-all duration-300 flex items-center"
+      :class="{'rounded-b-xl': !isOpen}"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+      </svg>
+      Чат с экспертом
+    </div>
+
+    <!-- Окно чата -->
+    <transition
+      enter-active-class="transition-all duration-300 ease-out"
+      leave-active-class="transition-all duration-300 ease-in"
+      enter-from-class="opacity-0 scale-95 translate-y-4"
+      enter-to-class="opacity-100 scale-100 translate-y-0"
+      leave-from-class="opacity-100 scale-100 translate-y-0"
+      leave-to-class="opacity-0 scale-95 translate-y-4"
+    >
+      <div 
+        v-if="isOpen"
+        @mouseenter="keepChatOpen"
+        @mouseleave="tryCloseChat"
+        class="w-80 bg-white rounded-tl-xl rounded-b-xl shadow-xl overflow-hidden"
+      >
+        <!-- Заголовок чата -->
+        <div class="bg-zinc-600 text-always-white p-4 flex justify-between items-center">
+          <h3 class="font-semibold text-ml">Эксперт рекомендует</h3>
+          <button @click="isOpen = false" class="">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 26" stroke="white">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Сообщения -->
+        <div class="h-64 p-4 overflow-y-auto bg-gray-50 flex-col flex gap-4">
+          <div class="mb-4">
+            <div class="items-start">
+              <div v-for="msg in messages"
+    :key="msg.id"
+    class="bg-blue-100 p-3 rounded-xl rounded-tl-none mt-3">
+                <p class="text-gray-800"> {{ msg.text }} </p>
+                <p class="text-xs text-gray-500 mt-1">{{ msg.sender_name }} — {{ formatDate(msg.created_at) }} </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Кнопка подтверждения -->
+        <div class="p-4 border-t border-gray-200 bg-white">
+          <button 
+            @click="confirmChanges(idea)"
+            class="w-full bg-green-500 hover:bg-green-600 text-always-white py-2 px-4 rounded-lg transition-colors duration-300 flex items-center justify-center"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            Подтвердить изменения
+          </button>
+        </div>
+      </div>
+    </transition>
+  </div>
+
+<teleport to="body">
+<div v-if="showRevisionModal" class="fixedd fixed inset-0 flex items-center justify-center bg-black z-100">
+    <div class="bg-card p-6 rounded-xl shadow-xl w-80 text-center">
+      <h3 class="text-lg font-semibold mb-3" >Отправить на доработку</h3>
+      <textarea class="w-full text-ml bg-input rounded-md p-2 focus:outline-none focus:ring-0 focus:border-none" v-model="revisionMessage" placeholder="Напишите сообщение..."></textarea>
+      <div class="flex justify-center gap-4 mt-3">
+        <button class="bg-green-600 px-4 py-2 rounded font-semibold text-always-white text-ml" @click="sendRevision(idea)">Отправить</button>
+        <button class="text-red font-semibold px-4 py-2" @click="showRevisionModal = false">Отмена</button>
+      </div>
+    </div>
+  </div>
+</teleport>
+
 
     <RespondedTeams
       v-if="isModalOpen"
@@ -244,10 +372,18 @@ export default {
   },
   data() {
     return {
+      messages: {},
+      showRevisionModal: false,
+      revisionMessage: "",
+      currentIdea: null,
+      isOpen: false,
+      isMouseOverChat: false,
       currentBgColor: "",
       userData: null,
       userId: JSON.parse(localStorage.getItem("userData") || "{}")?.id,
+      userRole: JSON.parse(localStorage.getItem("userData") || "{}")?.role,
       errorModalVisible: false,
+      showConfirmModal: false,
       errorModalMessage: "",
       confirmModalVisible: false,
       confirmModalMessage: "",
@@ -304,6 +440,8 @@ export default {
   mounted() {
     this.fetchTeamData();
     this.fetchUserData();
+    this.currentBgColor = this.instituteStyle.buttonOffColor;
+    this.fetchMessages(this.ideaId);
   },
   watch: {
     ideaId: {
@@ -314,8 +452,82 @@ export default {
         }
       },
     },
+    instituteStyle: {
+      handler(newStyle) {
+        this.currentBgColor = newStyle.buttonOffColor;
+      },
+      immediate: true,
+    },
   },
   methods: {
+    formatDate(date) {
+  return new Date(date).toLocaleString('ru-RU', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+},
+    openChat() {
+      this.isOpen = true
+      this.isMouseOverChat = true
+    },
+    tryCloseChat() {
+      this.isMouseOverChat = false
+      setTimeout(() => {
+        if (!this.isMouseOverChat) {
+          this.isOpen = false
+        }
+      }, 300)
+    },
+    keepChatOpen() {
+      this.isMouseOverChat = true
+    },
+    closeChat() {
+      this.isOpen = false
+    },
+    openRevisionModal(idea) {
+    this.currentIdea = idea;
+    this.revisionMessage = "";
+    this.showRevisionModal = true;
+  },
+  async sendRevision(idea) {
+    try {
+      await api.post(`/projects/${idea.id}/send_for_revision/`, {
+  text: this.revisionMessage,
+  is_revision_request: true
+});
+    } catch (err) {
+      console.error("Ошибка отправки на доработку", err);
+    }
+  },
+  async fetchMessages(projectId) {
+  try {
+    const res = await api.get(`/projects/${projectId}/messages/`);
+    this.messages = res.data;
+  } catch (e) {
+    console.error("Не удалось загрузить сообщения:", e);
+  }
+},
+    async confirmChanges(idea) {
+  try {
+    if (idea.status === 'under_revision') {
+      // Обновляем статус локально
+      idea.status = 'review';
+
+      // Отправляем PATCH запрос с обновлённым статусом
+      await api.patch(`/projects/${idea.id}/`, {
+        status: idea.status
+      });
+
+      // Можно обновить локальные данные, если нужно
+      // Например, вызвать метод обновления в списке
+    }
+  } catch (err) {
+    console.error("Ошибка при подтверждении изменений", err);
+  }
+},
     async fetchUserData() {
       const response = await api.get('/users/me');
       this.userData = response.data;
@@ -324,24 +536,20 @@ export default {
     openKanban() {
       this.$router.push(`/${this.selectedInstitute}/project/${this.ideaId}/kanban`);
   },
+  confirmDelete() {
+    this.handleDeleteProject(this.ideaId); // вызываем удаление
+    this.showConfirmModal = false; // закрываем модалку
+  },
     async handleDeleteProject(ideaId) {
-      try {
-        const confirmation = confirm(
-          "Вы уверены, что хотите удалить проект? Это действие необратимо."
-        );
-        if (!confirmation) return;
-
-        await deleteProject(ideaId);
-        this.$toast.success("Проект успешно удалён!");
-        this.$router.push("/projects");
-      } catch (error) {
-        console.error(
-          "Ошибка при удалении проекта:",
-          error.response?.data || error
-        );
-        this.$toast.error("Не удалось удалить проект. Попробуйте позже.");
-      }
-    },
+  try {
+    await deleteProject(ideaId);
+    this.$router.go(-1);
+    this.$toast.success("Проект успешно удалён!");
+  } catch (error) {
+    console.error("Ошибка при удалении проекта:", error);
+    this.$toast.error("Не удалось удалить проект. Попробуйте позже.");
+  }
+},
     openModal() {
       this.isModalOpen = true;
     },
@@ -362,50 +570,52 @@ export default {
         return null;
       }
     },
-    async submitApplication() {
-      const teamId = UserService.getUserData.team;
-      let teamData = null;
-      if (teamId) {
-        teamData = await this.fetchTeamData();
-      }
+    async handleSubmitJoinRequest() {
+    const userId = this.userData.id;
 
-      if (teamData && teamData.owner !== this.currentUser.id) {
-        this.errorModalMessage =
-          "Вы не можете подать заявку, так как вы состоите в команде как участник.";
-        this.errorModalVisible = true;
+    try {
+      // 1. Проверяем, является ли пользователь владельцем какой-либо команды
+      const ownerTeamRes = await api.get(`/teams/?owner=${userId}`);
+      const ownerTeam = ownerTeamRes.data.length > 0 ? ownerTeamRes.data[0] : null;
+
+      if (ownerTeam) {
+        // Заявка от команды (если он владелец)
+        const applicationData = {
+          applicant_type: "team",
+          project: this.ideaId,
+          freelancer: null,
+          team: ownerTeam.id,
+        };
+        console.log(applicationData)
+        await createProjectApplication(applicationData);
+        this.$toast.success("Заявка от команды отправлена!");
         return;
       }
 
-      let applicantType = "freelancer";
-      const payload = {
-        applicant_type: "",
+      // 2. Проверяем, состоит ли он в другой команде (но не владелец)
+      const memberRes = await api.get(`/teams/?members_ids=${userId}`);
+      const isMember = memberRes.data.length > 0;
+
+      if (isMember) {
+        // Показываем сообщение об ошибке
+        this.$toast.error("Вы уже состоите в команде. Только владелец команды может подать заявку.");
+        return;
+      }
+
+      // 3. Если пользователь ни в одной команде — заявка от фрилансера
+      const applicationData = {
+        applicant_type: "freelancer",
         project: this.ideaId,
-        freelancer: null,
+        freelancer: userId,
         team: null,
       };
-
-      if (teamData && teamData.owner === this.currentUser.id) {
-        applicantType = "team";
-        payload.team = teamData.id;
-      } else if (!teamData) {
-        applicantType = "freelancer";
-        payload.freelancer = this.currentUser.id;
-      }
-      payload.applicant_type = applicantType;
-
-      try {
-        await createProjectApplication(payload);
-        this.confirmModalMessage =
-          applicantType === "team"
-            ? "Ваша заявка отправлена от имени команды."
-            : "Ваша заявка отправлена как фрилансер.";
-        this.confirmModalVisible = true;
-      } catch (error) {
-        this.errorModalMessage =
-          "Ошибка при отправке заявки. Попробуйте позже.";
-        this.errorModalVisible = true;
-      }
-    },
+      await createProjectApplication(applicationData);
+      this.$toast.success("Заявка от фрилансера отправлена!");
+    } catch (error) {
+      console.error("Ошибка при создании заявки:", error);
+      this.$toast.error("Не удалось подать заявку. Попробуйте позже.");
+    }
+  },
     toggleEditing() {
       if (!this.hasEditAccess) {
         alert("У вас нет прав на редактирование этой идеи!");
@@ -514,6 +724,19 @@ export default {
 </script>
 
 <style scoped>
+.fixedd {
+  background: rgba(0, 0, 0, 0.3); /* Полупрозрачный черный */
+  backdrop-filter: blur(5px); /* Эффект размытия */
+}
+
+.text-red{
+  color: red !important;
+}
+
+.text-green{
+  color: rgb(62, 172, 62) !important;
+}
+
 .likes-count {
   display: inline-block;
   width: 4ch;      /* фиксированная ширина в символах — под размер числа */

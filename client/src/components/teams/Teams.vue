@@ -7,7 +7,7 @@
     <div class="p-6 w-4/5 mx-auto relative">
       <!-- Кнопка "Создать команду" -->
       <button
-        class=" button mt-4 px-6 py-2 rounded-md transition-all transform hover:button:hover text-white"
+        class=" button mt-4 px-6 py-2 rounded-md transition-all text-always-white transform hover:button:hover"
         @click="openCreateModal"
       >
       Создать команду
@@ -18,7 +18,7 @@
       <TeamCreate
   :isCreateModalOpen="isCreateModalOpen"
   :availableTechStack="availableTechStack"
-  @close-create-modal="closeCreateModal"
+  @close="closeCreateModal"
   @create-team="createTeam"
 />
     </div>

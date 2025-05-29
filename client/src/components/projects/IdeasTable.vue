@@ -1,7 +1,7 @@
 <template>
     <table class="w-full mt-5 border-collapse shadow-lg rounded-lg overflow-hidden bg-card table-auto">
       <thead>
-        <tr class="bg-card text-center">
+        <tr class="bg-input text-center">
           <th class="px-6 py-3 w-10">#</th>
           <th class="px-6 py-3 w-1/4">Название</th>
           <th class="px-6 py-3 w-1/4">Инициатор</th>
@@ -73,9 +73,9 @@ import { instituteStyles } from "@/assets/instituteStyles.js";
       },
       getStatusStyle(status) {
       const statusStyles = {
-        draft: { color: "#f0f0f0", label: "Черновик" },
-        open: { color: "#2AC778",color: "#2AC778", label: "Доступен" },
-        under_review: { color: "#ffe5b4", label: "Рассматриваем" },
+        draft: { color: "#8E8E8E", label: "Черновик" },
+        open: { color: "#3DB87A", label: "Доступен" },
+        under_review: { color: "#C58E26", label: "Рассматриваем" },
         unknown: { color: "#cccccc", label: "Неизвестно" }
       };
       return statusStyles[status] || statusStyles.unknown;

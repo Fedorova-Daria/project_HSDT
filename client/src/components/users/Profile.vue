@@ -14,7 +14,7 @@
     <!-- Затемнение фона -->
     <!--<div class="absolute inset-0 bg-black opacity-60 -z-10"></div>-->
 
-    <div class="min-h-screen text-white flex flex-col relative z-10">
+    <div class="min-h-screen flex flex-col relative z-10">
       <!-- Хедер -->
       <Header />
 
@@ -26,7 +26,7 @@
         >
           <div class="text-center">
             <img
-              class="w-32 h-32 rounded-full border-4 border-purple-400 mx-auto cursor-pointer hover:border-purple-300 transition-colors"
+              class="w-32 h-32 rounded-full border-4 mx-auto cursor-pointer transition-colors"
               :src="userData.avatar || null"
               alt="Аватар пользователя"
               @click="showAvatarModal = true"
@@ -49,7 +49,7 @@
               <strong>Почта:</strong>
             </p>
             <div
-              class="w-auto mt-2 bg-zinc-700/50 text-sm rounded-lg p-2.5 border border-zinc-600"
+              class="w-auto mt-2 bg-input text-sm rounded-lg p-2.5 border border-zinc-600 font-medium"
             >
               {{ userData.email || "Не указано" }}
             </div>
@@ -57,9 +57,9 @@
               <strong>Группа:</strong>
             </p>
             <div
-              class="w-auto mt-2 bg-zinc-700/50 text-sm rounded-lg p-2.5 border border-zinc-600"
+              class="w-auto mt-2 bg-input text-sm rounded-lg p-2.5 border border-zinc-600 font-medium"
             >
-              {{ userData.group?.name || "Не указано" }}
+              {{ userData.university_group || "Не указано" }}
             </div>
           </div>
 
@@ -69,21 +69,24 @@
               <strong>Биография:</strong>
             </p>
             <div
-              class="w-auto mt-2 bg-zinc-700/50 text-dynamic text-sm rounded-lg p-2.5 border border-zinc-600 min-h-[100px]"
+              class="w-auto mt-2 bg-input text-dynamic text-sm rounded-lg p-2.5 border border-zinc-600 min-h-[100px] font-medium"
             >
               {{ userData.bio || "Пока ничего не рассказал о себе" }}
             </div>
           </div>
 
           <button
+          :style="{ backgroundColor: currentBgColor }"
+        @mouseover="currentBgColor = instituteStyle.buttonOnColor"
+        @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
             @click="showModal = true"
-            class="w-full mt-4 py-2 bg-purple-600 text-white rounded-lg transition duration-300 hover:bg-purple-500 hover:shadow-lg"
+            class="w-full mt-4 py-2 text-always-white rounded-lg transition duration-300 hover:shadow-lg"
           >
             Редактировать профиль
           </button>
           <button
             @click="logout"
-            class="w-full mt-2 py-2 bg-red-600 text-white rounded-lg transition duration-300 hover:bg-red-500 hover:shadow-lg"
+            class="w-full mt-2 py-2 bg-red-600 text-always-white rounded-lg transition duration-300 hover:bg-red-500 hover:shadow-lg"
           >
             Выйти
           </button>
@@ -103,31 +106,31 @@
                 <div
                   v-for="(project, index) in userProjects"
                   :key="index"
-                  class="mb-4 p-4 bg-zinc-600 rounded-lg"
+                  class="mb-4 p-4 bg-input rounded-lg"
                 >
                   <div class="flex justify-between items-start">
-                    <h4 class="font-medium text-lg">{{ project.name }}</h4>
+                    <h4 class="font-medium text-lg">{{ project.title }}</h4>
                     <span
                       :class="{
                         'bg-green-500': project.status === 'Завершен',
                         'bg-blue-500': project.status === 'В работе',
                         'bg-yellow-500': project.status === 'Заморожен',
                       }"
-                      class="px-2 py-1 rounded-full text-xs text-white"
+                      class="px-2 py-1 rounded-full text-xs"
                     >
                       {{ project.status }}
                     </span>
                   </div>
-                  <p class="text-sm text-gray-300 mt-1">
+                  <p class="text-sm mt-1">
                     {{ project.description }}
                   </p>
                   <div class="mt-2 flex justify-between items-center">
                     <div>
                       <span class="text-sm">Оценка: </span>
-                      <span class="font-bold">{{ project.grade }}/10</span>
+                      <span class="font-bold"> {{userProjects.averageRating }} /10</span>
                     </div>
                     <div>
-                      <span class="text-sm">{{ project.date }}</span>
+                      <span class="text-sm">Участие: с {{ formatDate(project.date) }} по {{ formatDate(project.endDate) }}</span>
                     </div>
                   </div>
                 </div>
@@ -141,35 +144,32 @@
                 <div
                   v-for="(team, index) in userTeams"
                   :key="index"
-                  class="mb-4 p-4 bg-zinc-600 rounded-lg"
+                  class="mb-4 p-4 bg-input rounded-lg"
                 >
                   <div class="flex justify-between items-start">
                     <h4 class="font-medium text-lg">{{ team.name }}</h4>
                     <span class="text-sm text-gray-300"
-                      >{{ team.members }} участников</span
+                      >{{ team.members.lenght }} участников</span
                     >
                   </div>
                   <div class="mt-2">
                     <p class="text-sm">
-                      <span class="font-medium">Проекты:</span>
-                      {{ team.projects.join(", ") }}
                     </p>
                     <p class="text-sm mt-1">
                       <span class="font-medium">Статус команды:</span>
-                      <span
+                      <span class="ml-3"
                         :class="{
                           'text-green-400': team.teamStatus === 'Активна',
                           'text-red-400': team.teamStatus === 'Распущена',
                           'text-yellow-400': team.teamStatus === 'Заморожена',
                         }"
                       >
-                        {{ team.teamStatus }}
+                        {{ team.status }}
                       </span>
                     </p>
                     <div class="mt-2 text-sm">
                       <p>
-                        Участие: с {{ team.joinDate }} по
-                        {{ team.leaveDate || "настоящее время" }}
+                        Участие: с {{ formatDate(team.joinDate) }} по {{ formatDate(team.leaveDate) }}
                       </p>
                     </div>
                     <button
@@ -197,30 +197,65 @@
             </div>
           </div>
 
-          <!-- Навыки -->
-          <h3 class="mt-10 text-xl font-semibold border-b pb-2 mb-3">Навыки</h3>
-          <div class="flex flex-wrap gap-2 mt-4">
-            <span
-              v-for="(tech, index) in userTechStack"
-              :key="index"
-              class="px-3 py-1 bg-purple-600/50 rounded-full text-sm flex items-center"
-            >
-              {{ tech.name || tech }}
-              <button
-                v-if="typeof tech === 'object'"
-                @click="removeSkill(index)"
-                class="ml-1 text-xs text-red-300 hover:text-red-200"
-              >
-                ×
-              </button>
-            </span>
-            <button
-              @click="showSkillsModal = true"
-              class="w-8 h-8 flex items-center justify-center bg-purple-600/50 hover:bg-purple-600/70 rounded-full text-lg transition-colors"
-            >
-              +
-            </button>
-          </div>
+          <!-- Список навыков -->
+<h3 class="mt-10 text-xl font-semibold border-b pb-2 mb-3">Навыки</h3>
+<div class="flex flex-wrap gap-2 mt-4">
+  <span
+    v-for="(tech, index) in userSkills"
+    :key="index"
+    class="px-3 py-1 bg-purple-600/50 rounded-full text-sm flex items-center"
+  >
+    {{ tech.name }}
+    <button
+      @click="removeSkill(index)"
+      class="ml-1 text-xs text-red-300 hover:text-red-200"
+    >
+      ×
+    </button>
+  </span>
+
+  <button
+    @click="showSkillsModal = true"
+    class="w-8 h-8 flex items-center justify-center bg-purple-600/50 hover:bg-purple-600/70 rounded-full text-lg transition-colors"
+  >
+    +
+  </button>
+</div>
+
+
+<!-- Модалка -->
+<div v-if="showSkillsModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+  <div class="bg-white dark:bg-zinc-800 p-6 rounded-lg w-[90%] max-w-2xl">
+    <h3 class="text-xl font-semibold mb-4">Выберите навыки</h3>
+    <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+      <div v-for="(techs, type) in groupedTechnologies" :key="type">
+        <h4 class="text-lg font-semibold mb-2">{{ type }}</h4>
+        <div class="flex flex-wrap gap-2">
+          <button
+            v-for="tech in techs"
+            :key="tech.id"
+            @click="addSkill(tech)"
+            :disabled="userSkills.some(t => t.id === tech.id)"
+            class="px-3 py-1 border rounded-full text-sm hover:bg-purple-500 hover:text-white disabled:opacity-40"
+          >
+            {{ tech.name }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-6 flex justify-end gap-2">
+      <button
+        @click="showSkillsModal = false"
+        class="px-4 py-2 bg-zinc-600 rounded hover:bg-zinc-500"
+      >
+        Отмена
+      </button>
+    </div>
+  </div>
+</div>
+
+
         </div>
       </div>
 
@@ -458,85 +493,6 @@
           />
         </div>
       </div>
-
-      <!-- Модальное окно выбора навыков -->
-      <div
-        v-if="showSkillsModal"
-        class="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50"
-      >
-        <div
-          class="bg-zinc-800/95 p-6 rounded-lg shadow-lg backdrop-blur-sm w-full max-w-2xl max-h-[90vh] overflow-y-auto"
-        >
-          <h2 class="text-purple-500 text-xl font-bold mb-4">
-            Добавить навыки
-          </h2>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div
-              v-for="category in skillCategories"
-              :key="category.name"
-              class="border border-zinc-600 rounded-lg p-3"
-            >
-              <h3 class="font-bold text-purple-300 mb-2">
-                {{ category.name }}
-              </h3>
-              <div class="space-y-2">
-                <div v-if="category.subskills">
-                  <div
-                    v-for="subskill in category.subskills"
-                    :key="subskill"
-                    class="flex items-center"
-                  >
-                    <input
-                      type="checkbox"
-                      :id="`skill-${category.name}-${subskill}`"
-                      :value="{ category: category.name, name: subskill }"
-                      v-model="selectedSkills"
-                      class="mr-2 rounded text-purple-500 focus:ring-purple-400"
-                    />
-                    <label
-                      :for="`skill-${category.name}-${subskill}`"
-                      class="text-sm"
-                    >
-                      {{ subskill }}
-                    </label>
-                  </div>
-                </div>
-                <div class="flex items-center pt-2 border-t border-zinc-600">
-                  <input
-                    type="checkbox"
-                    :id="`skill-${category.name}`"
-                    :value="category.name"
-                    v-model="selectedSkills"
-                    class="mr-2 rounded text-purple-500 focus:ring-purple-400"
-                  />
-                  <label
-                    :for="`skill-${category.name}`"
-                    class="text-sm font-medium"
-                  >
-                    {{ category.name }} (общее направление)
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="mt-6 flex justify-end gap-3">
-            <button
-              @click="showSkillsModal = false"
-              class="px-4 py-2 bg-zinc-600 text-white rounded hover:bg-zinc-500 transition-colors"
-            >
-              Отмена
-            </button>
-            <button
-              @click="addSelectedSkills"
-              class="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors"
-            >
-              Добавить выбранные ({{ selectedSkills.length }})
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -545,11 +501,21 @@
 import Header from "@/components/header.vue";
 import UserService from "@/composables/storage.js";
 import Cookies from "js-cookie";
+import { instituteStyles } from "@/assets/instituteStyles.js";
+import api from "@/composables/auth";
 
 export default {
+  inject: ["globalState"],
   components: { Header },
   data() {
     return {
+      showSkillsModal: false,
+    allTechnologies: [], // Все технологии
+    groupedTechnologies: {}, // Группировка по типу
+    userSkills: [], // ID скиллов пользователя
+      userProjects: [],
+    userTeams: [],
+      currentBgColor: "",
       userData: {
         avatar: "",
         first_name: "",
@@ -561,17 +527,7 @@ export default {
       },
       showModal: false,
       showAvatarModal: false,
-      offsetX: 0,
-      offsetY: 0,
-      targetX: 0,
-      targetY: 0,
-      mouseX: 0,
-      mouseY: 0,
-      windowWidth: 0,
-      windowHeight: 0,
-      animationFrame: null,
       avatars: Array.from({ length: 6 }, (_, i) => `/ava-${i + 1}.jpg`),
-      randomAvatar: "",
       password: "",
       confirmPassword: "",
       showPassword: false,
@@ -579,161 +535,116 @@ export default {
       showPasswordFields: false,
       passwordError: "",
       formIsValid: true,
-      userProjects: [
-        {
-          name: "Тест",
-          description: "123123",
-          status: "В работе",
-          grade: "-",
-          date: "26.04.2025",
-        },
-      ],
-      userTeams: [
-        {
-          name: "Тест1",
-          members: 1,
-          projects: ["Тест"],
-          teamStatus: "В работе",
-          joinDate: "24.04.2025",
-          leaveDate: "настоящее время",
-        },
-      ],
-      showSkillsModal: false,
-      selectedSkills: [],
-      skillCategories: [
-        {
-          name: "IT навыки",
-          subskills: [
-            "Frontend разработка",
-            "Backend разработка",
-            "Мобильная разработка",
-            "DevOps",
-            "UI/UX дизайн",
-            "Тестирование",
-            "Базы данных",
-          ],
-        },
-        {
-          name: "Строительные навыки",
-          subskills: [
-            "Кровельные работы",
-            "Отделочные работы",
-            "Электромонтаж",
-            "Сантехника",
-            "Фундаментные работы",
-            "Каменная кладка",
-            "Плотницкие работы",
-          ],
-        },
-        {
-          name: "Архитектурные",
-          subskills: [
-            "3D моделирование",
-            "Черчение",
-            "Ландшафтный дизайн",
-            "Интерьерный дизайн",
-            "Визуализация",
-            "Проектирование",
-            "Строительные нормы",
-          ],
-        },
-        {
-          name: "Дизайн",
-          subskills: [
-            "Графический дизайн",
-            "Веб-дизайн",
-            "Иллюстрация",
-            "Анимация",
-            "Типографика",
-            "Брендинг",
-            "Фотография",
-          ],
-        },
-        {
-          name: "Маркетинг",
-          subskills: [
-            "SMM",
-            "Контент-маркетинг",
-            "SEO",
-            "Аналитика",
-            "Копирайтинг",
-            "Таргетированная реклама",
-            "PR",
-          ],
-        },
-        {
-          name: "Менеджмент",
-          subskills: [
-            "Управление проектами",
-            "Управление командой",
-            "Финансовый менеджмент",
-            "Аналитика данных",
-            "Стратегическое планирование",
-            "Управление продуктом",
-            "Agile методологии",
-          ],
-        },
-        {
-          name: "Иностранные языки",
-          subskills: [
-            "Английский",
-            "Немецкий",
-            "Французский",
-            "Китайский",
-            "Испанский",
-            "Японский",
-            "Итальянский",
-          ],
-        },
-      ],
-      userTechStack: [
-        "Дизайн",
-        { category: "IT навыки", name: "Frontend разработка" },
-        { category: "Строительные навыки", name: "Отделочные работы" },
-      ],
     };
   },
   computed: {
     passwordMismatch() {
       return this.password && this.password !== this.confirmPassword;
     },
+    selectedInstitute() {
+      return this.globalState.institute;
+    },
+    instituteStyle() {
+      const style = instituteStyles[this.selectedInstitute];
+      return style || { buttonOffColor: "#ccc" };
+    },
   },
   methods: {
+    async fetchTechnologies() {
+    const res = await api.get('/core/technologies');
+    const data = await res.data;
+
+    this.allTechnologies = data;
+    this.groupedTechnologies = data.reduce((acc, tech) => {
+      if (!acc[tech.type]) acc[tech.type] = [];
+      acc[tech.type].push(tech);
+      return acc;
+    }, {});
+  },
+
+  addSkill(tech) {
+    if (!this.userSkills.includes(tech)) {
+      this.userSkills.push(tech);
+    }
+  },
+
+  removeSkill(index) {
+    this.userSkills.splice(index, 1);
+  },
+    formatDate(dateStr) {
+    if (!dateStr) return 'по настоящее время';
+    const date = new Date(dateStr);
+    return date.toLocaleString("ru-RU", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  },
+async fetchUserActivity(userId) {
+  const response = await api.get(`/users/user-activity/?user_id=${userId}`);
+  const activityData = response.data;
+
+  const projectIds = activityData
+    .filter(item => item.type === 'project' && item.project_id)
+    .map(item => ({
+      id: item.project_id,
+      started_at: item.started_at,
+      ended_at: item.ended_at
+    }));
+
+  const teamIds = activityData
+    .filter(item => item.type === 'team' && item.team_id)
+    .map(item => ({
+      id: item.team_id,
+      started_at: item.started_at,
+      ended_at: item.ended_at
+    }));
+
+  const projectRequests = projectIds.map(async item => {
+    // Получаем данные проекта и участников
+    const [projectRes, participantsRes] = await Promise.all([
+      api.get(`/projects/${item.id}`),
+      api.get(`/projects/${item.id}/participants-details/`)
+    ]);
+
+    const projectData = projectRes.data;
+    const participants = participantsRes.data;
+
+    // Находим этого пользователя среди участников
+const userEntry = [
+  ...(participants?.workers || []),
+  ...(participants?.teams?.flatMap(team => team.members) || [])
+].find(p => p?.user?.id === userId);
+    return {
+      ...projectData,
+      date: item.started_at,
+      endDate: item.ended_at,
+      averageRating: userEntry?.rating ?? null // используем rating, если есть
+    };
+  });
+
+  const teamRequests = teamIds.map(async item => {
+    const res = await api.get(`/teams/${item.id}`);
+    const data = await res.data;
+    return {
+      ...data,
+      joinDate: item.started_at,
+      leaveDate: item.ended_at
+    };
+  });
+
+  const [projects, teams] = await Promise.all([
+    Promise.all(projectRequests),
+    Promise.all(teamRequests)
+  ]);
+
+  this.userProjects = projects;
+  this.userTeams = teams;
+},
     goToTeam(){
       this.$router.push({ path: "/HSDT/team/1/" });
-    },
-    initParallax() {
-      this.windowWidth = window.innerWidth;
-      this.windowHeight = window.innerHeight;
-      window.addEventListener("mousemove", this.handleMouseMove);
-      window.addEventListener("resize", this.handleResize);
-      this.animate();
-    },
-    handleMouseMove(e) {
-      this.mouseX = e.clientX;
-      this.mouseY = e.clientY;
-      const x = (e.clientX / this.windowWidth - 0.5) * 2;
-      const y = (e.clientY / this.windowHeight - 0.5) * 2;
-      const coefficient = 30;
-      this.targetX = x * coefficient;
-      this.targetY = y * coefficient;
-    },
-    handleResize() {
-      this.windowWidth = window.innerWidth;
-      this.windowHeight = window.innerHeight;
-    },
-    animate() {
-      const smoothness = 0.08;
-      this.offsetX += (this.targetX - this.offsetX) * smoothness;
-      this.offsetY += (this.targetY - this.offsetY) * smoothness;
-      this.animationFrame = requestAnimationFrame(this.animate);
-    },
-    cleanupParallax() {
-      window.removeEventListener("mousemove", this.handleMouseMove);
-      window.removeEventListener("resize", this.handleResize);
-      if (this.animationFrame) {
-        cancelAnimationFrame(this.animationFrame);
-      }
     },
     getRandomAvatar() {
       const randomIndex = Math.floor(Math.random() * this.avatars.length);
@@ -804,39 +715,6 @@ export default {
       Cookies.remove("refresh_token");
       this.$router.push("/login");
     },
-    addSelectedSkills() {
-      // Фильтруем, чтобы не добавлять дубликаты
-      const newSkills = this.selectedSkills.filter((skill) => {
-        if (typeof skill === "string") {
-          return !this.userTechStack.includes(skill);
-        } else {
-          return !this.userTechStack.some(
-            (s) =>
-              typeof s === "object" &&
-              s.category === skill.category &&
-              s.name === skill.name
-          );
-        }
-      });
-
-      this.userTechStack = [...this.userTechStack, ...newSkills];
-      this.selectedSkills = [];
-      this.showSkillsModal = false;
-
-      // Сохраняем изменения
-      UserService.saveUserData({
-        ...this.userData,
-        skills: this.userTechStack,
-      });
-    },
-    removeSkill(index) {
-      this.userTechStack.splice(index, 1);
-      // Сохраняем изменения
-      UserService.saveUserData({
-        ...this.userData,
-        skills: this.userTechStack,
-      });
-    },
   },
   watch: {
     showPasswordFields(newVal) {
@@ -847,18 +725,18 @@ export default {
         this.formIsValid = true;
       }
     },
+    instituteStyle: {
+      handler(newStyle) {
+        this.currentBgColor = newStyle.buttonOffColor;
+      },
+      immediate: true,
+    },
   },
   async mounted() {
+    this.fetchTechnologies();
     const savedData = await UserService.getUserData();
     this.userData = savedData;
-    if (savedData.skills) {
-      this.userTechStack = savedData.skills;
-    }
-    this.randomAvatar = this.getRandomAvatar();
-    this.initParallax();
-  },
-  beforeDestroy() {
-    this.cleanupParallax();
+    this.fetchUserActivity(this.userData.id);
   },
 };
 </script>

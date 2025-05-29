@@ -9,12 +9,13 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from rest_framework.views import APIView
 from rest_framework import status
 from django.utils import timezone
+from collections import defaultdict
 
-from .serializers import (ProjectSerializer, ProjectUpdateSerializer, ProjectUpdateStatusSerializer,
+from .serializers import (ProjectSerializer, ProjectUpdateSerializer, ProjectUpdateStatusSerializer, ProjectMessageSerializer,
                         IdeaSerializer, ProjectApplicationSerializer, IdeaEditSerializer, ProjectParticipantRatingSerializer, ProjectParticipantDetailSerializer)
 from .permissions import IsStudent, IsOwnerOrReadOnly
 from teams.models import Team
-from .models import Idea, Project, ProjectApplication, ProjectParticipantRating
+from .models import Idea, Project, ProjectApplication, ProjectParticipantRating, ProjectMessage
 from .filters import ProjectFilter, IdeaFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import ProjectFilter
@@ -33,7 +34,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return ProjectSerializer
 
     def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update', 'destroy', 'like', 'favorite', 'apply', 'vote']:
+        if self.action in ['create', 'update', 'partial_update', 'destroy', 'like', 'favorite', 'apply', 'expert_like']:
             # Требуем авторизацию для определенных действий
             return [IsAuthenticated()]
         # Для всех остальных действий доступ разрешен всем (включая неавторизованных пользователей)
@@ -69,18 +70,85 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return Response({'detail': 'Отклик принят'})
 
     @action(detail=True, methods=['post'])
-    def vote(self, request, pk=None):
+    def expert_like(self, request, pk=None):
         project = self.get_object()
         user = request.user
-        if user in project.experts_voted.all():
-            return Response({'detail': 'Вы уже голосовали'}, status=status.HTTP_400_BAD_REQUEST)
-        project.experts_voted.add(user)
-        if project.experts_voted.count() >= project.votes_to_approve:
-            project.approved = True
-            project.visible = True
-            project.status = "open"
-            project.save()
-        return Response({'detail': 'Голос учтён'})
+
+        # Проверка: уже лайкнул?
+        if user in project.expert_likes.all():
+            project.expert_likes.remove(user)
+            return Response({'detail': 'Лайк эксперта убран'})
+
+        project.expert_likes.add(user)
+        project.check_approval()
+
+        return Response({'detail': 'Лайк эксперта добавлен'})
+    
+    @action(detail=True, methods=['post'])
+    def send_for_revision(self, request, pk=None):
+        project = self.get_object()
+        text = request.data.get('text')
+        is_revision = request.data.get('is_revision_request', False)
+
+        if not text:
+            return Response({'error': 'Text is required'}, status=400)
+        
+        project.status = 'under_revision'
+        project.save()
+
+        msg = ProjectMessage.objects.create(
+            project=project,
+            sender=request.user,
+            text=text,
+            is_revision_request=is_revision
+        )
+        
+        # Вернуть сериализованные данные созданного сообщения, либо просто статус 200
+        return Response({'detail': 'Project sent for revision', 'message_id': msg.id}, status=200)
+
+    @action(detail=True, methods=["get"])
+    def messages(self, request, pk=None):
+        project = self.get_object()
+        messages = ProjectMessage.objects.filter(project=project).order_by('-created_at')
+        serializer = ProjectMessageSerializer(messages, many=True)
+        return Response(serializer.data)
+
+        return Response({'status': 'revision_requested'})
+
+
+    @action(detail=False, methods=["get"])
+    def grouped_by_semester(self, request):
+        # Используй filterset_class, передавая туда request.GET и queryset
+        filtered_qs = self.filterset_class(request.GET, queryset=self.get_queryset()).qs
+
+        # Здесь дополнительный фильтр по видимости (если нужен)
+        visible_param = request.query_params.get("visible")
+        if visible_param is not None:
+            if visible_param.lower() == "true":
+                filtered_qs = filtered_qs.filter(visible=True)
+            elif visible_param.lower() == "false":
+                filtered_qs = filtered_qs.filter(visible=False)
+
+        # Оптимизируем запрос
+        projects = filtered_qs.select_related("semester").order_by('-semester__year', 'semester__semester')
+
+        grouped = defaultdict(lambda: {'spring': [], 'winter': []})
+
+        for project in projects:
+            if project.semester:
+                year = project.semester.year
+                sem = project.semester.semester  # 'spring' или 'winter'
+                grouped[year][sem].append(ProjectSerializer(project).data)
+
+        result = []
+        for year in sorted(grouped.keys(), reverse=True):
+            result.append({
+                "year": year,
+                "spring": grouped[year]["spring"],
+                "winter": grouped[year]["winter"]
+            })
+
+        return Response(result)
 
 class ProjectParticipantRatingViewSet(viewsets.ModelViewSet):
     queryset = ProjectParticipantRating.objects.all()

@@ -1,55 +1,45 @@
 <template>
   <div>
     <table class="w-full border-collapse shadow-lg rounded-lg overflow-hidden mt-5">
-      <thead class="bg-card text-dynamic">
+      <thead class="bg-input text-dynamic">
         <tr>
-          <th class="p-3 text-left w-10"></th>
-          <th class="p-3 text-left ">Название команды</th>
-          <th class="p-3 text-left ">Количество человек</th>
-          <th class="p-3 text-left w-1/4">Статус</th>
-          <th class="p-3 text-left w-1/6"></th>
+          <th class="p-3 text-center ">Название команды</th>
+          <th class="p-3 text-center ">Количество человек</th>
+          <th class="p-3 text-center">Компетенции</th>
+          <th class="p-3 text-center w-1/4">Статус</th>
+          <th class="p-3 text-center w-1/6"></th>
         </tr>
       </thead>
       <tbody>
         <tr
           v-for="team in sortedTeams"
           :key="team.id"
-          :class="{
-            'bg-cards': !team.markedForDeletion,
-            'bg-marked-for-deletion': team.markedForDeletion,
-            'bg-favorite': team.isFavorite,
-          }"
-          class="transition-colors text-white hover:bg-zinc-600"
+          class="transition-colors bg-card"
         >
-          <!-- Кнопка "Избранное" -->
-          <td class="p-3 border-t border-zinc-600">
-            <button
-              class="btn bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition-colors w-15 cursor-pointer"
-              @click="toggleFavorite(team)"
-            >
-              {{ team.isFavorite ? "★" : "☆" }}
-            </button>
+          <td class="p-3 border-t bg-card">
+            {{ team.name }}
           </td>
-          <td class="p-3 border-t border-zinc-600">{{ team.name }}</td>
-          <td class="p-3 border-t border-zinc-600">{{ team.participants_count }}</td>
-          
-          <td class="p-3 border-t border-zinc-600">
-            <span class="flex justify-between px-3 py-1 rounded-full">
+          <td class="p-3 border-t bg-card text-center">{{ team.members_ids.length }}</td>
+          <td class="p-3 border-t bg-card"> <div class="flex flex-wrap gap-2 mt-2">
+  <span
+    v-for="(skills, i) in team.skills"
+    :key="i"
+    class="px-3 py-1 bg-zinc-200 text-gray-600 text-sm rounded-full"
+  >
+    {{ skills}}
+  </span>
+</div></td>
+          <td class="p-3 border-t bg-card text-center">
+            <span class=" px-3 py-1 rounded-full ">
               {{ team.status }}
             </span>
           </td>
-          <td class="p-3 border-t border-zinc-600">
+          <td class="p-3 border-t bg-card text-center">
             <button
-              class="button btn text-white px-4 py-2 rounded-md transition-colors hover:button:hover cursor-pointer"
+              class="button btn px-4 py-2 rounded-md text-always-white transition-colors hover:button:hover cursor-pointer "
               @click="viewTeamDetails(team)"
             >
               Подробнее
-            </button>
-            <button
-              class="px-4 py-2 rounded-md transition-all transform hover:scale-105 ml- cursor-pointer"
-              @click="markTeamForDeletion(team)"
-            >
-              ❌
             </button>
           </td>
         </tr>

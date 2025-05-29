@@ -47,3 +47,22 @@ class UniversityGroup(models.Model):
         verbose_name = "Группа"
         verbose_name_plural = "Группы"
 
+
+class Semester(models.Model):
+    SEMESTER_CHOICES = [
+        ('spring', 'Весенний'),
+        ('winter', 'Зимний'),
+    ]
+
+    year = models.PositiveIntegerField()
+    semester = models.CharField(max_length=10, choices=SEMESTER_CHOICES)
+
+    class Meta:
+        verbose_name = "Семестр"
+        verbose_name_plural = "Семестры"
+        unique_together = ('year', 'semester')
+        ordering = ['-year', 'semester']
+
+    def __str__(self):
+        return f"{self.year} - {'Весенний' if self.semester == 'spring' else 'Зимний'} семестр"
+

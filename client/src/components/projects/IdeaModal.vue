@@ -113,6 +113,88 @@
 </div>
   </div>
   </div>
+    <div class="dropdown" @click="toggleDropdownSem" tabindex="0" @blur="closeDropdownSem">
+    <div class="dropdown-selected">
+      {{ selectedLabel || 'Выберите семестр' }}
+      <span class="arrow">{{ dropdownOpenSem ? '▲' : '▼' }}</span>
+    </div>
+
+    <div v-if="dropdownOpenSem" class="dropdown-menu">
+      <ul>
+        <li v-for="year in years" :key="year" class="dropdown-year">
+          <div @click.stop="toggleYear(year)">
+            {{ year }}
+            <span>{{ openedYear === year ? '-' : '+' }}</span>
+          </div>
+
+          <ul v-if="openedYear === year" class="dropdown-semesters">
+            <li 
+              v-for="semester in semestersByYear[year]" 
+              :key="semester.id" 
+              @click.stop="selectSemester(semester)"
+              :class="{ selected: semester.id === selectedSemesterId }"
+            >
+              {{ semesterDisplay(semester.semester) }}
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+<div class="col-span-2">
+<!-- Кнопка для открытия списка институтов -->
+<div
+  class="w-full border-dynamic rounded-md py-2 px-3 bg-input text-black cursor-pointer flex justify-between items-center transition-colors"
+  @click="instituteDropdownOpen = !instituteDropdownOpen"
+>
+  <span>Выберите институты</span>
+  <span :class="{ 'rotate-180': instituteDropdownOpen }" class="transition-transform">
+    &#9660;
+  </span>
+</div>
+
+<!-- Выпадающий список институтов -->
+<div
+  v-if="instituteDropdownOpen"
+  class="flex flex-col absolute left-0 w-full bg-input rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto z-50 transition-colors"
+>
+  <!-- Поле поиска -->
+  <input
+    v-model="instituteSearchQuery"
+    type="text"
+    placeholder="Поиск..."
+    class="w-full px-3 py-2 border-b border-fiol outline-none transition-colors"
+  />
+
+  <!-- Список институтов -->
+  <div
+    v-for="(name, code) in filteredInstitutes"
+    :key="code"
+    @click="toggleInstitute(code)"
+    class="p-2 cursor-pointer hover:bg-gray-200 transition-colors duration-300"
+  >
+    <input
+      type="checkbox"
+      :id="code"
+      :value="code"
+      v-model="selectedInstitutes"
+      class="mr-2"
+    />
+    {{ name }}
+  </div>
+</div>
+
+<!-- Отображение выбранных институтов -->
+<div class="flex flex-wrap gap-2 mt-2">
+  <span
+    v-for="code in selectedInstitutes"
+    :key="code"
+    class="px-2 py-1 text-sm bg-gray-200 rounded-full"
+  >
+    {{ instituteNames[code] }}
+  </span>
+</div>
+</div>
 
             <div class="col-span-2">
               <label
@@ -132,7 +214,7 @@
           </div>
           <div class="flex justify-between gap-4">
             <button
-              @click="submitIdea('open')"
+              @click="submitIdea('review')"
                         :style="{ backgroundColor: currentBgColor }"
         @mouseover="currentBgColor = instituteStyle.buttonOnColor"
         @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
@@ -167,22 +249,40 @@ import { ref, onMounted } from 'vue';
 import { createIdeaOrProject } from "@/services/create"; // Импортируем метод создания
 import { fetchTechnologies } from "@/services/technologies.js";
 import { instituteStyles } from "@/assets/instituteStyles.js";
+import api from "@/composables/auth";
 
 export default {
   inject: ["globalState"],
   data() {
     return {
+      instituteDropdownOpen: false,
+    instituteSearchQuery: "",
+    selectedInstitutes: [],
+    instituteNames: {
+      HSDT: "ВШЦТ",
+      ARCHID: "АРХИД",
+      IPTI: "ИПТИ",
+      STROIN: "СТРОИН",
+      TYIU: "ТИУ",
+    },
       currentBgColor: "",
       form: {
         title: '',
         description: '',
         technologies: [], // Массив для выбранных технологий
+        semester: null, 
+        institutes: [],
       },
       dropdownOpen: false,
       searchQuery: "",
       selectedTechnologies: [], // Массив для выбранных технологий
       technologies: [], // Массив всех технологий
       filteredTechnologies: [], // Отфильтрованные технологии
+      semesters: [],          // Все семестры с API
+      dropdownOpenSem: false,
+      selectedYear: null,
+      openedYear: null,           // Какой год раскрыт
+      selectedSemesterId: null, // Выбранный семестр (ID)
     };
   },
   computed: {
@@ -193,8 +293,39 @@ export default {
       const style = instituteStyles[this.selectedInstitute]; // Используем глобальное состояние
       return style || { buttonOffColor: "#ccc" }; // Дефолтный стиль
     },
+    years() {
+      return [...new Set(this.semesters.map(s => s.year))].sort((a,b) => b - a);
+    },
+    semestersByYear() {
+      return this.semesters.reduce((acc, s) => {
+        if (!acc[s.year]) acc[s.year] = [];
+        acc[s.year].push(s);
+        return acc;
+      }, {});
+    },
+    selectedLabel() {
+    if (!this.selectedSemesterId || !this.semesters.length) return null;
+    const semester = this.semesters.find(s => s.id === this.selectedSemesterId);
+    return semester ? `${semester.year} год, ${this.semesterDisplay(semester.semester)}` : null;
+  },
+  filteredInstitutes() {
+      const query = this.instituteSearchQuery.toLowerCase();
+      return Object.fromEntries(
+        Object.entries(this.instituteNames).filter(([code, name]) =>
+          name.toLowerCase().includes(query)
+        )
+      );
+    },
   },
   methods: {
+    toggleInstitute(code) {
+      const index = this.selectedInstitutes.indexOf(code);
+      if (index === -1) {
+        this.selectedInstitutes.push(code);
+      } else {
+        this.selectedInstitutes.splice(index, 1);
+      }
+    },
     toggleTechnology(tech) {
       const index = this.selectedTechnologies.indexOf(tech.id);
       if (index > -1) {
@@ -209,8 +340,40 @@ export default {
         tech.name.toLowerCase().includes(query)
       );
     },
+    async fetchSemesters() {
+      try {
+        const response = await api.get('/core/semesters/');
+        this.semesters = response.data;
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    toggleDropdownSem() {
+      this.dropdownOpenSem = !this.dropdownOpenSem;
+      if (!this.dropdownOpenSem) {
+        this.openedYear = null;
+      }
+    },
+    closeDropdownSem() {
+      this.dropdownOpenSem = false;
+      this.openedYear = null;
+    },
+    toggleYear(year) {
+      this.openedYear = this.openedYear === year ? null : year;
+    },
+    selectSemester(semester) {
+  this.selectedSemesterId = semester.id;
+  this.dropdownOpenSem = false;
+  this.openedYear = null;
+  // Можно обновить form.semester сразу
+  this.form.semester = semester.id;
+  // Или оставить в submitIdea
+},
+    semesterDisplay(code) {
+      return code === 'spring' ? 'Весенний' : 'Зимний';
+    },
 async submitIdea(status) {
-  const validStatuses = ['draft', 'open', 'under_review'];
+  const validStatuses = ['draft', 'open', 'review'];
   if (!validStatuses.includes(status)) {
     console.error(`Невалидный статус: ${status}`);
     return;
@@ -218,6 +381,8 @@ async submitIdea(status) {
 
   // Обновляем form.technologies перед отправкой
   this.form.technologies = this.selectedTechnologies;
+  this.form.semester = this.selectedSemesterId;
+  this.form.institutes = this.selectedInstitutes;
 
   const data = {
     ...this.form,
@@ -236,6 +401,7 @@ async submitIdea(status) {
     },
   },
   async mounted() {
+    this.fetchSemesters();
     const technologiesData = await fetchTechnologies(); // Загружаем данные
     if (technologiesData) {
       this.technologies = technologiesData; // Обновляем массив технологий
@@ -257,6 +423,55 @@ async submitIdea(status) {
 </script>
 
 <style scoped>
+.dropdown {
+  position: relative;
+  width: 250px;
+  user-select: none;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.dropdown-selected {
+  padding: 8px 12px;
+  background: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #aaa;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+.dropdown-year > div {
+  padding: 8px 12px;
+  background: #f0f0f0;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+}
+.dropdown-semesters {
+  list-style: none;
+  padding-left: 16px;
+  margin: 0;
+  background: #fafafa;
+}
+.dropdown-semesters li {
+  padding: 6px 12px;
+}
+.dropdown-semesters li.selected {
+  background-color: #d3eaff;
+  font-weight: 600;
+}
+.dropdown-semesters li:hover {
+  background-color: #e0f0ff;
+}
 /* Немного мягче фон */
 .fixed {
   background: rgba(0, 0, 0, 0.3); /* Полупрозрачный черный */

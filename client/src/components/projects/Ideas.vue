@@ -13,19 +13,20 @@
         <div class="relative">
           <img class="absolute left-2 top-2" src="/search.svg" /> 
           <input
-            class="w-full max-w-md border bg-white rounded-md py-2 pl-10 pr-4 outline-none focus:border-purple-400 duration-500"
+            v-model="searchQuery"
+            class="w-full max-w-md border bg-white rounded-md py-2 pl-10 pr-4 outline-none duration-500"
             type="text"
             placeholder="Поиск..."
           />
         </div>
-        <select
+        <select v-model="sortOption"
           class="ml-5 h-10 py-2 px-3 border bg-white rounded-md focus:border-fiol duration-500"
         >
           <option value="" disabled selected class="text-gray-500">
             Сортировать по
           </option>
-          <option>По новизне</option>
-          <option>По популярности</option>
+          <option value="new">По новизне</option>
+          <option  value="popular">По популярности</option>
         </select>
 
         <button
@@ -67,7 +68,7 @@
       </div>
 
       <IdeasTable
-        :items="filteredItems"
+        :items="finalFilteredItems"
         :userId="userData.id"
         @toggle-like="updateLike"
         @open-idea="openIdea"
@@ -99,7 +100,9 @@ export default {
   components: { IdeaModal, Header, IdeasTable, ParallaxBackground },
   data() {
     return {
+      sortOption: "",
       currentBgColor: "",
+      searchQuery: '',
       userRole: null,
       userData: {}, // Изначально пустой объект
       isAnimating: false,
@@ -112,6 +115,19 @@ export default {
     };
   },
   computed: {
+    finalFilteredItems() {
+    let result = this.filteredItems.filter((idea) =>
+      idea.title.toLowerCase().includes(this.searchQuery.toLowerCase())
+    );
+
+    if (this.sortOption === "new") {
+      result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    } else if (this.sortOption === "popular") {
+      result.sort((a, b) => b.likes.length - a.likes.length);
+    }
+
+    return result;
+  },
     liked() {
       return (idea) => {
         const userData = this.userData; // Используем загруженные userData
@@ -153,7 +169,9 @@ export default {
     filterItems() {
       // Используем activeFilter, а не filter, так как filter - это параметр метода setFilter
       if (this.activeFilter === "all") {
-        this.filteredItems = this.items;
+        this.filteredItems = this.items.filter(
+          (idea) => idea.status !== "draft"
+        );
       } else if (this.activeFilter === "my") {
         this.filteredItems = this.items.filter(
           (idea) => idea.owner === this.userData.id

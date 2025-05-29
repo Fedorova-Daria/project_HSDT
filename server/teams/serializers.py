@@ -32,16 +32,16 @@ class TeamCreateSerializer(serializers.ModelSerializer):
 
 
 class TeamListSerializer(serializers.ModelSerializer):
-    participants_count = serializers.SerializerMethodField()
     skills = serializers.SerializerMethodField()
     status = serializers.CharField(source='get_status_display')
+    members_ids = serializers.SerializerMethodField()
 
     class Meta:
         model = Team
-        fields = ['id', 'name', 'participants_count', 'status', 'skills']
+        fields = ['id', 'name', 'members_ids', 'status', 'skills']
 
-    def get_participants_count(self, obj):
-        return obj.members.count()
+    def get_members_ids(self, obj):
+        return list(obj.members.values_list('id', flat=True))
 
     def get_skills(self, obj):
         skills_set = set()

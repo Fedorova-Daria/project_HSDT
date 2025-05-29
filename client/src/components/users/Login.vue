@@ -25,7 +25,7 @@
               <input
                 v-model="email"
                 @input="clearError('email')"
-                class="m-auto w-90 bg-white text-grey px-2 py-2 rounded-lg border-3 border-solid duration-500 ease-linear transition-colors outline-none"
+                class="m-auto w-90 bg-white text-always-black px-2 py-2 rounded-lg border-3 border-solid duration-500 ease-linear transition-colors outline-none"
                 :class="{
                   'border-fiolText hover:border-purple-500 focus:border-purple-600':
                     !emailError,

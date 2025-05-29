@@ -3,7 +3,7 @@
     <Header @institute-changed="onInstituteChanged" />
 
     <h1 class="font-display w-4/5 m-auto mt-20 text-dynamic text-5xl">
-      Биржа проектов {{ instituteName }}
+      Банк проектов {{ instituteName }}
     </h1>
 
     <div class="flex w-4/5 m-auto mt-5">
@@ -22,12 +22,6 @@
         <option>Набор закрыт</option>
       </select>
 
-      <select class="ml-5 h-10 py-2 px-3 border bg-white rounded-md text-always-black border-zinc-400 duration-500">
-        <option>Все навыки</option>
-        <option>Которые я знаю</option>
-        <option>Остальные стеки...</option>
-      </select>
-
       <button
       v-if="userRole === 'EX' || userRole === 'CU'"
         @click="openModal"
@@ -37,16 +31,6 @@
         @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
       >
         Создать идею
-      </button>
-      <button
-      @click="openBank"
-      v-if="userRole === 'EX'"
-        class="rounded-md px-4 py-2 transition ml-5 h-10 text-always-white"
-        :style="{ backgroundColor: currentBgColor }"
-        @mouseover="currentBgColor = instituteStyle.buttonOnColor"
-        @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
-      >
-        Банк проектов
       </button>
     </div>
 
@@ -155,7 +139,7 @@
                         class="checkbox"
                         :id="'like-checkbox-' + idea.id"
                         :checked="idea.likes?.includes(userId)"
-                        @change.stop
+                        @change.stop="updateLike($event, idea)"
                       />
                       <div class="svg-container">
                         <svg
@@ -230,10 +214,7 @@
 
 <script>
 import { toggleLike } from "@/services/projects.js";
-import Cookies from "js-cookie";
 import api from "@/composables/auth";
-import axios from "axios";
-import IdeaCard from "@/components/RialtoCard1.vue";
 import IdeaModal from "@/components/projects/IdeaModal.vue";
 import Header from "@/components/header.vue";
 import { instituteStyles } from "@/assets/instituteStyles.js";
@@ -241,7 +222,7 @@ import UserService from "@/composables/storage.js";
 
 export default {
   inject: ["globalState"],
-  components: { IdeaCard, IdeaModal, Header },
+  components: { IdeaModal, Header },
   data() {
     return {
       userId: JSON.parse(localStorage.getItem("userData") || "{}")?.id,
@@ -256,7 +237,6 @@ export default {
       filters: [
       { label: "Все", value: "all" },
       { label: "Понравившиеся", value: "liked" },
-      { label: "Мои", value: "mine" }
     ],
     activeFilter: 'all',
 
@@ -284,19 +264,8 @@ export default {
     if (this.activeFilter === 'liked') {
       return this.visibleIdeas.map(group => ({
         year: group.year,
-        spring: group.spring.filter(idea => idea.likes?.includes(this.userId)),
-        winter: group.winter.filter(idea => idea.likes?.includes(this.userId))
-      })).filter(group => group.spring.length || group.winter.length)
-    } else if (this.activeFilter === 'mine') {
-      // из allIdeas фильтруем по owner (или эксперту)
-      return this.allIdeas.map(group => ({
-        year: group.year,
-        spring: group.spring.filter(idea => 
-          (this.userRole === 'CU' && idea.owner?.id === this.userId) ||
-          (this.userRole === 'EX' && idea.owner?.id === this.userId)),
-        winter: group.winter.filter(idea => 
-          (this.userRole === 'CU' && idea.owner?.id === this.userId) ||
-          (this.userRole === 'EX' && idea.owner?.id === this.userId))
+        spring: group.spring.filter(idea => idea.expert_likes?.some(like => like.id === this.userId)),
+    winter: group.winter.filter(idea => idea.expert_likes?.some(like => like.id === this.userId))
       })).filter(group => group.spring.length || group.winter.length)
     } else {
       // activeFilter === 'all'
@@ -335,18 +304,33 @@ export default {
   }
   },
   methods: {
+    updateIdeaInLists(updatedIdea) {
+  function updateInGroup(group) {
+    ['spring', 'winter'].forEach(season => {
+      if (group[season]) {
+        const idx = group[season].findIndex(i => i.id === updatedIdea.id);
+        if (idx !== -1) {
+          group[season].splice(idx, 1, updatedIdea);
+        }
+      }
+    });
+  }
+
+  this.visibleIdeas.forEach(group => updateInGroup(group));
+  this.allIdeas.forEach(group => updateInGroup(group));
+},
     async loadVisibleIdeas() {
     const institute = this.selectedInstitute;
 const res = await api.get('/projects/grouped_by_semester/', {
   params: {
-    visible: true,
+    visible: false,
     institute: institute
   }
 });
 this.visibleIdeas = res.data;
   },
   async loadAllIdeas() {
-    const res = await api.get('/projects/grouped_by_semester/')
+    const res = await api.get('/projects/grouped_by_semester/?visible=false')
     this.allIdeas = await res.data;
   },
   setFilter(value) {
@@ -379,20 +363,11 @@ this.visibleIdeas = res.data;
         console.error("Институт не выбран");
       }
     },
-    openBank() {
-      const institute = this.selectedInstitute; // Используем selectedInstitute из data()
-      if (institute) {
-        this.$router.push({ path: `/${institute}/projectbank/` });
-      } else {
-        console.error("Институт не выбран");
-      }
-    },
 async updateLike(event, idea) {
   try {
     event.stopPropagation();
 
     const isExpert = this.userRole === "EX";
-    const isCustomerOrStudent = this.userRole === "CU" || this.userRole === "ST";
 
     const updatedIdea = await toggleLike(
       idea,
@@ -402,21 +377,9 @@ async updateLike(event, idea) {
       () => this.userId,
       false,
       isExpert,
-      isCustomerOrStudent
     );
+    this.updateIdeaInLists(updatedIdea);
 
-    // Обновим нужную коллекцию
-    const targetArray = this.activeFilter === 'mine' ? this.allIdeas : this.visibleIdeas;
-
-    for (const group of targetArray) {
-      for (const sem of ['spring', 'winter']) {
-        const index = group[sem].findIndex(i => i.id === updatedIdea.id);
-        if (index !== -1) {
-          group[sem].splice(index, 1, { ...updatedIdea });
-          break;
-        }
-      }
-    }
   } catch (error) {
     console.error("Ошибка при обновлении лайка:", error);
   }

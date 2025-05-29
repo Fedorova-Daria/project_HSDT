@@ -8,10 +8,10 @@
       <h2 class="text-2xl font-bold mb-4 text-dynamic">Заявки на проект</h2>
 
       <!-- 📌 Таблица с заявками от команд -->
-      <h3 class="text-xl font-semibold mt-4 text-dynamic">Команды</h3>
-      <table class="w-full border-collapse border-dynamic text-center">
+      <h3 class="text-xl font-semibold mt-4 text-dynamic mb-3">Команды</h3>
+      <table class="w-full border-dynamic text-center rounded-lg shadow-lg overflow-hidden">
         <thead>
-          <tr class="bg-card">
+          <tr class="bg-input">
             <th class="border-dynamic p-2">Название команды</th>
             <th class="border-dynamic p-2">Количество участников</th>
             <th class="border-dynamic p-2">Навыки</th>
@@ -31,7 +31,7 @@
             <td class="border-dynamic p-2">
               {{ team.skills.join(", ") }}
             </td>
-            <td class="border-dynamic p-2 flex justify-center space-x-2">
+            <td class=" p-2 flex justify-center space-x-2">
               <button
                 @click="acceptApplication(team.applicationId, team)"
                 class="bg-green-500 text-always-white px-3 py-1 rounded hover:bg-green-600 transition-colors"
@@ -50,11 +50,11 @@
       </table>
 
       <!-- 📌 Таблица с заявками от фрилансеров -->
-      <h3 class="text-xl font-semibold mt-6 text-dynamic">Фрилансеры</h3>
-      <table class="w-full border-collapse border-dynamic text-center">
+      <h3 class="text-xl font-semibold mt-6 text-dynamic mb-3">Фрилансеры</h3>
+      <table class="w-full border-dynamic text-center rounded-lg shadow-lg overflow-hidden">
         <thead>
-          <tr class="bg-card">
-            <th class="border-dynamic p-2">ФИО пользователя</th>
+          <tr class="bg-input">
+            <th class="border-dynamic p-2"></th>
             <th class="border-dynamic p-2">Навыки</th>
             <th class="border-dynamic p-2">Дата подачи заявки</th>
             <th class="border-dynamic p-2">Профиль</th>
@@ -122,6 +122,7 @@ import {
 import api from "@/composables/auth.js";
 
 export default {
+  inject: ["globalState"],
   name: "ProjectApplications",
   props: {
     projectId: {
@@ -131,11 +132,24 @@ export default {
   },
   data() {
     return {
+      technologiesMap: {},
       teamApplications: [],
       freelancerApplications: [],
     };
   },
   methods: {
+    async fetchTechnologies() {
+    try {
+      const response = await api.get('/core/technologies');
+      const map = {};
+      response.data.forEach(tech => {
+        map[tech.id] = tech.name;
+      });
+      this.technologiesMap = map;
+    } catch (error) {
+      console.error("Ошибка при загрузке технологий:", error);
+    }
+  },
     async fetchProjectApplications() {
       try {
         const applications = await getProjectApplications();
@@ -176,46 +190,56 @@ export default {
     },
 
     async fetchUserDetails(userId) {
-      try {
-        const response = await api.get(`/users/${userId}/`);
-        return {
-          user_full_name: response.data.full_name,
-          skills: response.data.skills,
-        };
-      } catch (error) {
-        console.error(
-          `Ошибка при получении информации о пользователе с ID ${userId}:`,
-          error
-        );
-        return {
-          user_full_name: "Неизвестно",
-          skills: [],
-        };
-      }
-    },
+  try {
+    const response = await api.get(`/users/${userId}/`);
+    const skillsIds = response.data.skills || [];
 
-    viewProfile(userId) {
-      this.$router.push(`/profile/${userId}`);
-    },
+    const skillNames = skillsIds.map(id => this.technologiesMap[id] || "Неизвестно");
+
+    return {
+      user_full_name: `${response.data.first_name} ${response.data.last_name}`,
+      skills: skillNames,
+    };
+  } catch (error) {
+    console.error(
+      `Ошибка при получении информации о пользователе с ID ${userId}:`,
+      error
+    );
+    return {
+      user_full_name: "Неизвестно",
+      skills: [],
+    };
+  }
+},
 
     async acceptApplication(id, applicationData) {
-      try {
-        const acceptData = {
-          applicant_type: applicationData.applicant_type || null,
-          project: applicationData.project || null,
-          freelancer: applicationData.freelancer || null,
-          team: applicationData.team || null,
-        };
-
-        await acceptProjectApplication(id, acceptData);
-        alert("Заявка принята!");
-        this.fetchProjectApplications();
-      } catch (error) {
-        alert("Ошибка при принятии заявки.");
-        console.error(error);
-      }
-    },
-
+  try {
+    const acceptData = {
+      applicant_type: applicationData.applicant_type || null,
+      project: applicationData.project || null,
+      freelancer: applicationData.freelancer || null,
+      team: applicationData.team || null,
+    };
+    const response = await api.get(`/project-applications/${id}/`);
+    const data = response.data;
+    // Принять заявку
+    await acceptProjectApplication(id, acceptData);
+    alert("Заявка принята!");
+    
+    if (data.team && data.project) {
+      await api.post('/kanban/boards/', {
+        team: data.team,
+        project: data.project,
+      });
+      alert("Канбан-доска создана!");
+    }
+    // Обновляем список заявок
+    this.fetchProjectApplications();
+  } catch (error) {
+    alert("Ошибка при принятии заявки или создании доски.");
+    console.error(error);
+  }
+},
     async cancelApplication(id, applicationData) {
       try {
         if (!applicationData) return;
@@ -238,6 +262,12 @@ export default {
   },
   mounted() {
     this.fetchProjectApplications();
+    this.fetchTechnologies();
+  },
+  computed: {
+        selectedInstitute() {
+      return this.globalState.institute;
+    },
   },
 };
 </script>

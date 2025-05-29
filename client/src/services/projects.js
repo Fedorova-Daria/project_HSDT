@@ -47,35 +47,47 @@ export async function toggleLike(
   isAnimatingSetter(true);
 
   try {
-    const isExpert = userService.getUserRole() === "EX";
+    const role = userService.getUserRole();
+    const isExpert = role === "EX";
+    const isCustomerOrStudent = role === "CU" || role === "ST";
+
+    const endpoint = isExpert
+      ? `/projects/${idea.id}/expert_like/`
+      : `/projects/${idea.id}/like/`;
+
+    const payload = isExpert ? { expert_voted: true } : {};
+
     const response = await api.post(
-      `/projects/${idea.id}/like/`,
-      { expert_voted: isExpert },
+      endpoint,
+      payload,
       { headers: { "Content-Type": "application/json" } }
     );
 
     const userId = getUserId();
+
     if (liked) {
       idea.likes = idea.likes.filter((id) => id !== userId);
-      // Убираем лайк из localStorage
       localStorage.setItem(`liked_${idea.id}_${userId}`, 'false');
     } else {
       idea.likes.push(userId);
-      // Сохраняем лайк в localStorage
       localStorage.setItem(`liked_${idea.id}_${userId}`, 'true');
     }
+
     idea.likes_count = response.data.likes_count;
 
     if (isExpert) {
       idea.experts_voted_count = response.data.experts_voted_count;
       idea.approved = response.data.approved;
     }
+
+    return idea;
+
   } catch (error) {
     console.error("Ошибка при обновлении лайка:", error);
     if (error.response?.status === 403 && !retry) {
       const newToken = await userService.refreshToken();
       if (newToken) {
-        await toggleLike(idea, event, liked, isAnimatingSetter, getUserId, true);
+        return await toggleLike(idea, event, liked, isAnimatingSetter, getUserId, true);
       } else {
         console.error("Не удалось обновить токен, требуется повторный вход.");
       }
@@ -86,6 +98,7 @@ export async function toggleLike(
     }, 300);
   }
 }
+
 export async function toggleOfferLike(
   offer,
   event,
@@ -157,6 +170,5 @@ export const updateProject = async (id, projectData) => {
 
 // Удалить проект
 export const deleteProject = async (id) => {
-  const response = await api.delete(`/projects/${id}/`);
-  return response.data;
+  await api.delete(`/projects/${id}/`);
 };

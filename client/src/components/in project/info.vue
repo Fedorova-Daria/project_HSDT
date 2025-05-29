@@ -10,20 +10,20 @@
         style="height: 300px"
       >
         <div class="flex-grow overflow-auto">
-          <h2 v-if="!isEditing" class="text-2xl text-white font-semibold mb-4">
+          <h2 v-if="!isEditing" class="text-2xl font-semibold mb-4">
             {{ idea.title || "Загрузка..." }}
           </h2>
           <input
             v-else
             v-model="editedIdea.title"
-            class="w-full text-2xl text-black bg-gray-100 rounded-md p-2"
+            class="w-full text-2xl bg-input rounded-md p-2 bg-input focus:outline-none focus:ring-0 focus:border-none"
           />
 
-          <h3 class="text-xl text-white font-semibold mb-2">
+          <h3 class="text-xl font-semibold mb-2 ">
             Инициатор: {{ idea.initiator || "Неизвестный автор" }}
           </h3>
 
-          <p class="text-gray-400">
+          <p class="opacity-70">
             Дата создания:
             {{ new Date(idea.created_at).toLocaleDateString("ru-RU") }}
           </p>
@@ -66,14 +66,14 @@
         class="w-3/4 mt-5 bg-card rounded-lg p-6 overflow-auto"
         style="height: auto; max-height: 100vh; overflow-y: auto"
       >
-        <h2 class="text-2xl text-white font-semibold mb-4">Описание идеи</h2>
-        <p v-if="!isEditing" class="text-gray-400">
+        <h2 class="text-2xl font-semibold mb-4">Описание идеи</h2>
+        <p v-if="!isEditing" class="opacity-70">
           {{ idea.description }}
         </p>
         <textarea
           v-else
           v-model="editedIdea.description"
-          class="w-full bg-gray-100 rounded-md p-2"
+          class="w-full bg-input focus:outline-none focus:ring-0 focus:border-none rounded-md p-2"
         ></textarea>
         <div v-if="isEditing">
           <label for="status">Статус:</label>
@@ -81,7 +81,7 @@
             id="status"
             v-model="editedIdea.status"
             @change="updateStatus"
-            class="w-full bg-gray-100 rounded-md p-2"
+            class="w-full bg-input rounded-md p-2"
           >
             <option value="">Не задан</option>
             <option value="active">Активный</option>

@@ -16,6 +16,7 @@ import Statistic from "@/components/in project/statistics.vue";
 import info from "@/components/in project/info.vue";
 import Offers from "@/components/university/offers.vue";
 import OfferDetail from "@/components/university/offerDetail.vue";
+import ProjectBank from "@/components/projects/ExpertBankProject.vue";
 import Cookies from "js-cookie";
 const routes = [
   {
@@ -30,12 +31,16 @@ const routes = [
   { path: "/registerZ", component: RegZ },
   { path: "/:institute/profile", name: "profile", component: Profile },
   { path: "/change-profile", component: ChangeProfile },
-
   // Динамические маршруты для всех институтов
   {
     path: "/:institute/rialto",
     name: "rialto",
     component: Rialto,
+  },
+  {
+    path: "/:institute/projectbank",
+    name: "projectbank",
+    component: ProjectBank,
   },
   {
     path: "/:institute/offers",

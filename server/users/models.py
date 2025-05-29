@@ -64,6 +64,9 @@ class Account(AbstractUser):
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.email})"
 
+    def get_full_name(self):
+        return f"{self.first_name} {self.last_name}"
+
     def save(self, *args, **kwargs):
         if not self.username:
             self.username = self.email  # Заполняем username email'ом

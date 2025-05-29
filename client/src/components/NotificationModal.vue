@@ -1,7 +1,7 @@
 <template>
   <div v-if="show" >
         <!-- 1. Приглашение в команду -->
-<div v-if="notification.type === 'invitation_team'" class="fixed inset-0 bg-transparent flex items-center justify-center p-4 z-50">
+<div v-if="notification.notification_type === 'added_to_team'" class="fixed inset-0 bg-transparent flex items-center justify-center p-4 z-50">
   <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
     <h2 class="text-2xl font-bold text-gray-800 mb-2">Поздравляем! Вас пригласили в команду!</h2>
     <p class="text-gray-600 mb-4">Вас пригласили в команду:</p>
@@ -25,7 +25,7 @@
 </div>
 
 <!-- 2. Вам кинули заявку в команду -->
-<div v-else-if="notification.type === 'team_request'" class="fixed inset-0 bg-transparent flex items-center justify-center p-4 z-50">
+<div v-else-if="notification.notification_type === 'team_join_request_sent'" class="fixed inset-0 bg-transparent flex items-center justify-center p-4 z-50">
   <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
     <h2 class="text-2xl font-bold text-gray-800 mb-2">Заявка в команду</h2>
     <p class="text-gray-600 mb-4">В вашу команду хочет вступить:</p>
@@ -41,68 +41,137 @@
     </div>
     
     <div class="flex flex-col gap-3">
-      <button class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Принять</button>
-      <button class="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg">Отклонить</button>
       <button class="text-blue-600 hover:text-blue-800 text-sm font-medium mt-1">Рассмотреть все заявки</button>
     </div>
   </div>
 </div>
 
 <!-- 3. Заявка в проект (для заказчика) -->
-<div v-else-if="notification.type === 'project_request'" class="fixed inset-0 bg-transparent flex items-center justify-center p-4 z-50">
-  <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
-    <h2 class="text-2xl font-bold text-gray-800 mb-2">Заявка в проект</h2>
-    <p class="text-gray-600 mb-4">Над вашим проектом хочет работать:</p>
-    
+<div v-else-if="notification.notification_type === 'project_join_request_sent'" class="fixed inset-0 bg-transparent flex items-center justify-center p-4 z-50">
+  <div class="bg-card rounded-xl p-6 w-full max-w-md shadow-2xl">
+    <div class="flex justify-between mb-3">
+    <h2 class="text-2xl font-bold mb-2">Заявка в проект</h2>
+    <button
+            @click="close"
+            type="button"
+            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+            data-modal-toggle="crud-modal"
+          >
+            <svg
+              class="w-3 h-3"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 14 14"
+            >
+              <path
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
+              />
+            </svg>
+            <span class="sr-only">Close modal</span>
+          </button>
+        </div>
     <div class="space-y-4 mb-4">
-      <div class="bg-gray-50 p-4 rounded-lg">
-        <h4 class="font-semibold text-lg mb-2">Интернет-магазин</h4>
-        <p class="text-gray-600 text-sm mb-3 line-clamp-2">Разработка современного интернет-магазина с использованием Vue.js и Node.js...</p>
+      <div v-if="project" class="bg-input p-4 rounded-lg">
+        <h4 class="font-semibold text-lg mb-2 text-always-white">{{ project.title }}</h4>
+        <p class="text-sm mb-3 line-clamp-2 text-always-white">{{project.description}}</p>
         <div class="flex flex-wrap gap-2">
-          <span class="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">Vue.js</span>
-          <span class="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">Node.js</span>
+<div class="flex flex-wrap gap-2 mt-2">
+  <span
+    v-for="(skills_required, i) in project.skills_required"
+    :key="i"
+    class="px-3 py-1 bg-zinc-200 text-gray-600 text-sm rounded-full"
+  >
+    {{ skills_required.name }}
+  </span>
+</div>
         </div>
       </div>
-      
-      <div class="bg-gray-50 p-4 rounded-lg text-center">
-        <h4 class="font-semibold mb-2">Команда: DevTeam</h4>
-        <img src="https://via.placeholder.com/80" class="w-20 h-20 rounded-full mx-auto mb-3">
+      <p class="font-semibold mb-4">Над вашим проектом хочет работать:</p>
+      <div class="bg-input p-4 rounded-lg text-center">
+        <h4 class="font-semibold mb-6 text-always-white text-xl">Команда: {{team?.name}}</h4>
         <div class="flex flex-wrap justify-center gap-2">
-          <span class="px-3 py-1 bg-orange-100 text-orange-800 text-sm rounded-full">PHP</span>
-          <span class="px-3 py-1 bg-orange-100 text-orange-800 text-sm rounded-full">Laravel</span>
+          <div class="flex flex-wrap gap-2 mt-2">
+  <span
+    v-for="(skill, i) in team.skills"
+    :key="i"
+    class="px-3 py-1 bg-zinc-200 text-gray-600 text-sm rounded-full"
+  >
+    {{ skill }}
+  </span>
+</div>
         </div>
       </div>
     </div>
     
-    <div class="flex flex-col gap-3">
-      <button class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Принять</button>
-      <button class="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg">Отклонить</button>
-      <button class="text-blue-600 hover:text-blue-800 text-sm font-medium mt-1">Рассмотреть все заявки</button>
-    </div>
+    <router-link
+  :to="{ name: 'ProjectDetail', params: { id: project.id }}"
+  class="text-sm text-blue-400 font-medium mt-1 flex justify-center"
+>
+  Рассмотреть все заявки
+</router-link>
   </div>
 </div>
 
 <!-- 4. Принятие заявки в проект (для студента) -->
-<div v-if="notification.type === 'apply_team'" class="fixed inset-0 bg-transparent flex items-center justify-center p-4 z-50">
-  <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
-    <h2 class="text-2xl font-bold text-gray-800 mb-2">Заявка в проект</h2>
-    <p class="text-gray-600 mb-4">Поздравляем! Вашу заявку принял проект <span class="font-semibold">Интернет-магазин</span></p>
+<div v-if="notification.notification_type === 'project_join_request_accepted'" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+  <div class="bg-card rounded-xl p-6 w-full max-w-md shadow-2xl">
+    <div class="flex justify-between mb-3">
+    <h2 class="text-2xl font-bold mb-2">Заявка в проект</h2>
+    <button
+            @click="close"
+            type="button"
+            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+            data-modal-toggle="crud-modal"
+          >
+            <svg
+              class="w-3 h-3"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 14 14"
+            >
+              <path
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
+              />
+            </svg>
+            <span class="sr-only">Close modal</span>
+          </button>
+        </div>
+    <p class=" mb-4">Поздравляем! Вашу заявку принял проект <span class="font-semibold">{{project.title}}</span></p>
     
-    <div class="bg-gray-50 p-4 rounded-lg mb-4">
-      <h4 class="font-semibold text-lg mb-2">Интернет-магазин</h4>
-      <p class="text-gray-600 text-sm mb-3 line-clamp-2">Разработка современного интернет-магазина с использованием Vue.js и Node.js...</p>
-      <div class="flex flex-wrap gap-2">
-        <span class="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">Vue.js</span>
-        <span class="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">Node.js</span>
-      </div>
+    <div class="bg-input p-4 rounded-lg mb-4">
+      <h4 class="font-semibold text-dynamic text-lg mb-2">{{project.title}}</h4>
+      <p class="text-dynamic opacity-70 text-sm mb-5 line-clamp-2">{{project.description}}</p>
+      <div class="flex flex-wrap gap-2 mt-2">
+  <span
+    v-for="(skill, i) in team.skills"
+    :key="i"
+    class="px-3 py-1 bg-zinc-200 text-gray-600 text-sm rounded-full"
+  >
+    {{ skill }}
+  </span>
+</div>
     </div>
-    
-    <button class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Перейти к проекту</button>
+    <router-link
+  :to="{ name: 'ProjectDetail', params: { id: project.id }}"
+  class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white px-3 flex justify-center text-sl rounded-lg text-always-white"
+>
+    Перейти к проекту
+    </router-link>
   </div>
 </div>
 
 <!-- 5. Принятие в команду -->
-<div v-if="notification.type === 'apply_project'" class="fixed inset-0 bg-transparent flex items-center justify-center p-4 z-50">
+<div v-if="notification.type === 'team_join_request_accepted'" class="fixed inset-0 bg-transparent flex items-center justify-center p-4 z-50">
   <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
     <h2 class="text-2xl font-bold text-gray-800 mb-2">Заявка в команду</h2>
     <p class="text-gray-600 mb-4">Поздравляем! Вас приняли в команду <span class="font-semibold">Web разработчики</span></p>
@@ -124,10 +193,69 @@
 </template>
 
 <script>
+import api from "@/composables/auth";
+
 export default {
   props: {
     show: Boolean,
     notification: Object
-  }
+  },
+  data() {
+  return {
+    project: null,
+    team: null,
+    isModalOpen: false,
+  };
+},
+  watch: {
+    notification: {
+      immediate: true,
+      handler: async function (newVal) {
+        if (!newVal || !newVal.related_project) return;
+
+        try {
+          const response = await api.get(`/projects/${newVal.related_project}/`);
+          this.project = response.data;
+        } catch (error) {
+          console.error('Ошибка при получении проекта:', error);
+        }
+
+        if (newVal.related_team) {
+          this.team = await this.fetchTeam(newVal.related_team);
+        }
+      }
+    }
+  },
+  methods: {
+    close() {
+      this.$emit('close');  // отправляем событие закрытия родителю
+    },
+    formatDate(date) {
+      if (!date) return '';
+      return new Date(date).toLocaleString("ru-RU", {
+        day: "numeric",
+        month: "long",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    },
+    async fetchTeam(id) {
+      try {
+        const response = await api.get(`/teams/${id}/`);
+        const team = response.data;
+        return team;
+      } catch (error) {
+        console.error('Ошибка при загрузке команды:', error);
+        return null;
+      }
+    },
+  },
 };
 </script>
+
+<style scoped>
+.fixed {
+  background: rgba(0, 0, 0, 0.3); /* Полупрозрачный черный */
+  backdrop-filter: blur(5px); /* Эффект размытия */
+}
+</style>

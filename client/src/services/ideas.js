@@ -50,7 +50,7 @@ export async function toggleLike(
 
   try {
     // Получаем роль пользователя из userService
-    const isExpert = userService.getUserRole() === "expert";
+    const isExpert = userService.getUserRole() === "EX";
 
     // Выполняем запрос через api; интерсепторы автоматически добавят актуальный Authorization header
     const response = await api.post(
@@ -121,6 +121,5 @@ export const updateIdea = async (id, ideaData) => {
 
 // Удалить идею
 export const deleteIdea = async (id) => {
-    const response = await api.delete(`/ideas/${id}/`);
-    return response.data;
+  await api.delete(`/ideas/${id}/`);
 };

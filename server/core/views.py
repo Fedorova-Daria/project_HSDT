@@ -1,6 +1,6 @@
-from rest_framework import generics
-from .models import UniversityGroup, Technology
-from .serializers import GroupSerializer, TechnologySerializer
+from rest_framework import generics, viewsets
+from .models import UniversityGroup, Technology, Semester
+from .serializers import GroupSerializer, TechnologySerializer, SemesterSerializer
 
 
 class GroupListView(generics.ListAPIView):
@@ -12,3 +12,6 @@ class TechnologyListView(generics.ListAPIView):
     serializer_class = TechnologySerializer
 
 
+class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Semester.objects.all().order_by('-year', 'semester')
+    serializer_class = SemesterSerializer

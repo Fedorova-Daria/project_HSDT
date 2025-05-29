@@ -5,20 +5,20 @@
 
     <div class="p-4 m-auto w-4/5">
       <!-- Выбор команды -->
-      <label class="text-white text-lg">Выберите команду:</label>
-      <select v-model="selectedTeamId" @change="fetchTeamMembers" class="w-64 p-2 rounded bg-gray-800 text-white">
+      <label class=" text-lg">Выберите команду:</label>
+      <select v-model="selectedTeamId" @change="fetchTeamMembers" class="w-64 p-2 rounded bg-input">
   <option v-for="team in teams" :key="team.id" :value="team.id">
     {{ team.name }}
   </option>
 </select>
 
       <div v-if="teamMembers[selectedTeamId] && teamMembers[selectedTeamId].length" class="mt-4">
-  <h2 class="text-white text-xl mb-2">Участники команды</h2>
+  <h2 class="text-xl mb-2">Участники команды</h2>
   <ul>
     <li v-for="member in teamMembers[selectedTeamId]" :key="member.id" class="p-3 rounded mb-2 flex justify-between items-center">
       <div>
-        <p class="text-white font-semibold">{{ member.full_name }}</p>
-        <p class="text-gray-300">Средний рейтинг: {{ getParticipantRating(member.id) }}</p>
+        <p class=" font-semibold">{{ member.full_name }}</p>
+        <p class="">Средний рейтинг: {{ getParticipantRating(member.id) }}</p>
       </div>
       <!-- Выбор оценки -->
       <div class="radio">
@@ -68,7 +68,7 @@
         </label>
       </div>
       <!-- Кнопка "Поставить" -->
-<button @click="rateParticipant(worker.id)" class="px-4 py-2 bg-blue-500 text-white rounded">
+<button @click="rateParticipant(member.id)" class="px-4 py-2 bg-blue-500 text-always-white rounded">
   Поставить
 </button>
     </li>
@@ -76,12 +76,12 @@
 </div>
 
 <div v-if="freelancers.length" class="mt-6">
-  <h2 class="text-white text-xl mb-2">Фрилансеры</h2>
+  <h2 class="text-xl mb-2">Фрилансеры</h2>
   <ul>
     <li v-for="worker in freelancers" :key="worker.id" class="p-3 rounded mb-2 flex justify-between items-center">
       <div>
-        <p class="text-white font-semibold">{{ worker.full_name }}</p>
-        <p class="text-gray-300">Средний рейтинг: {{ getParticipantRating(worker.id) }}</p>
+        <p class="font-semibold">{{ worker.full_name }}</p>
+        <p class="">Средний рейтинг: {{ getParticipantRating(worker.id) }}</p>
       </div>
       <!-- Выбор оценки -->
       <div class="radio">
@@ -131,7 +131,7 @@
         </label>
       </div>
       <!-- Кнопка "Поставить" -->
-<button @click="rateParticipant(worker.id)" class="px-4 py-2 bg-blue-500 text-white rounded">
+<button @click="rateParticipant(worker.id)" class="px-4 py-2 bg-blue-500 text-always-white rounded">
   Поставить
 </button>
     </li>
@@ -265,12 +265,25 @@ async fetchFreelancers() {
   }
 },
     getParticipantRating(userId) {
-  if (!this.participantsDetails || !this.participantsDetails.workers) {
+  if (!this.participantsDetails) {
     return "Нет данных";
   }
-  
-  const worker = this.participantsDetails.workers.find(w => w.id === userId);
-  return worker ? worker.average_rating : "Нет данных";
+
+  // 1. Поиск среди одиночных воркеров
+  const worker = this.participantsDetails.workers?.find(w => w.id === userId);
+  if (worker) {
+    return worker.average_rating ?? "Нет данных";
+  }
+
+  // 2. Поиск среди членов команд
+  for (const team of this.participantsDetails.teams || []) {
+    const member = team.members.find(m => m.id === userId);
+    if (member) {
+      return member.average_rating ?? "Нет данных";
+    }
+  }
+
+  return "Нет данных";
 },
   },
 

@@ -41,12 +41,14 @@ def notify_project_application_created(sender, instance, created, **kwargs):
             instance.team.name if instance.applicant_type == 'team'
             else instance.freelancer.get_full_name()
         )
+
         create_notification(
             user=instance.project.initiator,
             notification_type='project_join_request_sent',
             message=f"{applicant_name} подал(а) заявку в проект {instance.project.title}",
             related_project=instance.project,
             related_project_application=instance,
+            related_team=instance.team if instance.applicant_type == 'team' else None,
         )
 
 @receiver(pre_save, sender=ProjectApplication)
@@ -60,10 +62,12 @@ def notify_project_application_status_change(sender, instance, **kwargs):
             instance.team.owner if instance.applicant_type == 'team'
             else instance.freelancer
         )
+
         create_notification(
             user=recipient,
             notification_type='project_join_request_accepted',
             message=f"Ваша заявка на участие в проекте {instance.project.title} была принята!",
             related_project=instance.project,
             related_project_application=instance,
+            related_team=instance.team if instance.applicant_type == 'team' else None,
         )

@@ -1,16 +1,17 @@
 <template>
+  <div>
   <div
     v-if="showNotifications"
-    class="absolute right-0 mt-2 w-72 bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-700 max-h-96 overflow-y-auto"
+    class="absolute right-0 mt-2 w-72 bg-input rounded-md shadow-lg py-1 z-50 border border-gray-700 max-h-96 overflow-y-auto"
   >
-    <div class="px-4 py-2 border-b border-gray-700 flex justify-between items-center">
-      <h3 class="font-medium text-white">Уведомления</h3>
+    <div class="px-4 py-2 flex justify-between items-center">
+      <h3 class="font-medium">Уведомления</h3>
       <button
         @click="markAllAsRead"
-        class="text-xs text-purple-400 hover:text-purple-300"
-        :disabled="unreadNotificationsCount === 0"
+        class="btn-read-all text-xs"
+        :disabled="loading"
       >
-        Прочитать все
+        {{ loading ? 'Обработка...' : 'Прочитать все' }}
       </button>
     </div>
 
@@ -18,21 +19,21 @@
       <div
         v-for="notification in notifications"
         :key="notification.id"
-        class="px-4 py-3 hover:bg-gray-700 cursor-pointer border-b border-gray-700 last:border-b-0"
-        :class="{ 'bg-gray-700/50': !notification.read }"
-        @click="handleNotificationClick(notification)"
+        class="px-4 py-3 cursor-pointer bg-card border-b last:border-b-0"
+        :class="{ read: !notification.is_read }"
+        @click="openModal(notification)"
       >
         <div class="flex items-start">
           <div class="flex-shrink-0 mr-3">
-            <div class="h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center text-white">
+            <div class="h-8 w-8 rounded-full bg-zinc-500 flex items-center justify-center text-white">
               {{ getNotificationIcon(notification.type) }}
             </div>
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium text-white truncate">
+            <p class="text-sm font-medium truncate">
               {{ notification.title }}
             </p>
-            <p class="text-xs text-gray-400 mt-1">
+            <p class="text-xs mt-1">
               {{ notification.message }}
             </p>
             <p class="text-xs text-gray-500 mt-1">
@@ -40,7 +41,9 @@
             </p>
           </div>
           <div v-if="!notification.read" class="ml-2">
-            <span class="h-2 w-2 rounded-full bg-purple-500 block"></span>
+            <span 
+            :style="{ backgroundColor: currentBgColor }"
+            class="h-2 w-2 rounded-full block"></span>
           </div>
         </div>
       </div>
@@ -48,9 +51,10 @@
     <div v-else class="px-4 py-6 text-center">
       <p class="text-gray-400 text-sm">Нет новых уведомлений</p>
     </div>
-
-    <!-- Модальное окно -->
+</div>
+<!-- Модальное окно -->
   <NotificationModal
+  v-if="isModalOpen && selectedNotification"
     :show="isModalOpen"
     :notification="selectedNotification"
     @close="closeModal"
@@ -60,16 +64,21 @@
 </template>
 
 <script>
+import api from "@/composables/auth";
 import { notificationService } from "@/services/notificationService";
 import NotificationModal from "@/components/NotificationModal.vue";
+import { instituteStyles } from "@/assets/instituteStyles.js";
 
 export default {
+  inject: ["globalState"], 
   components: {NotificationModal},
   props: {
     showNotifications: Boolean,
   },
   data() {
     return {
+      loading: false,
+      currentBgColor: "",
       notifications: [],
       pollingInterval: null,  // для автообновления
       isModalOpen: false,
@@ -77,6 +86,13 @@ export default {
     };
   },
   computed: {
+    selectedInstitute() {
+      return this.globalState.institute; // Глобальное состояние для чтения
+    },
+    instituteStyle() {
+      const style = instituteStyles[this.selectedInstitute]; // Используем глобальное состояние
+      return style || { buttonOffColor: "#ccc" }; // Дефолтный стиль
+    },
     unreadNotificationsCount() {
       return this.notifications.filter((n) => !n.read).length;
     },
@@ -90,6 +106,23 @@ export default {
     clearInterval(this.pollingInterval);
   },
   methods: {
+    async markAllAsRead() {
+    try {
+      await api.post('/notifications/mark_all_as_read/', {
+        notification_type: "",  // или что требует API
+        message: "",                        // если поле можно пустым
+        is_read: true,
+        related_team: null,
+        related_project: null,
+        related_team_join_request: null,
+        related_project_application: null,
+      });
+      // Обнови локально, если надо
+      this.notifications.forEach(n => n.is_read = true);
+    } catch (error) {
+      console.error('Ошибка отметки всех уведомлений прочитанными', error);
+    }
+  },
     async loadNotifications() {
       try {
         const data = await notificationService.getNotifications();
@@ -105,39 +138,6 @@ export default {
         console.error("Не удалось загрузить уведомления:", error);
         this.notifications = [];
       }
-    },
-    async markAsRead(notificationId) {
-      try {
-        await notificationService.markAsRead(notificationId);
-        this.notifications = this.notifications.map((notification) =>
-          notification.id === notificationId
-            ? { ...notification, read: true }
-            : notification
-        );
-      } catch (error) {
-        console.error("Ошибка при пометке как прочитанное:", error);
-      }
-    },
-    async markAllAsRead() {
-      try {
-        const unread = this.notifications.filter((n) => !n.read);
-        await Promise.all(unread.map((n) => this.markAsRead(n.id)));
-      } catch (error) {
-        console.error("Ошибка при отметке всех как прочитанных:", error);
-      }
-    },
-    async handleNotificationClick(notification) {
-      // Запрашиваем подробности уведомления по id
-      try {
-        const detailedNotification = await notificationService.getNotificationById(notification.id);
-        this.selectedNotification = detailedNotification;
-        this.isModalOpen = true;
-      } catch (error) {
-        console.error("Ошибка при загрузке данных уведомления:", error);
-      }
-    },
-    closeModal() {
-      this.isModalOpen = false;
     },
     getNotificationIcon(type) {
       const icons = {
@@ -166,11 +166,40 @@ export default {
         month: "short",
       });
     },
+    openModal(notification) {
+  console.log('Открываем модалку с уведомлением:', notification);
+  this.selectedNotification = notification;
+  this.isModalOpen = true;
+},
+    closeModal() {
+      this.isModalOpen = false;
+      this.selectedNotification = null;
+    },
+  },
+  watch: {
+    instituteStyle: {
+      handler(newStyle) {
+        this.currentBgColor = newStyle.buttonOffColor;
+      },
+      immediate: true,
+    },
+    showNotifications(newVal) {
+      if (newVal) {
+        this.loadNotifications();
+      }
+    }
   },
 };
 </script>
 
 <style scoped>
+.read {
+  opacity: 0.6;
+}
+.btn-read-all {
+  margin-top: 10px;
+  /* стили для кнопки */
+}
 ::-webkit-scrollbar {
   width: 6px;
 }

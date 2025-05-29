@@ -11,7 +11,7 @@ class TeamJoinRequestFilter(django_filters.FilterSet):
 
 class TeamFilter(django_filters.FilterSet):
     owner = django_filters.NumberFilter(field_name='owner__id', lookup_expr='exact')
-    members = django_filters.NumberFilter(field_name='members__id', lookup_expr='exact')
+    members_ids = django_filters.NumberFilter(field_name='members__id', lookup_expr='exact')
 
     class Meta:
         model = Team

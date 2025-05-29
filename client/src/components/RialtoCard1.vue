@@ -1,6 +1,6 @@
 <template>
   <div
-    class="idea-card bg-card rounded-2xl p-5 shadow-lg cursor-pointer h-full flex flex-col justify-between"
+    class="bg-card rounded-2xl p-5 shadow-lg cursor-pointer h-full flex flex-col justify-between"
   >
     <!-- Верхняя часть -->
     <div>
@@ -10,6 +10,12 @@
         </h1>
       </div>
     </div>
+
+<div class="flex">
+  <span class="bg-gray-200 text-sm text-gray-700 px-2 py-1 rounded-full">
+    {{ localizedStatus }}
+  </span>
+</div>
 
     <!-- Нижняя часть -->
     <div class="mt-auto">
@@ -68,6 +74,18 @@ export default {
     this.userRole = UserService.getUserRole(); // Устанавливаем значение из Cookies
   },
   computed: {
+    localizedStatus() {
+      const statusMap = {
+        draft: 'Черновик',
+        under_review: 'На модерации',
+        open: 'Подтверждена',
+        rejected: 'Отклонена',
+        in_progress: 'В процессе',
+        completed: 'Завершена'
+      };
+
+      return statusMap[this.idea.status] || this.idea.status;
+    },
     liked() {
       if (!this.idea || !this.idea.likes) return false;
       const userData = JSON.parse(Cookies.get("userData") || "{}");

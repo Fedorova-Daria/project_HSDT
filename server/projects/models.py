@@ -1,8 +1,15 @@
 from django.db import models
 from users.models import Account
-from core.models import Technology
+from core.models import Technology, Semester
 from teams.models import Team
 from django.conf import settings
+import json
+
+class Institute(models.Model):
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
 
 class Project(models.Model):
     STATUS_CHOICES = [
@@ -10,6 +17,7 @@ class Project(models.Model):
         ('review', 'На рассмотрении'),
         ('open', 'В поиске'),
         ('in_progress', 'В работе'),
+        ('under_revision', 'На доработке'),
         ('done', 'Сделан'),
     ]
 
@@ -21,6 +29,7 @@ class Project(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
     skills_required = models.ManyToManyField(Technology, blank=True)
+    institutes = models.CharField(max_length=255, blank=True, default='[]')
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -31,7 +40,6 @@ class Project(models.Model):
     workers = models.ManyToManyField(Account, related_name='workers_projects', blank=True)
 
     favorites = models.ManyToManyField(Account, related_name="favorite_projects", blank=True)
-    experts_voted = models.ManyToManyField(Account, related_name="voted_projects", blank=True)
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
 
@@ -42,7 +50,16 @@ class Project(models.Model):
     likes = models.ManyToManyField(Account, related_name="liked_projects", blank=True)
     expert_likes = models.ManyToManyField(Account, related_name="expert_liked_projects", blank=True)
 
-    duration = models.CharField(max_length=50, choices=DURATION_CHOICES, default="semester")
+    semester = models.ForeignKey(Semester, on_delete=models.SET_NULL, null=True, blank=True)
+
+    def get_institutes_list(self):
+        try:
+            return json.loads(self.institutes)
+        except:
+            return []
+
+    def set_institutes_list(self, inst_list):
+        self.institutes = json.dumps(inst_list)
 
     def check_approval(self):
         if self.expert_likes.count() >= self.votes_to_approve:
@@ -60,7 +77,12 @@ class Project(models.Model):
             return round(ratings.aggregate(models.Avg('rating'))['rating__avg'], 2)
         return None
 
-
+class ProjectMessage(models.Model):
+    project = models.ForeignKey('Project', on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey(Account, on_delete=models.CASCADE)
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_revision_request = models.BooleanField(default=False)
 
 class ProjectParticipantRating(models.Model):
     project = models.ForeignKey('Project', on_delete=models.CASCADE, related_name='participant_ratings')
