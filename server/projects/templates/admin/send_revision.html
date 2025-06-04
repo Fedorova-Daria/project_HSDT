@@ -1,0 +1,8 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+  <h1>Отправить проект "{{ project.title }}" на доработку</h1>
+  <form method="post">{% csrf_token %}
+    <textarea name="message" rows="5" cols="80" required></textarea><br><br>
+    <button type="submit" class="default">Отправить</button>
+  </form>
+{% endblock %}

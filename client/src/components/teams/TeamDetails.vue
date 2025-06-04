@@ -155,13 +155,12 @@
 </table>
     </div>
     </div>
-    <div class="w-4/5 m-auto">
+    <div class="w-4/5 m-auto flex flex-col gap-4">
     <button @click="sendJoinRequest"
-            v-if="requestStatus === 'none'"
             :style="{ backgroundColor: currentBgColor }"
         @mouseover="currentBgColor = instituteStyle.buttonOnColor"
         @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
-            class=" ml-20 text-always-white inline-flex items-center focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+            class=" ml-20 text-always-white inline-flex items-center focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center w-88"
           >
             <svg
               class="me-1 -ms-1 w-5 h-5"
@@ -177,18 +176,22 @@
             </svg>
             Присоединиться
           </button>
+          <button
+        @click="openModal"
+        :style="{ backgroundColor: currentBgColor }"
+        @mouseover="currentBgColor = instituteStyle.buttonOnColor"
+        @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
+        class=" text-always-white w-88 ml-20 inline-flex items-center focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-3 text-center"
+      >
+        Посмотреть заявки
+      </button>
         </div>
-        <div class="">
-    <h1>Заявки на вступление в команду</h1>
 
-    <ul>
-      <li v-for="request in joinRequests" :key="request.id">
-        <span>{{ request.user }}</span>
-        <button @click="acceptJoinRequest(request.id)">Принять</button>
-        <button @click="cancelJoinRequest(request.id)">Отклонить</button>
-      </li>
-    </ul>
-  </div>
+<RespondedTeams
+      v-if="isModalOpen"
+      :teamId="teamId"
+      @close="closeModal"
+    />
 
   </div>
 </template>
@@ -198,21 +201,14 @@ import api from "@/composables/auth.js"; // axios-инстанс с интерс
 import Header from "@/components/header.vue";
 import Cookies from "js-cookie"; 
 import { deleteTeam } from "@/services/teamService";
-import {
-  fetchJoinRequestsByTeam,
-  acceptJoinRequest,
-  cancelJoinRequestDelete,
-  getJoinRequestById,
-  cancelJoinRequestPost
-} from "@/services/joinRequests";
 import { instituteStyles } from "@/assets/instituteStyles.js";
-
+import RespondedTeams from "@/components/teams/request.vue";
 
 export default {
   inject: ["globalState"],
   name: "TeamDetails",
   components: {
-    Header,
+    Header, RespondedTeams 
   },
   props: {
     institute: {
@@ -226,12 +222,10 @@ export default {
   },
   data() {
     return {
+      isModalOpen: false,
       currentBgColor: "",
       userData: null,
       showConfirmModal: false,
-      joinRequests: [],  // Список заявок
-      joinRequestId: null,
-      requestStatus: 'none', // 'none', 'pending', 'accepted', 'canceled'
       userId: null,
       team: {},                // Объект с данными команды
       isEditing: false,        // Флаг режима редактирования
@@ -240,8 +234,6 @@ export default {
         description: "",
         status: "",
       },
-      joinSuccess: false,      // Флаг успешного запроса на вступление
-      joinRequests: [],            // Список заявок на вступление в команду
       errorMessage: '',        // Сообщения об ошибках
       skills: []
     };
@@ -302,7 +294,6 @@ export default {
     const userData = JSON.parse(localStorage.getItem('userData'));
     console.log('teamId:', this.teamId, 'Тип данных:', typeof this.teamId);
     this.userId = userData?.id;
-    this.fetchJoinRequests();  // Загружаем заявки при монтировании компонента
   },
   methods: {
     confirmDelete() {
@@ -325,53 +316,6 @@ export default {
       this.$toast.error("Не удалось удалить проект. Попробуйте позже.");
     }
   },
-// Метод для получения заявок
-async fetchJoinRequests() {
-      try {
-        this.joinRequests = await fetchJoinRequestsByTeam(this.teamId);
-        console.log("Заявки на вступление:", this.joinRequests);
-      } catch (error) {
-        console.error("Ошибка при загрузке заявок:", error);
-      }
-    },
-     // Метод для принятия заявки
-    async acceptJoinRequest(requestId) {
-      try {
-        // Преобразуем requestId в число, если это строка
-      const id = parseInt(requestId, 10);
-      if (isNaN(id)) {
-        throw new Error("Неверный ID заявки");
-      }
-        // 1) принимаем заявку на сервере
-        const response = await api.post(`/team-join-requests/${id}/accept/`);
-        console.log(response.data);
-        
-        // 2) находим объект заявки
-        const jr = this.joinRequests.find(r => r.id === requestId);
-        if (!jr) throw new Error("Заявка не найдена в локальном списке");
-
-        // 4) перезагружаем список заявок
-        await this.fetchJoinRequests();
-        return response.data;
-      } catch (err) {
-        console.error("Ошибка при принятии заявки или отправке уведомления:", err);
-      }
-    },
-
-    // Метод для отклонения заявки
-    async cancelJoinRequest(requestId) {
-      try {
-        await cancelJoinRequestDelete(requestId);  // Отклонить заявку
-
-        // 2) находим объект заявки
-        const jr = this.joinRequests.find(r => r.id === requestId);
-        if (!jr) throw new Error("Заявка не найдена в локальном списке");
-
-        this.fetchJoinRequests();  // Перезагружаем заявки
-      } catch (error) {
-        console.error('Ошибка при отклонении заявки', error);
-      }
-    },
   async sendJoinRequest() {
     try {
       // 1) парсим ID команды
@@ -408,16 +352,6 @@ async fetchJoinRequests() {
       this.errorMessage = "Не удалось отправить заявку или уведомление.";
     }
   },
-      async cancelJoinRequest() {
-      try {
-        if (this.joinRequestId) {
-          await cancelJoinRequestPost(this.joinRequestId);
-          this.requestStatus = 'canceled';
-        }
-      } catch (err) {
-        console.error('Ошибка при отмене заявки:', err);
-      }
-    },
     /**
      * Перенаправляет пользователя на предыдущую страницу.
      */
@@ -475,11 +409,11 @@ async fetchJoinRequests() {
         console.error("Ошибка при сохранении изменений:", error.response?.data || error);
       }
     },
-    /**
-     * Переходит на предыдущую страницу.
-     */
-    goBack() {
-      this.$router.go(-1);
+    openModal() {
+      this.isModalOpen = true;
+    },
+    closeModal() {
+      this.isModalOpen = false;
     },
   },
 };

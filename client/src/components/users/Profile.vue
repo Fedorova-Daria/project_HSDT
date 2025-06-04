@@ -1,19 +1,5 @@
 <template>
   <div class="relative min-h-screen overflow-hidden">
-    <!-- Размытый фон с параллакс-эффектом -->
-    <!--<img
-      ref="backgroundImage"
-      class="absolute top-0 left-0 h-full w-full object-cover filter blur-md transform-gpu scale-105 -z-10"
-      src="/bgg.jpg"
-      :style="{
-        transform: `translate(${offsetX}px, ${offsetY}px) scale(1.05)`,
-        transition: 'transform 0.5s cubic-bezier(0.13, 0.62, 0.23, 0.99)',
-      }"
-    />-->
-
-    <!-- Затемнение фона -->
-    <!--<div class="absolute inset-0 bg-black opacity-60 -z-10"></div>-->
-
     <div class="min-h-screen flex flex-col relative z-10">
       <!-- Хедер -->
       <Header />
@@ -27,7 +13,7 @@
           <div class="text-center">
             <img
               class="w-32 h-32 rounded-full border-4 mx-auto cursor-pointer transition-colors"
-              :src="userData.avatar || null"
+              :src="userData.avatar ? `http://127.0.0.1:8000/${userData.avatar}` : null"
               alt="Аватар пользователя"
               @click="showAvatarModal = true"
             />
@@ -38,7 +24,11 @@
               {{ userData.first_name }} {{ userData.last_name }}
             </h1>
             <div class="mt-2">
-              <span class="px-3 py-1 bg-purple-600 rounded-full text-sm">
+              <span 
+              :style="{ backgroundColor: currentBgColor }"
+                    @mouseover="currentBgColor = instituteStyle.buttonOnColor"
+                    @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
+              class="px-3 py-1 text-always-white rounded-full text-sm">
                 {{ userData.role || "Роль не указана" }}
               </span>
             </div>
@@ -127,7 +117,7 @@
                   <div class="mt-2 flex justify-between items-center">
                     <div>
                       <span class="text-sm">Оценка: </span>
-                      <span class="font-bold"> {{userProjects.averageRating }} /10</span>
+                      <span class="font-bold"> {{userProjects.averageRating }} /5</span>
                     </div>
                     <div>
                       <span class="text-sm">Участие: с {{ formatDate(project.date) }} по {{ formatDate(project.endDate) }}</span>
@@ -175,7 +165,7 @@
                     <button
                       class="mt-2 text-purple-300 hover:text-purple-200 text-sm flex items-center"
                     >
-                      <span @click="goToTeam">Подробнее о команде</span>
+                      <span @click="viewTeam(team.id)">Подробнее о команде</span>
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         class="h-4 w-4 ml-1"
@@ -199,61 +189,62 @@
 
           <!-- Список навыков -->
 <h3 class="mt-10 text-xl font-semibold border-b pb-2 mb-3">Навыки</h3>
-<div class="flex flex-wrap gap-2 mt-4">
-  <span
-    v-for="(tech, index) in userSkills"
-    :key="index"
-    class="px-3 py-1 bg-purple-600/50 rounded-full text-sm flex items-center"
-  >
-    {{ tech.name }}
-    <button
-      @click="removeSkill(index)"
-      class="ml-1 text-xs text-red-300 hover:text-red-200"
+    <div class="flex flex-wrap gap-2 mt-4">
+      <span
+  v-for="(tech, index) in userSkills"
+  :key="tech.id"
+  class="px-3 py-1 bg-purple-600/50 rounded-full text-sm flex items-center"
+>
+  {{ tech.name }}
+  <button @click="removeSkill(index)" class="ml-1 text-xs text-red-300 hover:text-red-200">×</button>
+</span>
+
+      <button
+        @click="openSkillsModal"
+        class="w-8 h-8 flex items-center justify-center bg-purple-600/50 hover:bg-purple-600/70 rounded-full text-lg transition-colors"
+      >
+        +
+      </button>
+    </div>
+
+    <!-- Модалка -->
+    <div
+      v-if="showSkillsModal"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
     >
-      ×
-    </button>
-  </span>
+      <div class="bg-white dark:bg-zinc-800 p-6 rounded-lg w-[90%] max-w-2xl">
+        <h3 class="text-xl font-semibold mb-4">Выберите навыки</h3>
+        <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+          <div v-for="(techs, type) in groupedTechnologies" :key="type">
+            <h4 class="text-lg font-semibold mb-2">{{ type }}</h4>
+            <div class="flex flex-wrap gap-2">
+              <button
+  v-for="tech in techs"
+  :key="tech.id"
+  @click="toggleSkillInModal(tech)"
+  :class="[
+    'px-3 py-1 border rounded-full text-sm hover:bg-purple-500 hover:text-white',
+    selectedSkillsInModal.some(t => t.id === tech.id) ? 'bg-purple-600 text-white' : ''
+  ]"
+>
+  {{ tech.name }}
+</button>
+            </div>
+          </div>
+        </div>
 
-  <button
-    @click="showSkillsModal = true"
-    class="w-8 h-8 flex items-center justify-center bg-purple-600/50 hover:bg-purple-600/70 rounded-full text-lg transition-colors"
-  >
-    +
-  </button>
-</div>
-
-
-<!-- Модалка -->
-<div v-if="showSkillsModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-  <div class="bg-white dark:bg-zinc-800 p-6 rounded-lg w-[90%] max-w-2xl">
-    <h3 class="text-xl font-semibold mb-4">Выберите навыки</h3>
-    <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-      <div v-for="(techs, type) in groupedTechnologies" :key="type">
-        <h4 class="text-lg font-semibold mb-2">{{ type }}</h4>
-        <div class="flex flex-wrap gap-2">
+        <div class="mt-6 flex justify-end gap-2">
+          <button class="px-4 py-2 bg-zinc-600 rounded hover:bg-zinc-500" @click="saveSkillsFromModal">
+            Сохранить</button>
           <button
-            v-for="tech in techs"
-            :key="tech.id"
-            @click="addSkill(tech)"
-            :disabled="userSkills.some(t => t.id === tech.id)"
-            class="px-3 py-1 border rounded-full text-sm hover:bg-purple-500 hover:text-white disabled:opacity-40"
+            @click="showSkillsModal = false"
+            class="px-4 py-2 bg-zinc-600 rounded hover:bg-zinc-500"
           >
-            {{ tech.name }}
+            Отмена
           </button>
         </div>
       </div>
     </div>
-
-    <div class="mt-6 flex justify-end gap-2">
-      <button
-        @click="showSkillsModal = false"
-        class="px-4 py-2 bg-zinc-600 rounded hover:bg-zinc-500"
-      >
-        Отмена
-      </button>
-    </div>
-  </div>
-</div>
 
 
         </div>
@@ -265,34 +256,40 @@
         class="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50"
       >
         <div
-          class="bg-zinc-800/95 p-6 rounded-lg shadow-lg backdrop-blur-sm w-full max-w-md"
+          class="bg-input p-6 rounded-lg shadow-lg backdrop-blur-sm w-full max-w-md"
         >
-          <h2 class="text-purple-500 text-xl font-bold mb-4">
+          <h2 class=" text-xl font-bold mb-4">
             Редактировать профиль
           </h2>
           <form
+          :style="{ borderColor: currentBgColor }"
+        @mouseover="currentBgColor = instituteStyle.buttonOnColor"
+        @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
             @submit.prevent="updateProfile"
-            class="w-full p-6 border border-purple-400 rounded-lg bg-zinc-800/90 text-white"
+            class="w-full p-6 border rounded-lg bg-card"
           >
             <!-- Поле для загрузки аватара -->
             <div class="form-group mb-4">
-              <label class="font-bold text-purple-300">Аватар:</label>
+              <label class="font-bold">Аватар:</label>
               <div class="flex items-center mt-2">
                 <img
-                  :src="userData.avatar || randomAvatar"
-                  class="w-16 h-16 rounded-full border-2 border-purple-400 mr-3"
+                :style="{ borderColor: currentBgColor }"
+        @mouseover="currentBgColor = instituteStyle.buttonOnColor"
+        @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
+                  :src="userData.avatar"
+                  class="w-16 h-16 rounded-full border-2 mr-3"
                 />
                 <input
                   type="file"
                   accept="image/*"
                   @change="handleAvatarUpload"
-                  class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-500 file:text-white hover:file:bg-purple-600"
+                  class="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-zinc-500 file:text-white hover:file:bg-zinc-600"
                 />
               </div>
             </div>
 
             <div class="form-group mb-4">
-              <label for="email" class="font-bold text-purple-300"
+              <label for="email" class="font-bold "
                 >Email:</label
               >
               <input
@@ -300,26 +297,13 @@
                 id="email"
                 v-model="userData.email"
                 required
-                class="mt-1 block w-full p-2 border border-purple-400 rounded bg-zinc-700/50"
+                class="mt-1 block w-full p-2 bg-input rounded-lg"
               />
             </div>
 
-            <div class="form-group mb-4">
-              <label for="role" class="font-bold text-purple-300">Роль:</label>
-              <select
-                id="role"
-                v-model="userData.role"
-                class="mt-1 block w-full p-2 border border-purple-400 rounded bg-zinc-700/50 text-white"
-              >
-                <option value="" disabled>Выберите роль</option>
-                <option value="Студент">Студент</option>
-                <option value="Эксперт">Эксперт</option>
-                <option value="Заказчик">Заказчик</option>
-              </select>
-            </div>
 
             <div class="form-group mb-4">
-              <label for="bio" class="font-bold text-purple-300"
+              <label for="bio" class="font-bold "
                 >Биография:</label
               >
               <textarea
@@ -327,7 +311,7 @@
                 v-model="userData.bio"
                 maxlength="500"
                 rows="4"
-                class="mt-1 block w-full p-2 border border-purple-400 rounded bg-zinc-700/50"
+                class="mt-1 block w-full p-2 rounded-lg bg-input"
                 placeholder="Расскажите о себе, своих интересах и опыте"
               ></textarea>
             </div>
@@ -336,7 +320,7 @@
               <button
                 type="button"
                 @click="showPasswordFields = !showPasswordFields"
-                class="flex items-center text-purple-300 hover:text-purple-200 transition-colors"
+                class="flex items-center transition-colors"
               >
                 <span>{{
                   showPasswordFields ? "Скрыть" : "Изменить пароль"
@@ -362,7 +346,7 @@
             <transition name="slide-fade">
               <div v-if="showPasswordFields">
                 <div class="form-group mb-4">
-                  <label for="password" class="font-bold text-purple-300"
+                  <label for="password" class="font-bold"
                     >Новый пароль:</label
                   >
                   <div class="relative">
@@ -371,13 +355,13 @@
                       id="password"
                       v-model="password"
                       @input="validatePasswords"
-                      class="mt-1 block w-full p-2 border border-purple-400 rounded bg-zinc-700/50"
+                      class="mt-1 block w-full p-2 rounded-lg bg-input"
                       placeholder="Введите новый пароль"
                     />
                     <button
                       type="button"
                       @click="showPassword = !showPassword"
-                      class="absolute right-2 top-2 text-purple-300 hover:text-purple-200"
+                      class="absolute right-2 top-2"
                       :title="
                         showPassword ? 'Скрыть пароль' : 'Показать пароль'
                       "
@@ -407,7 +391,7 @@
                 </div>
 
                 <div class="form-group mb-4">
-                  <label for="confirmPassword" class="font-bold text-purple-300"
+                  <label for="confirmPassword" class="font-bold"
                     >Подтвердите пароль:</label
                   >
                   <div class="relative">
@@ -416,7 +400,7 @@
                       id="confirmPassword"
                       v-model="confirmPassword"
                       @input="validatePasswords"
-                      class="mt-1 block w-full p-2 border border-purple-400 rounded bg-zinc-700/50"
+                      class="mt-1 block w-full p-2 rounded-lg bg-input"
                       placeholder="Повторите новый пароль"
                     />
                     <button
@@ -459,12 +443,15 @@
             </transition>
 
             <button
+            :style="{ backgroundColor: currentBgColor }"
+                    @mouseover="currentBgColor = instituteStyle.buttonOnColor"
+                    @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
               type="submit"
-              class="w-full mt-4 p-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors"
+              class="w-full mt-4 p-2  text-always-white rounded-lg transition-colors"
               :disabled="!formIsValid"
               :class="{
                 'opacity-50 cursor-not-allowed': !formIsValid,
-                'hover:bg-purple-500': !formIsValid,
+                '': !formIsValid,
               }"
             >
               Сохранить изменения
@@ -472,8 +459,11 @@
           </form>
 
           <button
+          :style="{ backgroundColor: currentBgColor }"
+                    @mouseover="currentBgColor = instituteStyle.buttonOnColor"
+                    @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
             @click="closeModal"
-            class="mt-4 p-2 bg-purple-500 text-white rounded hover:bg-purple-600 w-full transition-colors"
+            class="mt-4 p-2  text-always-white rounded  w-full transition-colors"
           >
             Закрыть
           </button>
@@ -510,6 +500,7 @@ export default {
   data() {
     return {
       showSkillsModal: false,
+      selectedSkillsInModal: [],
     allTechnologies: [], // Все технологии
     groupedTechnologies: {}, // Группировка по типу
     userSkills: [], // ID скиллов пользователя
@@ -550,27 +541,54 @@ export default {
     },
   },
   methods: {
+    openSkillsModal() {
+  this.selectedSkillsInModal = [...this.userSkills];
+  this.showSkillsModal = true;
+},
     async fetchTechnologies() {
-    const res = await api.get('/core/technologies');
-    const data = await res.data;
+      const res = await api.get('/core/technologies');
+      const data = res.data;
 
-    this.allTechnologies = data;
-    this.groupedTechnologies = data.reduce((acc, tech) => {
-      if (!acc[tech.type]) acc[tech.type] = [];
-      acc[tech.type].push(tech);
-      return acc;
-    }, {});
+      this.allTechnologies = data;
+      this.groupedTechnologies = data.reduce((acc, tech) => {
+        if (!acc[tech.type]) acc[tech.type] = [];
+        acc[tech.type].push(tech);
+        return acc;
+      }, {});
+    },
+userSkillsDetailed() {
+    // userSkills содержит id скиллов (числа)
+    // allTechnologies — полный список навыков с id и name
+    return this.userSkills.map(skillId => {
+      return this.allTechnologies.find(tech => tech.id === skillId) || { id: skillId, name: 'Неизвестный навык' };
+    });
   },
-
-  addSkill(tech) {
-    if (!this.userSkills.includes(tech)) {
-      this.userSkills.push(tech);
+    addSkill(tech) {
+      if (!this.userSkills.some(t => t.id === tech.id)) {
+        this.userSkills.push(tech);
+      }
+    },
+    removeSkill(index) {
+  this.userSkills.splice(index, 1);
+  this.updateProfile();
+},
+toggleSkillInModal(tech) {
+    const index = this.selectedSkillsInModal.findIndex(t => t.id === tech.id);
+    if (index === -1) {
+      this.selectedSkillsInModal.push(tech);
+    } else {
+      this.selectedSkillsInModal.splice(index, 1);
     }
   },
-
-  removeSkill(index) {
-    this.userSkills.splice(index, 1);
+  saveSkillsFromModal() {
+    this.userSkills = [...this.selectedSkillsInModal];
+    this.showSkillsModal = false;
+    this.updateProfile();
   },
+    // Когда будешь отправлять на бекенд — отправляй массив ID:
+    getSkillsIds() {
+      return this.userSkills.map(skill => skill.id);
+    },
     formatDate(dateStr) {
     if (!dateStr) return 'по настоящее время';
     const date = new Date(dateStr);
@@ -643,23 +661,17 @@ const userEntry = [
   this.userProjects = projects;
   this.userTeams = teams;
 },
-    goToTeam(){
-      this.$router.push({ path: "/HSDT/team/1/" });
-    },
-    getRandomAvatar() {
-      const randomIndex = Math.floor(Math.random() * this.avatars.length);
-      return this.avatars[randomIndex];
-    },
+    viewTeam(teamId) {
+    this.$router.push(`/${this.selectedInstitute}/team/${teamId}`);
+  },
     handleAvatarUpload(event) {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          this.userData.avatar = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      }
-    },
+  const file = event.target.files[0];
+  if (file) {
+    this.userData.avatarFile = file; // сохраняем в отдельное поле
+    // можно тут же локально обновить превью:
+    this.userData.avatar = URL.createObjectURL(file);
+  }
+},
     validatePasswords() {
       if (this.showPasswordFields) {
         if (this.password && this.confirmPassword) {
@@ -686,19 +698,67 @@ const userEntry = [
       this.passwordError = "";
       this.formIsValid = true;
     },
-    updateProfile() {
-      if (!this.formIsValid) {
-        return;
-      }
+    async updateProfile() {
+  // Если меняется аватар — используем FormData, иначе обычный JSON
+  const hasAvatar = !!this.userData.avatarFile;
 
+  try {
+    let response;
+    if (hasAvatar) {
+      // Используем FormData для отправки файла
+      const formData = new FormData();
+      if (this.userData.email) formData.append('email', this.userData.email);
+      if (this.userData.bio) formData.append('bio', this.userData.bio);
+      formData.append('avatar', this.userData.avatarFile);
       if (this.password && this.password === this.confirmPassword) {
-        console.log("Пароль будет изменён на:", this.password);
+        formData.append('password', this.password);
+      }
+      // Добавляем навыки как отдельные элементы
+      if (updatedUser.skills) {
+  this.userSkills = updatedUser.skills.map(skillId => 
+    this.allTechnologies.find(t => t.id === skillId) || { id: skillId, name: 'Неизвестный навык' }
+  );
+} else {
+  this.userSkills = [];
+}
+      response = await api.patch('users/me/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+    } else {
+      // Отправляем JSON
+      const payload = {
+        email: this.userData.email,
+        bio: this.userData.bio,
+        skills: this.userSkills.map(skill => skill.id),
+      };
+      if (this.password && this.password === this.confirmPassword) {
+        payload.password = this.password;
       }
 
-      UserService.saveUserData(this.userData);
-      alert("Профиль обновлён!");
-      this.closeModal();
-    },
+      response = await api.patch('users/me/', payload);
+    }
+
+    const updatedUser = response?.data;
+
+    if (updatedUser) {
+  UserService.saveUserData(updatedUser);
+  this.userData = { ...this.userData, ...updatedUser };
+
+  if (updatedUser.skills && this.allTechnologies.length) {
+    // Преобразуем ID в объекты навыков
+    this.userSkills = updatedUser.skills.map(skillId => {
+      return this.allTechnologies.find(tech => tech.id === skillId) || { id: skillId, name: 'Неизвестный навык' };
+    });
+  } else {
+    this.userSkills = [];
+  }
+}
+
+    this.showModal = false;
+  } catch (error) {
+    console.error('Ошибка при обновлении профиля:', error);
+  }
+},
     closeModal() {
       this.showModal = false;
       this.password = "";
@@ -733,11 +793,27 @@ const userEntry = [
     },
   },
   async mounted() {
-    this.fetchTechnologies();
-    const savedData = await UserService.getUserData();
-    this.userData = savedData;
-    this.fetchUserActivity(this.userData.id);
-  },
+  await this.fetchTechnologies();
+
+  const savedData = await UserService.getUserData();
+
+  if (savedData && typeof savedData === 'object') {
+    this.userData = {
+      ...this.userData,
+      ...savedData
+    };
+    if (this.userData.skills) {
+  this.userSkills = this.userData.skills.map(skillId => 
+    this.allTechnologies.find(t => t.id === skillId) || { id: skillId, name: 'Неизвестный навык' }
+  );
+} else {
+  this.userSkills = [];
+}
+    if (this.userData.id) {
+      this.fetchUserActivity(this.userData.id);
+    }
+  }
+},
 };
 </script>
 

@@ -6,7 +6,7 @@
       <div class="relative rounded-lg shadow-sm bg-card">
         <!-- Modal header -->
         <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t border-zinc-600">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 class="text-lg font-semibold">
             Создать свое предложение
           </h3>
           <button
@@ -39,7 +39,7 @@
             <div class="col-span-2">
               <label
                 for="name"
-                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                class="block mb-2 text-sm font-medium"
                 >Название проекта</label
               >
               <input
@@ -47,7 +47,7 @@
                 type="text"
                 name="name"
                 id="name"
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-zinc-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                class="bg-input border-dynamic text-sm rounded-lg block w-full p-2.5 focus:outline-none focus:ring-0 focus:border-none"
                 placeholder="Какой вы придумали проект? Удивите нас!"
                 required
               />
@@ -56,14 +56,14 @@
             <div class="col-span-2">
               <label
                 for="description"
-                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                class="block mb-2 text-sm font-medium"
                 >Расскажите, как можно улучшить наш университет!</label
               >
               <textarea
                 v-model="form.description"
                 id="description"
                 rows="4"
-                class="block mt-3 p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                class="block mt-3 bg-input border-dynamic text-sm rounded-lg block w-full p-2.5 focus:outline-none focus:ring-0 focus:border-none"
                 placeholder="Напишите подробное описание проекта здесь"
                 required
               ></textarea>
@@ -71,9 +71,12 @@
           </div>
           <div class="flex justify-between gap-4">
             <button
-              @click="submitOffer('open')"
+              @click="submitOffer('review')"
               type="button"
-              class="text-white inline-flex items-center bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:outline-none focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-800"
+              :style="{ backgroundColor: currentBgColor }"
+        @mouseover="currentBgColor = instituteStyle.buttonOnColor"
+        @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
+              class="text-always-white inline-flex items-center focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center"
             >
               <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                 <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path>
@@ -89,15 +92,35 @@
 
 <script>
 import api from "@/composables/auth";
+import { instituteStyles } from "@/assets/instituteStyles.js";
 
 export default {
+  inject: ["globalState"],
   data() {
     return {
+      currentBgColor: "",
       form: {
         title: '',
         description: '',
       },
     };
+  },
+  computed: {
+    selectedInstitute() {
+      return this.globalState.institute; // Глобальное состояние для чтения
+    },
+    instituteStyle() {
+      const style = instituteStyles[this.selectedInstitute]; // Используем глобальное состояние
+      return style || { buttonOffColor: "#ccc" }; // Дефолтный стиль
+    },
+  },
+  watch: {
+    instituteStyle: {
+      handler(newStyle) {
+        this.currentBgColor = newStyle.buttonOffColor;
+      },
+      immediate: true,
+    },
   },
   methods: {
     async submitOffer(status) {

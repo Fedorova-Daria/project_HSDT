@@ -26,10 +26,6 @@
         Инициатор: {{ offer.initiator || "Неизвестный автор" }}
       </h3>
     </div>
-
-    <div v-if="userRole === 'EX' && userRole === 'CU'" class="text-dynamic mt-2">
-      Голосов экспертов: {{ offer.expert_likes.length }}
-    </div>
   </div>
 </template>
 

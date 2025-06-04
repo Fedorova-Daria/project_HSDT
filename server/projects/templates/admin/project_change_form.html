@@ -1,0 +1,45 @@
+{% extends "admin/change_form.html" %}
+
+{% block submit_buttons_bottom %}
+  <style>
+    .custom-admin-btn {
+      font-size: 16px;        /* Увеличенный шрифт */
+      padding: 10px 20px;     /* Больше отступов внутри кнопки */
+      border-radius: 6px;     /* Закруглённые углы */
+      text-align: center;
+      display: inline-block;
+      min-width: 140px;       /* Минимальная ширина */
+      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+      transition: background-color 0.3s ease;
+    }
+    .custom-admin-btn.default {
+      background-color: #0b7dda;
+      color: white;
+      border: none;
+    }
+    .custom-admin-btn.default:hover {
+      background-color: #095c9e;
+      color: white;
+    }
+    .custom-admin-btn.deletelink {
+      background-color: #d9534f;
+      color: white !important;
+      border: none;
+    }
+    .custom-admin-btn.deletelink:hover {
+      background-color: #c9302c;
+      color: white;
+    }
+  </style>
+{% if original.status == 'new' or original.status == 'under_revision_on_admin' %}
+  <div style="margin-bottom: 10px;">
+    <a href="{% url 'admin:project-confirm' original.id %}" class="custom-admin-btn default" style="margin-right: 10px;">
+      ✅ Подтвердить проверку
+    </a>
+    <a href="{% url 'admin:project-revise' original.id %}" class="custom-admin-btn deletelink">
+      ❌ Отправить на доработку
+    </a>
+  </div>
+{% endif %}
+  {{ block.super }}
+{% endblock %}

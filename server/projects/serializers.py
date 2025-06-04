@@ -96,7 +96,7 @@ class ProjectMessageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProjectMessage
-        fields = ['id', 'project', 'sender','sender_name', 'text', 'created_at', 'is_revision_request']
+        fields = ['id', 'project', 'sender','sender_name', 'text', 'created_at', 'is_revision_request', 'sender_role']
 
 class ProjectUpdateStatusSerializer(serializers.ModelSerializer):
     class Meta:

@@ -3,7 +3,8 @@
       <Header/>
       <div class="w-4/5 mt-5 m-auto p-6 overflow-auto flex gap-3 items-start z-10">
         <button   @click="goBack"
-      class="ml-auto bg-buttonoff hover:bg-buttonon text-white font-medium rounded-lg text-sm px-4 py-2 mt-5 duration-300 h-10"
+        :style="{ backgroundColor: currentBgColor }"
+      class="ml-auto bg-card font-medium rounded-lg text-sm px-4 py-2 mt-5 duration-300 h-10"
     >
     <svg width="13" height="10" viewBox="0 0 13 10" fill="none" xmlns="http://www.w3.org/2000/svg">
   <path d="M5.27934 8.23871C5.35303 8.30737 5.41213 8.39017 5.45312 8.48217C5.49411 8.57417 5.51616 8.67348 5.51793 8.77418C5.51971 8.87489 5.50118 8.97492 5.46346 9.0683C5.42574 9.16169 5.3696 9.24653 5.29838 9.31774C5.22716 9.38896 5.14233 9.44511 5.04894 9.48283C4.95555 9.52055 4.85552 9.53907 4.75482 9.5373C4.65412 9.53552 4.5548 9.51348 4.4628 9.47249C4.3708 9.4315 4.288 9.37239 4.21934 9.29871L0.21934 5.29871C0.0788892 5.15808 -1.99759e-07 4.96746 -2.08447e-07 4.76871C-2.17135e-07 4.56996 0.0788892 4.37933 0.21934 4.23871L4.21934 0.238705C4.288 0.165019 4.3708 0.105917 4.4628 0.064925C4.5548 0.023933 4.65411 0.00189198 4.75482 0.000115187C4.85552 -0.0016616 4.95555 0.0168623 5.04894 0.0545833C5.14233 0.0923043 5.22716 0.148449 5.29838 0.219668C5.3696 0.290887 5.42574 0.375721 5.46346 0.469109C5.50118 0.562497 5.51971 0.662525 5.51793 0.763228C5.51615 0.863931 5.49411 0.963245 5.45312 1.05524C5.41213 1.14724 5.35303 1.23004 5.27934 1.29871L2.55934 4.01871L12.2493 4.01871C12.4483 4.01871 12.639 4.09772 12.7797 4.23838C12.9203 4.37903 12.9993 4.56979 12.9993 4.76871C12.9993 4.96762 12.9203 5.15838 12.7797 5.29904C12.639 5.43969 12.4483 5.51871 12.2493 5.51871L2.55934 5.51871L5.27934 8.23871Z" fill="white"/>
@@ -14,33 +15,69 @@
         <div class="w-1/4 mt-5 bg-card rounded-lg p-6 flex flex-col" style="height: 300px;">
     <div class="flex-grow overflow-auto">
   
-      <h2 v-if="!isEditing" class="text-2xl text-white font-semibold mb-4">
+      <h2 v-if="!isEditing" class="text-2xl font-semibold mb-4">
       {{ offer.title || "Загрузка..." }}
     </h2>
     <input
       v-else
       v-model="editedoffer.title"
-      class="w-full text-2xl text-black bg-gray-100 rounded-md p-2"
+      class="w-full text-2xl bg-input rounded-md p-2 focus:outline-none focus:ring-0 focus:border-none"
     />
   
-      <h3 class="text-xl text-white font-semibold mb-2">
+      <h3 class="text-xl font-semibold mb-2">
         Инициатор: {{ offer.initiator || "Неизвестный автор" }}
       </h3>
   
-      <p class="text-gray-400">Дата создания: {{ new Date(offer.created_at).toLocaleDateString("ru-RU") }}</p>
+      <p class="opacity-70">Дата создания: {{ new Date(offer.created_at).toLocaleDateString("ru-RU") }}</p>
     </div>
   
 
     <div class="mt-auto flex justify-between">
       <div class="flex justify-start gap-2">
-        <span class="text-white">{{ offer.likes ? offer.likes.length : 0 }}</span>
-        <img
-    :src="liked ? '/liked.svg' : '/like.svg'"
-    alt="Like"
-    class="w-6 h-6 mr-2 duration-300 cursor-pointer"
-    :class="{ 'animate-like': isAnimating }"
-    @click.stop="updateLike"
-  />
+        <span class="">{{ offer.likes ? offer.likes.length : 0 }}</span>
+        <div
+    class="heart-container cursor-pointer"
+    :style="{ '--heart-color': instituteStyle.likeColor }"
+    title="Like"
+    @click.stop="updateLike($event, offer)"
+  >
+    <input
+      type="checkbox"
+      class="checkbox"
+      :id="'like-checkbox-' + offer.id"
+      :checked="offer.likes?.includes(userId)"
+      @change.stop
+      style="display:none"
+    />
+    <div class="svg-container relative w-[30px] h-[30px]">
+      <svg
+        width="30" height="30"
+        viewBox="0 0 24 24"
+        class="svg-outline absolute top-0 left-0"
+        xmlns="http://www.w3.org/2000/svg"
+        v-show="!isLikedByUser(offer)"
+        :stroke="instituteStyle.likeColor"
+        fill="none"
+        stroke-width="2"
+      >
+        <path
+          d="M17.5,1.917a6.4,6.4,0,0,0-5.5,3.3,6.4,6.4,0,0,0-5.5-3.3A6.8,6.8,0,0,0,0,8.967c0,4.547,4.786,9.513,8.8,12.88a4.974,4.974,0,0,0,6.4,0C19.214,18.48,24,13.514,24,8.967A6.8,6.8,0,0,0,17.5,1.917Zm-3.585,18.4a2.973,2.973,0,0,1-3.83,0C4.947,16.006,2,11.87,2,8.967a4.8,4.8,0,0,1,4.5-5.05A4.8,4.8,0,0,1,11,8.967a1,1,0,0,0,2,0,4.8,4.8,0,0,1,4.5-5.05A4.8,4.8,0,0,1,22,8.967C22,11.87,19.053,16.006,13.915,20.313Z"
+        />
+      </svg>
+      <svg
+        width="30" height="30"
+        viewBox="0 0 24 24"
+        class="svg-filled absolute top-0 left-0"
+        xmlns="http://www.w3.org/2000/svg"
+        v-show="isLikedByUser(offer)"
+        :style="{ fill: instituteStyle.likeColor }"
+      >
+        <path
+          d="M17.5,1.917a6.4,6.4,0,0,0-5.5,3.3,6.4,6.4,0,0,0-5.5-3.3A6.8,6.8,0,0,0,0,8.967c0,4.547,4.786,9.513,8.8,12.88a4.974,4.974,0,0,0,6.4,0C19.214,18.48,24,13.514,24,8.967A6.8,6.8,0,0,0,17.5,1.917Z"
+        />
+      </svg>
+    </div>
+  </div>
       </div>
       
   <div class="mt-auto flex justify-end gap-5">
@@ -61,19 +98,42 @@
     </div>
   </div>
       <div class="w-3/4 mt-5 bg-card rounded-lg p-6 overflow-auto"  style="height: auto; max-height: 100vh; overflow-y: auto;">
-        <h2 class="text-2xl text-white font-semibold mb-4">Предложение</h2>
-    <p v-if="!isEditing" class="text-gray-400">
+        <h2 class="text-2xl font-semibold mb-4">Предложение</h2>
+    <p v-if="!isEditing" class="">
       {{ offer.description }}
     </p>
     <textarea
       v-else
       v-model="editedoffer.description"
-      class="w-full bg-gray-100 rounded-md p-2"
+      class="w-full bg-input rounded-md p-2 focus:outline-none focus:ring-0 focus:border-none"
     ></textarea>
     <div v-if="isEditing">
     <label for="status">Статус:</label>
     </div>
       </div>
+      </div>
+      <div class="w-4/5 m-auto flex flex-col gap-4">
+      <button
+      :style="{ backgroundColor: currentBgColor }"
+        @mouseover="currentBgColor = instituteStyle.buttonOnColor"
+        @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
+        @click="AcceptOffer"
+        class="text-always-white w-88 ml-20 inline-flex items-center gap--2 focus:outline-none font-medium rounded-lg text-sm px-2 py-2.5"
+      >
+        <svg
+          class="me-1 -ms-1 w-10 h-10"
+          fill="currentColor"
+          viewBox="0 -2 15 25"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+            clip-rule="evenodd"
+          ></path>
+        </svg>
+        Одобрить
+      </button>
       </div>
     </div>
   </template>
@@ -82,8 +142,11 @@
   import api from "@/composables/auth.js"; // axios-инстанс с интерсепторами
   import Header from "@/components/header.vue";
   import { fetchOwnerName, toggleOfferLike } from "@/services/projects.js";
+import { instituteStyles } from "@/assets/instituteStyles.js";
+import UserService from "@/composables/storage";
 
   export default {
+    inject: ["globalState"],
     name: "offerDetails",
     components: { Header },
     props: {
@@ -94,6 +157,8 @@
     },
     data() {
       return {
+        userId: JSON.parse(localStorage.getItem("userData") || "{}")?.id,
+        currentBgColor: "",
         offer: {}, // Загруженные данные идеи
         editedoffer: {
           name: "",
@@ -107,6 +172,21 @@
       };
     },
     computed: {
+      likeColor() {
+    const inst = this.globalState.institute;
+    const style = instituteStyles[inst];
+    return style?.likeColor || "red"; // Цвет лайка по умолчанию красный
+  },
+      isLikedByUser() {
+    return (offer) => offer.likes?.includes(this.userId);
+  },
+      selectedInstitute() {
+      return this.globalState.institute;
+    },
+    instituteStyle() {
+      const style = instituteStyles[this.selectedInstitute];
+      return style || { buttonOffColor: "#ccc" };
+    },
       /**
        * Получаем данные пользователя из Cookies один раз.
        */
@@ -117,19 +197,13 @@
      * Определяет, поставил ли пользователь лайк.
      */
     liked() {
-      if (!this.offer || !this.offer.likes || !this.currentUser || !this.currentUser.id) return false;
-  
-      // Загружаем состояние лайка из localStorage
-      const userId = this.currentUser.id;
-      const likedInStorage = localStorage.getItem(`liked_${this.offer.id}_${userId}`);
-      
-      if (likedInStorage !== null) {
-        // Если лайк был сохранен в localStorage, используем это состояние
-        return likedInStorage === 'true';
-      }
-  
-      // Если лайк не сохранен, проверяем, есть ли id текущего пользователя в массиве лайков
-      return this.offer.likes.includes(userId);
+      const userId = this.currentUser?.id;
+      if (!this.offer || !this.offer.likes || !userId) return false;
+
+      const likedInStorage = localStorage.getItem(
+        `liked_${this.offer.id}_${userId}`
+      );
+      return likedInStorage === "true" || this.offer.likes.includes(userId);
     },
       /**
        * Определяет, является ли текущий пользователь владельцем идеи.
@@ -144,6 +218,11 @@
         return this.isOwner;
       },
     },
+    mounted() {
+      this.fetchUserData();
+    this.currentBgColor = this.instituteStyle.buttonOffColor;
+
+  },
     watch: {
       offerId: {
         immediate: true,
@@ -154,8 +233,26 @@
           }
         },
       },
+      instituteStyle: {
+      handler(newStyle) {
+        this.currentBgColor = newStyle.buttonOffColor;
+      },
+      immediate: true,
+    },
     },
     methods: {
+      async AcceptOffer() {
+  try {
+    const payload = { status: "open" };
+    const response = await api.patch(`/offers/${this.offer.id}/`, payload);
+    console.log("Изменения сохранены:", response.data);
+
+    // Обнови локально статус, если надо
+    this.offer.status = response.data.status;
+  } catch (error) {
+    console.error("Ошибка при обновлении статуса:", error);
+  }
+},
         async handleDeleteOffer(offerId) {
   try {
     const confirmation = confirm(
@@ -248,7 +345,11 @@
         );
       }
     },
-
+async fetchUserData() {
+      const response = await api.get('/users/me');
+      this.userData = response.data;
+      return response.data;
+    },
     /**
      * Загружает имя владельца идеи, используя метод `fetchOwnerName`
      */
@@ -259,9 +360,9 @@
         return;
       }
 
-      console.log("ID владельца идеи:", this.offer.owner);
+      console.log("ID владельца идеи:", this.offer.owner.id);
       try {
-        await fetchOwnerName(this.offer, this.offer.owner);
+        await fetchOwnerName(this.offer, this.offer.owner.id);
       } catch (error) {
         console.error("Ошибка при загрузке имени владельца:", error);
         this.offer.initiator = "Неизвестный автор";

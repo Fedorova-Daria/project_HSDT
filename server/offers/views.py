@@ -4,12 +4,15 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
+from django_filters.rest_framework import DjangoFilterBackend
 
 from .serializers import (OfferSerializer, OfferEditSerializer)
 from .models import offers
 
 class OfferViewSet(viewsets.ModelViewSet):
     queryset = offers.objects.all()
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['status']  # ← добавляем фильтрацию по статусу
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:

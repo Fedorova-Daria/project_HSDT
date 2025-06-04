@@ -22,6 +22,7 @@ class Account(AbstractUser):
         STUDENT = "ST", "Student"
         CUSTOMER = "CU", "Customer"
         EXPERT = "EX", "Expert"
+        ADMIN = "AD", "Admin"
 
     role = models.CharField(
         max_length=2,

@@ -10,6 +10,13 @@ class Institute(models.Model):
 
     def __str__(self):
         return self.name
+    
+INSTITUTE_NAMES = {
+    'HSDT': 'ВШЦТ',
+    'ARHID': 'АРХИД',
+    'IPTI' : 'ИПТИ',
+    'STROIN' : 'СТРОИН'
+}
 
 class Project(models.Model):
     STATUS_CHOICES = [
@@ -19,12 +26,15 @@ class Project(models.Model):
         ('in_progress', 'В работе'),
         ('under_revision', 'На доработке'),
         ('done', 'Сделан'),
+        ('new', 'Новый'),
+        ('under_revision_on_admin', 'На доработке дирекции')
     ]
 
     DURATION_CHOICES = [
         ("semester", "1 семестр"),
         ("year", "1 год"),
     ]
+
 
     title = models.CharField(max_length=255)
     description = models.TextField()
@@ -41,7 +51,7 @@ class Project(models.Model):
 
     favorites = models.ManyToManyField(Account, related_name="favorite_projects", blank=True)
 
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    status = models.CharField(max_length=25, choices=STATUS_CHOICES, default='draft')
 
     visible = models.BooleanField(default=False)  # Для модерации
     votes_to_approve = models.PositiveIntegerField(default=3)
@@ -57,6 +67,11 @@ class Project(models.Model):
             return json.loads(self.institutes)
         except:
             return []
+
+    @property
+    def institutes_verbose(self):
+        codes = self.get_institutes_list()
+        return [INSTITUTE_NAMES.get(code, code) for code in codes]
 
     def set_institutes_list(self, inst_list):
         self.institutes = json.dumps(inst_list)
@@ -80,6 +95,12 @@ class Project(models.Model):
 class ProjectMessage(models.Model):
     project = models.ForeignKey('Project', on_delete=models.CASCADE, related_name='messages')
     sender = models.ForeignKey(Account, on_delete=models.CASCADE)
+    sender_role = models.CharField(
+    max_length=20,
+    choices=[('expert', 'Expert'), ('admin', 'Admin'), ('user', 'User')],
+    null=True,
+    blank=True  # Опционально, если используешь формы
+)
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     is_revision_request = models.BooleanField(default=False)

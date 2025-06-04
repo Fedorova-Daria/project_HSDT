@@ -13,6 +13,7 @@ class Notification(models.Model):
         ('project_join_request_sent', 'Заявка в проект отправлена'),
         ('project_join_request_accepted', 'Заявка в проект принята'),
         ('system', 'Системное уведомление'), 
+        ('project_on_under_revision', 'Проект отправлен на доработку')
         # добавь любые другие типы
     )
 

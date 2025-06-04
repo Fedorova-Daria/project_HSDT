@@ -17,6 +17,8 @@ import info from "@/components/in project/info.vue";
 import Offers from "@/components/university/offers.vue";
 import OfferDetail from "@/components/university/offerDetail.vue";
 import ProjectBank from "@/components/projects/ExpertBankProject.vue";
+import OfferBank from "@/components/university/offersBank.vue";
+import Profileid from "@/components/users/Profileid.vue";
 import Cookies from "js-cookie";
 const routes = [
   {
@@ -26,6 +28,12 @@ const routes = [
       return userData.institute ? `/${userData.institute}/rialto` : "/login";
     },
   },
+  {
+  path: '/:institute/profile/:userId',
+  name: 'Profile',
+  component: Profileid,
+  props: true,
+},
   { path: "/login", component: Login },
   { path: "/register", component: Register },
   { path: "/registerZ", component: RegZ },
@@ -41,6 +49,11 @@ const routes = [
     path: "/:institute/projectbank",
     name: "projectbank",
     component: ProjectBank,
+  },
+  {
+    path: "/:institute/offerbank",
+    name: "offerbank",
+    component: OfferBank,
   },
   {
     path: "/:institute/offers",

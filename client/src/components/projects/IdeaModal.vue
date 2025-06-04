@@ -214,7 +214,7 @@
           </div>
           <div class="flex justify-between gap-4">
             <button
-              @click="submitIdea('review')"
+              @click="submitIdea(userRole === 'CU' || userRole === 'EX' ? 'new' : userRole === 'ST' ? 'open' : 'default')"
                         :style="{ backgroundColor: currentBgColor }"
         @mouseover="currentBgColor = instituteStyle.buttonOnColor"
         @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
@@ -255,6 +255,7 @@ export default {
   inject: ["globalState"],
   data() {
     return {
+      userRole: null,
       instituteDropdownOpen: false,
     instituteSearchQuery: "",
     selectedInstitutes: [],
@@ -373,7 +374,7 @@ export default {
       return code === 'spring' ? 'Весенний' : 'Зимний';
     },
 async submitIdea(status) {
-  const validStatuses = ['draft', 'open', 'review'];
+  const validStatuses = ['draft', 'open', 'review', 'new'];
   if (!validStatuses.includes(status)) {
     console.error(`Невалидный статус: ${status}`);
     return;
@@ -408,6 +409,17 @@ async submitIdea(status) {
       this.filteredTechnologies = technologiesData; // Изначально показываем все технологии
     }
   },
+  created() {
+  const userDataStr = localStorage.getItem('userData');
+  if (userDataStr) {
+    try {
+      const userData = JSON.parse(userDataStr);
+      this.userRole = userData.role;
+    } catch (e) {
+      console.error('Ошибка парсинга userData из localStorage', e);
+    }
+  }
+},
   watch: {
     technologies(newTechs) {
       this.filteredTechnologies = newTechs;

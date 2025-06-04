@@ -40,11 +40,6 @@
               {{ formatTime(new Date(notification.created_at)) }}
             </p>
           </div>
-          <div v-if="!notification.read" class="ml-2">
-            <span 
-            :style="{ backgroundColor: currentBgColor }"
-            class="h-2 w-2 rounded-full block"></span>
-          </div>
         </div>
       </div>
     </div>

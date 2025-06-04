@@ -84,6 +84,20 @@ class AccountMeView(APIView):
         user = request.user  # Django сам найдет юзера по JWT токену
         serializer = AccountSerializer(user)
         return Response(serializer.data)
+    
+    def put(self, request):  # Полное обновление
+        serializer = AccountSerializer(request.user, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+
+    def patch(self, request):  # Частичное обновление
+        serializer = AccountSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
 
 
 class AccountIDView(RetrieveAPIView):

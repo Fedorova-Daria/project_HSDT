@@ -65,14 +65,14 @@ export async function toggleLike(
 
     const userId = getUserId();
 
+    // Обновляем лайки на основе их состояния на сервере
     if (liked) {
-      idea.likes = idea.likes.filter((id) => id !== userId);
-      localStorage.setItem(`liked_${idea.id}_${userId}`, 'false');
+      idea.likes = idea.likes.filter((id) => id !== userId); // Убираем лайк
     } else {
-      idea.likes.push(userId);
-      localStorage.setItem(`liked_${idea.id}_${userId}`, 'true');
+      idea.likes.push(userId); // Добавляем лайк
     }
 
+    // Обновляем количество лайков с сервера
     idea.likes_count = response.data.likes_count;
 
     if (isExpert) {
@@ -80,7 +80,7 @@ export async function toggleLike(
       idea.approved = response.data.approved;
     }
 
-    return idea;
+    return idea; // Возвращаем обновленный объект идеи
 
   } catch (error) {
     console.error("Ошибка при обновлении лайка:", error);

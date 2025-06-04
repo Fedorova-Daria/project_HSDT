@@ -33,6 +33,12 @@
             </td>
             <td class=" p-2 flex justify-center space-x-2">
               <button
+                @click="viewTeam(team.id)"
+                class="bg-blue-500 text-always-white px-3 py-1 rounded hover:bg-blue-600 transition-colors"
+              >
+                Просмотр
+              </button>
+              <button
                 @click="acceptApplication(team.applicationId, team)"
                 class="bg-green-500 text-always-white px-3 py-1 rounded hover:bg-green-600 transition-colors"
               >
@@ -110,6 +116,7 @@
         Закрыть
       </button>
     </div>
+
   </div>
 </template>
 
@@ -138,6 +145,12 @@ export default {
     };
   },
   methods: {
+    viewProfile(userId) {
+    this.$router.push(`/${this.selectedInstitute}/profile/${userId}`);
+  },
+viewTeam(teamId) {
+    this.$router.push(`/${this.selectedInstitute}/team/${teamId}`);
+  },
     async fetchTechnologies() {
     try {
       const response = await api.get('/core/technologies');
@@ -259,6 +272,7 @@ export default {
         console.error(error);
       }
     },
+    
   },
   mounted() {
     this.fetchProjectApplications();

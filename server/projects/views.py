@@ -89,10 +89,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
         project = self.get_object()
         text = request.data.get('text')
         is_revision = request.data.get('is_revision_request', False)
+        sender_role = request.data.get('sender_role', 'admin')
 
         if not text:
             return Response({'error': 'Text is required'}, status=400)
-        
         project.status = 'under_revision'
         project.save()
 
@@ -100,10 +100,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
             project=project,
             sender=request.user,
             text=text,
-            is_revision_request=is_revision
+            is_revision_request=is_revision,
+            sender_role=sender_role
         )
-        
-        # Вернуть сериализованные данные созданного сообщения, либо просто статус 200
+
         return Response({'detail': 'Project sent for revision', 'message_id': msg.id}, status=200)
 
     @action(detail=True, methods=["get"])
@@ -115,6 +115,26 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
         return Response({'status': 'revision_requested'})
 
+    @action(detail=True, methods=['post'])
+    def confirm_changes(self, request, pk=None):
+        project = self.get_object()
+
+        # Найти последнее сообщение с флагом is_revision_request=True
+        last_msg = project.messages.filter(is_revision_request=True).order_by('-created_at').first()
+
+        if not last_msg:
+            return Response({'error': 'No revision request found'}, status=400)
+
+        # Проверяем роль, чтобы определить новый статус
+        if last_msg.sender_role == 'admin':
+            project.status = 'new'
+        elif last_msg.sender_role == 'expert':
+            project.status = 'review'
+        else:
+            return Response({'error': 'Unknown sender role'}, status=400)
+
+        project.save()
+        return Response({'detail': 'Project status updated successfully'}, status=200)
 
     @action(detail=False, methods=["get"])
     def grouped_by_semester(self, request):

@@ -6,6 +6,7 @@ class offers(models.Model):
     STATUS_CHOICES = [
         ('draft', 'Черновик'),
         ('open', 'Опубликован'),
+        ('review', 'На рассмотрении')
     ]
 
     title = models.CharField(max_length=255)

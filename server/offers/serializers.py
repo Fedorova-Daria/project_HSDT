@@ -6,7 +6,7 @@ from users.models import Account
 
 
 class OfferSerializer(serializers.ModelSerializer):
-    owner = serializers.ReadOnlyField(source='owner.id')
+    owner = AccountShortSerializer(read_only=True)
     likes_count = serializers.SerializerMethodField()
 
     class Meta:

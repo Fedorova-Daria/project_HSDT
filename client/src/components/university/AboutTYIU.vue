@@ -36,21 +36,14 @@
   
         <div class="main-content">
           <!-- Стилизованный заголовок -->
-          <div class="main-title text-white">
+          <div class="main-title">
             <span>ДАВАЙТЕ</span>
             <span>МЕНЯТЬ</span>
             <span class="highlight">ТИУ</span>
             <span>ВМЕСТЕ!</span>
           </div>
   
-          <!-- Галерея фотографий -->
-          <div class="gallery">
-            <div class="gallery-item" v-for="(image, index) in universityImages" :key="index">
-              <img :src="image.src" :alt="image.alt" />
-              <p class="image-caption">{{ image.caption }}</p>
-            </div>
-          </div>
-  
+          
           <div class="info-block">
             Добро пожаловать на платформу идей студентов ТИУ!
           </div>
@@ -58,10 +51,6 @@
           <div class="description">
             <p>Мы создали этот сайт для студентов и сотрудников Тюменского индустриального университета, чтобы каждый мог предложить идею, найти единомышленников и довести свой проект до реализации. Здесь ваш голос будет услышан, а задумки — найдут поддержку!</p>
           </div>
-  
-          <button class="suggestion-button" @click="showModal = true">
-            У меня есть предложение
-          </button>
   
           <!-- Блоки возможностей -->
           <div class="features-grid">
@@ -79,8 +68,8 @@
             
             <div class="feature-card">
               <div class="feature-icon">💬</div>
-              <h3>Обсуждение</h3>
-              <p>Оставляйте комментарии, улучшайте идеи вместе с сообществом.</p>
+              <h3>Команды</h3>
+              <p>Команды могут включать участников из разных институтов. Объединяйтесь и создавайте проекты вместе.</p>
             </div>
             
             <div class="feature-card">
@@ -92,14 +81,6 @@
         </div>
       </div>
   
-      <!-- Секция поддержки проектов -->
-      <div class="project-support">
-        <h3>Есть проект, но не хватает ресурсов?</h3>
-        <p>Найдите поддержку среди студентов, преподавателей и администрации.</p>
-        <button class="support-button" @click="showSupportModal = true">
-          Найти поддержку
-        </button>
-      </div>
   
       <!-- Модальное окно предложения -->
       <div class="modal" v-if="showModal">
@@ -208,7 +189,7 @@
   }
   
   .platform-info h3 {
-    color: #6a1b9a;
+    color: #281b9a;
     font-size: 1.3rem;
     margin-bottom: 20px;
     padding-bottom: 10px;
@@ -240,7 +221,7 @@
     margin-right: 12px;
     width: 30px;
     text-align: center;
-    color: #8a2be2;
+    color: #2b2ee2;
   }
   
   .feature-text {
@@ -252,9 +233,9 @@
   .platform-footer {
     margin-top: 25px;
     padding-top: 15px;
-    border-top: 1px dashed #d1b3ff;
+    border-top: 1px dashed #c1b3ff;
     font-size: 0.85rem;
-    color: #8a2be2;
+    color: #3d2be2;
     text-align: center;
     font-style: italic;
   }
@@ -280,7 +261,7 @@
   }
   
   .main-title .highlight {
-    color: #8a2be2;
+    color: #462be2;
     font-size: 5rem;
     text-shadow: 3px 3px 0 rgba(0,0,0,0.1);
   }
@@ -321,7 +302,7 @@
   
   /* Инфо-блок */
   .info-block {
-    background-color: #8a2be2;
+    background-color: #462be2;
     color: white;
     padding: 20px;
     border-radius: 8px;
@@ -341,7 +322,7 @@
   
   /* Кнопка предложения */
   .suggestion-button {
-    background-color: #8a2be2;
+    background-color: #3d2be2;
     color: white;
     border: none;
     padding: 12px 24px;
@@ -353,7 +334,7 @@
   }
   
   .suggestion-button:hover {
-    background-color: #7b1fa2;
+    background-color: #1f28a2;
   }
   
   /* Блоки возможностей */
@@ -381,12 +362,12 @@
   .feature-card .feature-icon {
     font-size: 32px;
     margin-bottom: 15px;
-    color: #8a2be2;
+    color: #2b3de2;
     width: auto;
   }
   
   .feature-card h3 {
-    color: #8a2be2;
+    color: #372be2;
     margin-bottom: 10px;
   }
   
@@ -403,11 +384,11 @@
     margin-top: 40px;
     border-radius: 8px;
     text-align: center;
-    border-top: 3px solid #8a2be2;
+    border-top: 3px solid #372be2;
   }
   
   .project-support h3 {
-    color: #8a2be2;
+    color: #3d2be2;
     margin-bottom: 10px;
   }
   
@@ -417,7 +398,7 @@
   }
   
   .support-button {
-    background-color: #8a2be2;
+    background-color: #2e2be2;
     color: white;
     border: none;
     padding: 12px 24px;
@@ -428,7 +409,7 @@
   }
   
   .support-button:hover {
-    background-color: #7b1fa2;
+    background-color: #2c1fa2;
   }
   
   /* Модальные окна */
@@ -464,7 +445,7 @@
   }
   
   .modal h3 {
-    color: #8a2be2;
+    color: #4c2be2;
     margin-bottom: 15px;
   }
   
@@ -474,7 +455,7 @@
   }
   
   .modal-button {
-    background-color: #8a2be2;
+    background-color: #372be2;
     color: white;
     border: none;
     padding: 10px 20px;
@@ -484,7 +465,7 @@
   }
   
   .modal-button:hover {
-    background-color: #7b1fa2;
+    background-color: #281fa2;
   }
   
   /* Плавающее облачко */
@@ -492,7 +473,7 @@
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background-color: #8a2be2;
+    background-color: #4c2be2;
     color: white;
     border-radius: 15px;
     padding: 20px;
@@ -516,7 +497,7 @@
     right: 40px;
     border-width: 10px 10px 0;
     border-style: solid;
-    border-color: #8a2be2 transparent;
+    border-color: #372be2 transparent;
   }
   
   .bubble-content h3 {

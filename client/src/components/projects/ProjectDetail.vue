@@ -496,7 +496,8 @@ export default {
     try {
       await api.post(`/projects/${idea.id}/send_for_revision/`, {
   text: this.revisionMessage,
-  is_revision_request: true
+  is_revision_request: true,
+  sender_role: "expert"
 });
     } catch (err) {
       console.error("Ошибка отправки на доработку", err);
@@ -510,22 +511,19 @@ export default {
     console.error("Не удалось загрузить сообщения:", e);
   }
 },
-    async confirmChanges(idea) {
+  async confirmChanges(idea) {
   try {
-    if (idea.status === 'under_revision') {
-      // Обновляем статус локально
-      idea.status = 'review';
+    const response = await api.post(`/projects/${idea.id}/confirm_changes/`);
+    const data = response.data;
 
-      // Отправляем PATCH запрос с обновлённым статусом
-      await api.patch(`/projects/${idea.id}/`, {
-        status: idea.status
-      });
-
-      // Можно обновить локальные данные, если нужно
-      // Например, вызвать метод обновления в списке
+    console.log('Изменения подтверждены');
+    // если сервер возвращает новый статус — обновляем
+    if (data.new_status) {
+      idea.status = data.new_status;
     }
-  } catch (err) {
-    console.error("Ошибка при подтверждении изменений", err);
+  } catch (e) {
+    const errMsg = e.response?.data?.error || 'Ошибка при подтверждении';
+    console.error(e);
   }
 },
     async fetchUserData() {

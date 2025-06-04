@@ -126,7 +126,7 @@
         >
           <img
             v-if="userAvatar"
-            :src="userAvatar"
+            :src="userAvatar ? `http://127.0.0.1:8000/${userAvatar}` : null"
             alt="User Avatar"
             class="object-cover w-full h-full rounded-full border-2 border-zinc-400"
           />
@@ -155,6 +155,7 @@ export default {
   components: { Notifications },
   data() {
     return {
+      unreadNotificationsCount: 0,
       isDark: false,
       userData:null,
       isDropdownOpen: false,
@@ -182,6 +183,7 @@ export default {
   mounted() {
     this.initTheme();
     this.fetchUserData();
+    this.fetchUnreadNotificationsCount();
   },
   computed: {
     isDarkTheme() {
@@ -217,9 +219,6 @@ export default {
         this.instituteMap[this.localSelectedInstitute] ||
         this.localSelectedInstitute;
       return instituteStyles[latinInstitute] || instituteStyles["TYIU"];
-    },
-    unreadNotificationsCount() {
-      return this.notifications.filter((n) => !n.read).length;
     },
     userName() {
       try {
@@ -289,6 +288,18 @@ export default {
     },
   },
   methods: {
+    async fetchUnreadNotificationsCount() {
+      const storedUser = localStorage.getItem("userData");
+      if (!storedUser) return;
+
+  const user = JSON.parse(storedUser);
+    try {
+      const response = await api.get(`/notifications/?is_read=false&user=${user.id}`);
+      this.unreadNotificationsCount = response.data.length;
+    } catch (error) {
+      console.error("Ошибка при получении непрочитанных уведомлений:", error);
+    }
+  },
     async fetchUserData() {
       const response = await api.get('/users/me');
       this.userData = response.data;

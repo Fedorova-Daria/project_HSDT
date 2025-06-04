@@ -21,16 +21,6 @@
       >
         Создать предложение
       </button>
-      <button
-        @click="openBank"
-        v-if="userRole === 'EX'"
-        class="rounded-md px-4 py-2 transition ml-5 h-10 text-always-white"
-        :style="{ backgroundColor: currentBgColor }"
-        @mouseover="currentBgColor = instituteStyle.buttonOnColor"
-        @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
-      >
-        Банк предложений>
-      </button>
     </div>
 
     <!-- Обновленные карточки -->
@@ -166,12 +156,13 @@ import UserService from "@/composables/storage.js";
 import api from "@/composables/auth";
 import { toggleOfferLike } from "@/services/projects.js";
 import Cookies from "js-cookie";
+
 export default {
   inject: ["globalState"],
   components: { OfferModal, Header },
   data() {
     return {
-      searchQuery: '',
+        searchQuery: '',
       statusStyleMap: {
   draft: { label: "Черновик", bg: "#f3f4f6" },             // серый
   review: { label: "На проверке", bg: "#fff3cd" },          // жёлтый
@@ -223,17 +214,9 @@ export default {
 },
   },
   methods: {
-    openBank() {
-      const institute = this.selectedInstitute; // Используем selectedInstitute из data()
-      if (institute) {
-        this.$router.push({ path: `/${institute}/offerbank/` });
-      } else {
-        console.error("Институт не выбран");
-      }
-    },
     async fetchCustomeroffers() {
       try {
-        const response = await api.get("/offers/?status=open");
+        const response = await api.get("/offers/?status=review");
         this.offers = response.data.map((offer) => ({
           ...offer,
           isLiked: this.checkIfLiked(offer),
