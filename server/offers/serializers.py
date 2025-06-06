@@ -20,4 +20,4 @@ class OfferSerializer(serializers.ModelSerializer):
 class OfferEditSerializer(serializers.ModelSerializer):
     class Meta:
         model = offers
-        fields = ['title', 'description', 'status']
+        fields = ['title', 'description', 'status', 'offer_type']

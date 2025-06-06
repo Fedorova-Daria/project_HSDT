@@ -230,11 +230,8 @@
 
 
 <script>
-import { toggleLike } from "@/services/projects.js";
-import Cookies from "js-cookie";
+import { toggleLike } from "@/services/projects.js";  
 import api from "@/composables/auth";
-import axios from "axios";
-import IdeaCard from "@/components/RialtoCard1.vue";
 import IdeaModal from "@/components/projects/IdeaModal.vue";
 import Header from "@/components/header.vue";
 import { instituteStyles } from "@/assets/instituteStyles.js";
@@ -243,145 +240,133 @@ import { debounce } from 'lodash';
 
 export default {
   inject: ["globalState"],
-  components: { IdeaCard, IdeaModal, Header },
+  components: { IdeaModal, Header },
   data() {
     return {
       userId: JSON.parse(localStorage.getItem("userData") || "{}")?.id,
-      isAnimating: false, // Для анимации лайка
+      isAnimating: false, 
       userRole: null,
       currentBgColor: "",
-      visibleIdeas: [],  // идеи с visible=true (для Все и Понравившиеся)
-      allIdeas: [],      // все идеи (для Мои)
+      visibleIdeas: [],  
+      allIdeas: [],      
       editedIdea: {},
       isEditing: false,
-statusStyleMap: {
-  draft: { label: "Черновик", bg: "#f3f4f6" },             // серый
-  review: { label: "На проверке", bg: "#fff3cd" },          // жёлтый
-  open: { label: "Открыт", bg: "#d4edda" },      // зелёный
-  rejected: { label: "Отклонено", bg: "#e2e3e5" },          // серый светлый
-  under_revision: {label: "На доработке", bg: "#FDB89A"},
-  done: {label: "Сделан", bg: "#A1FFB7"},
-  new: {label: "На проверке у дирекции", bg: "#FFE1A1"},
-  under_revision_on_admin: {label: "На доработке у дирекции", bg: "#FFA4A1"},
-},
-      filters: [
-      { label: "Все", value: "all" },
-      { label: "Понравившиеся", value: "liked" },
-      { label: "Мои", value: "mine" }
-    ],
-    activeFilter: 'all',
-
+      statusStyleMap: this.getStatusStyleMap(),
+      filters: this.getFilters(),
+      activeFilter: 'all',
       searchQuery: "",
       isModalOpen: false,
       hover: false,
-      instituteNames: {
+      instituteNames: this.getInstituteNames(),
+    };
+  },
+  created() {
+    this.userRole = UserService.getUserRole();
+  },
+  mounted() {
+    this.loadIdeas();
+  },
+  computed: {
+    filteredIdeas() {
+      return this.filterIdeasByRole(this.activeFilter);
+    },
+    likeColor() {
+      const style = instituteStyles[this.globalState.institute];
+      return style?.likeColor || "red";
+    },
+    selectedInstitute() {
+      return this.globalState.institute;
+    },
+    instituteStyle() {
+      return instituteStyles[this.selectedInstitute] || { buttonOffColor: "#ccc" };
+    },
+    instituteName() {
+      return this.instituteNames[this.selectedInstitute] || "Неизвестный институт";
+    },
+    semesterDisplay() {
+      return code => (code === 'spring' ? 'Весенний' : (code === 'winter' ? 'Зимний' : code));
+    },
+  },
+  methods: {
+    getStatusStyleMap() {
+      return {
+        draft: { label: "Черновик", bg: "#f3f4f6" },
+        review: { label: "На проверке", bg: "#fff3cd" },
+        open: { label: "Открыт", bg: "#d4edda" },
+        rejected: { label: "Отклонено", bg: "#e2e3e5" },
+        under_revision: { label: "На доработке", bg: "#FDB89A" },
+        done: { label: "Сделан", bg: "#A1FFB7" },
+        new: { label: "На проверке у дирекции", bg: "#FFE1A1" },
+        under_revision_on_admin: { label: "На доработке у дирекции", bg: "#FFA4A1" },
+      };
+    },
+    getFilters() {
+      return [
+        { label: "Все", value: "all" },
+        { label: "Понравившиеся", value: "liked" },
+        { label: "Мои", value: "mine" }
+      ];
+    },
+    getInstituteNames() {
+      return {
         HSDT: "ВШЦТ",
         ARCHID: "АРХИД",
         IPTI: "ИПТИ",
         STROIN: "СТРОИН",
         TYIU: "ТИУ",
-      },
-    };
-  },
-  mounted() {
-  this.loadVisibleIdeas()
-  this.loadAllIdeas()
-},
-  created() {
-    this.userRole = UserService.getUserRole();
-  },
-  computed: {
-    filteredIdeas() {
-    if (this.activeFilter === 'liked') {
+      };
+    },
+    filterIdeasByRole(filter) {
+      if (filter === 'liked') {
+        return this.filterLikedIdeas();
+      } else if (filter === 'mine') {
+        return this.filterMineIdeas();
+      } else {
+        return this.visibleIdeas;  // Все идеи
+      }
+    },
+    filterLikedIdeas() {
       return this.visibleIdeas.map(group => ({
         year: group.year,
         spring: group.spring.filter(idea => idea.likes?.includes(this.userId)),
-        winter: group.winter.filter(idea => idea.likes?.includes(this.userId))
-      })).filter(group => group.spring.length || group.winter.length)
-    } else if (this.activeFilter === 'mine') {
-      // из allIdeas фильтруем по owner (или эксперту)
+        winter: group.winter.filter(idea => idea.likes?.includes(this.userId)),
+      })).filter(group => group.spring.length || group.winter.length);
+    },
+    filterMineIdeas() {
       return this.allIdeas.map(group => ({
         year: group.year,
-        spring: group.spring.filter(idea => 
-          (this.userRole === 'CU' && idea.owner?.id === this.userId) ||
-          (this.userRole === 'EX' && idea.owner?.id === this.userId)),
-        winter: group.winter.filter(idea => 
-          (this.userRole === 'CU' && idea.owner?.id === this.userId) ||
-          (this.userRole === 'EX' && idea.owner?.id === this.userId))
-      })).filter(group => group.spring.length || group.winter.length)
-    } else {
-      // activeFilter === 'all'
-      return this.visibleIdeas
-    }
-  },
-    likeColor() {
-    const inst = this.globalState.institute;
-    const style = instituteStyles[inst];
-    return style?.likeColor || "red"; // Цвет лайка по умолчанию красный
-  },
-    selectedInstitute() {
-      return this.globalState.institute;
+        spring: group.spring.filter(idea => this.isIdeaOwnedByUser(idea)),
+        winter: group.winter.filter(idea => this.isIdeaOwnedByUser(idea)),
+      })).filter(group => group.spring.length || group.winter.length);
     },
-    instituteStyle() {
-      const style = instituteStyles[this.selectedInstitute];
-      return style || { buttonOffColor: "#ccc" };
+    isIdeaOwnedByUser(idea) {
+      return (this.userRole === 'CU' && idea.owner?.id === this.userId) || 
+             (this.userRole === 'EX' && idea.owner?.id === this.userId);
     },
-    instituteName() {
-      return (
-        this.instituteNames[this.selectedInstitute] || "Неизвестный институт"
-      );
-    },
-  semesterDisplay() {
-    return (code) => {
-      if (code === 'spring') return 'Весенний';
-      if (code === 'winter') return 'Зимний';
-      return code;
-    };
-  }
-  },
-  methods: {
     totalLikes(idea) {
-    const userLikes = idea.likes ? idea.likes.length : 0;  // Количество лайков от пользователей
-    const expertLikes = idea.expert_likes ? idea.expert_likes.length : 0;  // Количество лайков от экспертов
-    return (userLikes + expertLikes).toLocaleString();  // Суммируем и форматируем
-  },
+      const userLikes = idea.likes?.length || 0;
+      const expertLikes = idea.expert_likes?.length || 0;
+      return (userLikes + expertLikes).toLocaleString();
+    },
     isLikedByUser(idea) {
-  if (!this.userId) return false; // Если нет пользователя, то не лайкнул
-
-  // Проверяем, если пользователь есть в обычных лайках
-  if (idea.likes && idea.likes.includes(this.userId)) {
-    return true;
-  }
-
-  // Проверяем, если пользователь есть в лайках эксперта
-  if (idea.expert_likes && Array.isArray(idea.expert_likes)) {
-    return idea.expert_likes.some(expert => expert.id === this.userId);
-  }
-
-  return false; // Если не найдено
-},
-    async loadVisibleIdeas() {
-    const institute = this.selectedInstitute;
-const res = await api.get('/projects/grouped_by_semester/', {
-  params: {
-    visible: true,
-    institute: institute
-  }
-});
-this.visibleIdeas = res.data;
-  },
-  async loadAllIdeas() {
-    const res = await api.get('/projects/grouped_by_semester/')
-    this.allIdeas = await res.data;
-  },
-  setFilter(value) {
-    this.activeFilter = value
-  },
-    updateIdeaLikes(updatedIdea) {
-      const index = this.ideas.findIndex((idea) => idea.id === updatedIdea.id);
-      if (index !== -1) {
-        this.ideas[index] = { ...updatedIdea };
+      if (!this.userId) return false;
+      return idea.likes?.includes(this.userId) || idea.expert_likes?.some(expert => expert.id === this.userId);
+    },
+    async loadIdeas() {
+      const institute = this.selectedInstitute;
+      try {
+        const [visibleResponse, allResponse] = await Promise.all([
+          api.get('/projects/grouped_by_semester/', { params: { visible: true, institute }}),
+          api.get('/projects/grouped_by_semester/')
+        ]);
+        this.visibleIdeas = visibleResponse.data;
+        this.allIdeas = allResponse.data;
+      } catch (error) {
+        console.error("Ошибка при загрузке идей:", error);
       }
+    },
+    setFilter(value) {
+      this.activeFilter = value;
     },
     openModal() {
       this.isModalOpen = true;
@@ -389,50 +374,10 @@ this.visibleIdeas = res.data;
     closeModal() {
       this.isModalOpen = false;
     },
-    addNewIdea(newIdea) {
-      console.log("Новая идея:", newIdea);
-      this.isModalOpen = false;
+    updateIdeaLikes(updatedIdea) {
+      this.updateIdeaInList(updatedIdea, this.activeFilter === 'mine' ? this.allIdeas : this.visibleIdeas);
     },
-    onInstituteChanged(newInstitute) {
-      this.globalState.institute = newInstitute;
-    },
-    openIdea(idea) {
-      const institute = this.selectedInstitute; // Используем selectedInstitute из data()
-      if (institute) {
-        this.$router.push({ path: `/${institute}/project/${idea.id}` });
-      } else {
-        console.error("Институт не выбран");
-      }
-    },
-    openBank() {
-      const institute = this.selectedInstitute; // Используем selectedInstitute из data()
-      if (institute) {
-        this.$router.push({ path: `/${institute}/projectbank/` });
-      } else {
-        console.error("Институт не выбран");
-      }
-    },
-updateLike: debounce(async function (event, idea) {
-    try {
-      event.stopPropagation();
-
-      const isExpert = this.userRole === "EX";
-      const isCustomerOrStudent = this.userRole === "CU" || this.userRole === "ST";
-
-      const updatedIdea = await toggleLike(
-        idea,
-        event,
-        idea.likes.includes(this.userId),
-        (state) => (this.isAnimating = state),
-        () => this.userId,
-        false,
-        isExpert,
-        isCustomerOrStudent
-      );
-      this.loadVisibleIdeas();
-      // Обновим нужную коллекцию
-      const targetArray = this.activeFilter === 'mine' ? this.allIdeas : this.visibleIdeas;
-
+    updateIdeaInList(updatedIdea, targetArray) {
       for (const group of targetArray) {
         for (const sem of ['spring', 'winter']) {
           const index = group[sem].findIndex(i => i.id === updatedIdea.id);
@@ -442,10 +387,23 @@ updateLike: debounce(async function (event, idea) {
           }
         }
       }
-    } catch (error) {
-      console.error("Ошибка при обновлении лайка:", error);
-    }
-  }),
+    },
+    updateLike: debounce(async function (event, idea) {
+      try {
+        event.stopPropagation();
+        const isExpert = this.userRole === "EX";
+        const isCustomerOrStudent = ["CU", "ST"].includes(this.userRole);
+        
+        const updatedIdea = await toggleLike(idea, event, idea.likes.includes(this.userId), (state) => {
+          this.isAnimating = state;
+        }, () => this.userId, false, isExpert, isCustomerOrStudent);
+        
+        this.loadIdeas();  // Перезагрузим данные
+        this.updateIdeaLikes(updatedIdea);
+      } catch (error) {
+        console.error("Ошибка при обновлении лайка:", error);
+      }
+    }),
   },
   watch: {
     instituteStyle: {

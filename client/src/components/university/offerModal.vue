@@ -63,19 +63,35 @@
                 v-model="form.description"
                 id="description"
                 rows="4"
-                class="block mt-3 bg-input border-dynamic text-sm rounded-lg block w-full p-2.5 focus:outline-none focus:ring-0 focus:border-none"
+                class="block mt-3 bg-input border-dynamic text-sm rounded-lg w-full p-2.5 focus:outline-none focus:ring-0 focus:border-none"
                 placeholder="Напишите подробное описание проекта здесь"
                 required
               ></textarea>
             </div>
+
+            <!-- Тип оффера -->
+            <div class="col-span-2">
+              <label for="offerType" class="block mb-2 text-sm font-medium">Тип оффера</label>
+              <select
+                v-model="form.offer_type"
+                id="offerType"
+                name="offerType"
+                class="bg-input border-dynamic text-sm rounded-lg block w-full p-2.5 focus:outline-none focus:ring-0 focus:border-none"
+                required
+              >
+                <option value="toir">ТОИР</option>
+                <option value="other">Прочее</option>
+              </select>
+            </div>
           </div>
+
           <div class="flex justify-between gap-4">
             <button
               @click="submitOffer('review')"
               type="button"
               :style="{ backgroundColor: currentBgColor }"
-        @mouseover="currentBgColor = instituteStyle.buttonOnColor"
-        @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
+              @mouseover="currentBgColor = instituteStyle.buttonOnColor"
+              @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
               class="text-always-white inline-flex items-center focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center"
             >
               <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
@@ -102,6 +118,7 @@ export default {
       form: {
         title: '',
         description: '',
+        offer_type: 'other',
       },
     };
   },

@@ -111,7 +111,7 @@
           >
             <option value="in_process">В работе</option>
             <option value="open">Открытый</option>
-            <option value="close">Закрытый</option>
+            <option value="private">Закрытый</option>
           </select>
         </div>
         <p v-if="!isEditing" class="opacity-70">

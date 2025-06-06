@@ -16,11 +16,15 @@
           placeholder="Поиск..."
         />
       </div>
-      <select class="ml-5 h-10 py-2 px-3 border bg-white rounded-md border-zinc-400 text-always-black duration-500">
-        <option>Все статусы идей</option>
-        <option>Набор открыт</option>
-        <option>Набор закрыт</option>
-      </select>
+     <select
+  v-model="selectedStatus"
+  @change="setStatusFilter"
+  class="ml-5 h-10 py-2 px-3 border bg-white rounded-md border-zinc-400 text-always-black duration-500"
+>
+  <option value="Все статусы идей">Все статусы идей</option>
+  <option value="На доработке">На доработке</option>
+  <option value="Рассматривается">Рассматривается</option>
+</select>
 
       <button
       v-if="userRole === 'EX' || userRole === 'CU'"
@@ -60,28 +64,28 @@
     </div>
 
     <div v-for="group in filteredIdeas" :key="group.year" class="mb-10 w-4/5 m-auto">
-      <h2 class="text-4xl font-bold mb-3 mt-4">
-        {{ group.year }} год
-      </h2>
-      <hr class="divider" />
+  <h2 class="text-4xl font-bold mb-3 mt-4">
+    {{ group.year }} год
+  </h2>
+  <hr class="divider" />
 
-      <div v-for="semesterKey in ['winter', 'spring']" :key="semesterKey">
-        <div v-if="group[semesterKey] && group[semesterKey].length > 0">
-        <h3 class="text-2xl font-semibold mb-2 mt-2">
-          {{ semesterDisplay(semesterKey) }} семестр
-        </h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-5">
-          <div v-for="idea in group[semesterKey]" :key="idea.id" class="flip-container w-full h-full">
-            <div class="flipper bg-card h-full">
-              <div class="front p-6 rounded-lg shadow-lg flex flex-col bg-card h-full">
-      <h3 class="text-2xl font-semibold mb-3">
-        {{ idea.title }}
+  <div v-for="semesterKey in ['winter', 'spring']" :key="semesterKey">
+    <div v-if="group[semesterKey] && group[semesterKey].length > 0">
+      <h3 class="text-2xl font-semibold mb-2 mt-2">
+        {{ semesterDisplay(semesterKey) }} семестр
       </h3>
-      <div class="flex">
-  <span class="bg-gray-200 text-sm text-gray-700 px-2 py-1 rounded-full"
-  :style="{ backgroundColor: statusStyleMap[idea.status]?.bg || '#eee' }">
-    {{ statusStyleMap[idea.status]?.label || idea.status }}
-  </span>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-5">
+        <div v-for="idea in group[semesterKey]" :key="idea.id" class="flip-container w-full h-full">
+          <div class="flipper bg-card h-full">
+            <div class="front p-6 rounded-lg shadow-lg flex flex-col bg-card h-full">
+              <h3 class="text-2xl font-semibold mb-3">
+                {{ idea.title }}
+              </h3>
+              <div class="flex">
+                <span class="bg-gray-200 text-sm text-gray-700 px-2 py-1 rounded-full"
+                  :style="{ backgroundColor: statusStyleMap[idea.status]?.bg || '#eee' }">
+                  {{ statusStyleMap[idea.status]?.label || idea.status }}
+                </span>
 </div>
 
     <!-- Нижняя часть -->
@@ -227,29 +231,15 @@ export default {
   components: { IdeaModal, Header },
   data() {
     return {
+      searchQuery: "",
+      selectedStatus: "",
       userId: JSON.parse(localStorage.getItem("userData") || "{}")?.id,
-      isAnimating: false, // Для анимации лайка
       userRole: null,
       currentBgColor: "",
-      visibleIdeas: [],  // идеи с visible=true (для Все и Понравившиеся)
-      allIdeas: [],      // все идеи (для Мои)
-      editedIdea: {},
-      isEditing: false,
-statusStyleMap: {
-  draft: { label: "Черновик", bg: "#f3f4f6" },             // серый
-  review: { label: "На проверке", bg: "#fff3cd" },          // жёлтый
-  open: { label: "Опубликовано", bg: "#d4edda" },      // зелёный
-  under_revision: {label: "На доработке", bg: "#FDB89A"}
-},
-      filters: [
-      { label: "Все", value: "all" },
-      { label: "Понравившиеся", value: "liked" },
-    ],
-    activeFilter: 'all',
-
-      searchQuery: "",
+      visibleIdeas: [],
+      allIdeas: [],
       isModalOpen: false,
-      hover: false,
+      activeFilter: 'all',
       instituteNames: {
         HSDT: "ВШЦТ",
         ARCHID: "АРХИД",
@@ -257,112 +247,128 @@ statusStyleMap: {
         STROIN: "СТРОИН",
         TYIU: "ТИУ",
       },
+      statusStyleMap: {
+        draft: { label: "Черновик", bg: "#f3f4f6" },
+        review: { label: "На проверке", bg: "#fff3cd" },
+        open: { label: "Опубликовано", bg: "#d4edda" },
+        under_revision: { label: "На доработке", bg: "#FDB89A" }
+      },
+      filters: [
+        { label: "Все", value: "all" },
+        { label: "Понравившиеся", value: "liked" },
+      ],
     };
   },
-  mounted() {
-  this.loadVisibleIdeas()
-  this.loadAllIdeas()
-},
   created() {
     this.userRole = UserService.getUserRole();
   },
+  mounted() {
+    this.loadIdeas();
+  },
   computed: {
     filteredIdeas() {
+    let filtered = this.allIdeas; // Начинаем с всех идей
+
+    // Фильтрация по статусу
+    if (this.selectedStatus === 'Рассматривается') {
+      filtered = filtered.filter(idea => idea.status === 'review');
+    } else if (this.selectedStatus === 'На доработке') {
+      filtered = filtered.filter(idea => idea.status === 'under_revision');
+    }
+
+    // Фильтрация по "liked"
     if (this.activeFilter === 'liked') {
-      return this.visibleIdeas.map(group => ({
+      filtered = filtered.map(group => ({
         year: group.year,
         spring: group.spring.filter(idea => idea.expert_likes?.some(like => like.id === this.userId)),
-    winter: group.winter.filter(idea => idea.expert_likes?.some(like => like.id === this.userId))
-      })).filter(group => group.spring.length || group.winter.length)
-    } else {
-      // activeFilter === 'all'
-      return this.visibleIdeas
+        winter: group.winter.filter(idea => idea.expert_likes?.some(like => like.id === this.userId))
+      })).filter(group => group.spring.length || group.winter.length);
     }
+
+    return filtered;
   },
     likeColor() {
-    const inst = this.globalState.institute;
-    const style = instituteStyles[inst];
-    return style?.likeColor || "red"; // Цвет лайка по умолчанию красный
-  },
-    selectedInstitute() {
-      return this.globalState.institute;
+      const style = instituteStyles[this.globalState.institute];
+      return style?.likeColor || "red";
     },
     instituteStyle() {
-      const style = instituteStyles[this.selectedInstitute];
-      return style || { buttonOffColor: "#ccc" };
+      return instituteStyles[this.globalState.institute] || { buttonOffColor: "#ccc" };
     },
     instituteName() {
-      return (
-        this.instituteNames[this.selectedInstitute] || "Неизвестный институт"
-      );
-    },
-  semesterDisplay() {
-    return (code) => {
-      if (code === 'spring') return 'Весенний';
-      if (code === 'winter') return 'Зимний';
-      return code;
-    };
-  }
+      return this.instituteNames[this.globalState.institute] || "Неизвестный институт";
+    }
   },
   methods: {
+    setStatusFilter(event) {
+    this.selectedStatus = event.target.value;
+    console.log("Фильтр по статусу изменен:", this.selectedStatus); // Отладка
+    this.filterIdeas();
+  },
+  filterIdeas() {
+    console.log("Фильтрация идей с выбранным статусом:", this.selectedStatus); // Отладка
+  },
     totalLikes(idea) {
-    const userLikes = idea.likes ? idea.likes.length : 0;  // Количество лайков от пользователей
-    const expertLikes = idea.expert_likes ? idea.expert_likes.length : 0;  // Количество лайков от экспертов
-    return (userLikes + expertLikes).toLocaleString();  // Суммируем и форматируем
+      const userLikes = idea.likes ? idea.likes.length : 0;  // Количество лайков от пользователей
+      const expertLikes = idea.expert_likes ? idea.expert_likes.length : 0;  // Количество лайков от экспертов
+      return (userLikes + expertLikes).toLocaleString();  // Суммируем и форматируем
+    },
+    semesterDisplay(code) {
+    if (code === 'spring') return 'Весенний';
+    if (code === 'winter') return 'Зимний';
+    return code;
   },
-    isLikedByUser(idea) {
-  if (!this.userId) return false; // Если нет пользователя, то не лайкнул
-
-  // Проверяем, если пользователь есть в обычных лайках
-  if (idea.likes && idea.likes.includes(this.userId)) {
-    return true;
-  }
-
-  // Проверяем, если пользователь есть в лайках эксперта
-  if (idea.expert_likes && Array.isArray(idea.expert_likes)) {
-    return idea.expert_likes.some(expert => expert.id === this.userId);
-  }
-
-  return false; // Если не найдено
-},
+    async loadIdeas() {
+      const institute = this.globalState.institute;
+      try {
+        const response = await api.get('/projects/grouped_by_semester/', {
+          params: { visible: false, institute, status: 'review,under_revision' }
+        });
+        this.visibleIdeas = response.data;
+        this.allIdeas = response.data;
+      } catch (error) {
+        console.error("Ошибка при загрузке идей:", error);
+      }
+    },
     updateIdeaInLists(updatedIdea) {
-  function updateInGroup(group) {
-    ['spring', 'winter'].forEach(season => {
-      if (group[season]) {
-        const idx = group[season].findIndex(i => i.id === updatedIdea.id);
-        if (idx !== -1) {
-          group[season].splice(idx, 1, updatedIdea);
-        }
-      }
-    });
-  }
+      const updateInGroup = (group) => {
+        ['spring', 'winter'].forEach(season => {
+          if (group[season]) {
+            const idx = group[season].findIndex(i => i.id === updatedIdea.id);
+            if (idx !== -1) group[season].splice(idx, 1, updatedIdea);
+          }
+        });
+      };
+      this.visibleIdeas.forEach(updateInGroup);
+      this.allIdeas.forEach(updateInGroup);
+    },
+    async updateLike(event, idea) {
+      try {
+        event.stopPropagation();
+        const isExpert = this.userRole === "EX";
+        const isCustomerOrStudent = this.userRole === "CU" || this.userRole === "ST";
 
-  this.visibleIdeas.forEach(group => updateInGroup(group));
-  this.allIdeas.forEach(group => updateInGroup(group));
-},
-    async loadVisibleIdeas() {
-    const institute = this.selectedInstitute;
-const res = await api.get('/projects/grouped_by_semester/', {
-  params: {
-    visible: false,
-    institute: institute,
-    status : 'review,under_revision'
-  }
-});
-this.visibleIdeas = res.data;
-  },
-  async loadAllIdeas() {
-    const res = await api.get('/projects/grouped_by_semester/?status=review,under_revision&visible=false')
-    this.allIdeas = await res.data;
-  },
-  setFilter(value) {
-    this.activeFilter = value
-  },
-    updateIdeaLikes(updatedIdea) {
-      const index = this.ideas.findIndex((idea) => idea.id === updatedIdea.id);
-      if (index !== -1) {
-        this.ideas[index] = { ...updatedIdea };
+        const updatedIdea = await toggleLike(idea, event, idea.likes.includes(this.userId), 
+          (state) => (this.isAnimating = state), () => this.userId, false, isExpert, isCustomerOrStudent);
+
+        this.loadIdeas();  // Загружаем заново все идеи после обновления лайка
+
+        const targetArray = this.activeFilter === 'mine' ? this.allIdeas : this.visibleIdeas;
+        targetArray.forEach(group => {
+          ['spring', 'winter'].forEach(season => {
+            const index = group[season]?.findIndex(i => i.id === updatedIdea.id);
+            if (index !== -1) group[season].splice(index, 1, updatedIdea);
+          });
+        });
+      } catch (error) {
+        console.error("Ошибка при обновлении лайка:", error);
       }
+    },
+    isLikedByUser(idea) {
+      if (!this.userId) return false;
+      return idea.likes?.includes(this.userId) || idea.expert_likes?.some(expert => expert.id === this.userId);
+    },
+    setFilter(value) {
+      this.activeFilter = value;
     },
     openModal() {
       this.isModalOpen = true;
@@ -378,47 +384,13 @@ this.visibleIdeas = res.data;
       this.globalState.institute = newInstitute;
     },
     openIdea(idea) {
-      const institute = this.selectedInstitute; // Используем selectedInstitute из data()
+      const institute = this.globalState.institute;
       if (institute) {
         this.$router.push({ path: `/${institute}/project/${idea.id}` });
       } else {
         console.error("Институт не выбран");
       }
-    },
-updateLike: debounce(async function (event, idea) {
-    try {
-      event.stopPropagation();
-
-      const isExpert = this.userRole === "EX";
-      const isCustomerOrStudent = this.userRole === "CU" || this.userRole === "ST";
-
-      const updatedIdea = await toggleLike(
-        idea,
-        event,
-        idea.likes.includes(this.userId),
-        (state) => (this.isAnimating = state),
-        () => this.userId,
-        false,
-        isExpert,
-        isCustomerOrStudent
-      );
-      this.loadVisibleIdeas();
-      // Обновим нужную коллекцию
-      const targetArray = this.activeFilter === 'mine' ? this.allIdeas : this.visibleIdeas;
-
-      for (const group of targetArray) {
-        for (const sem of ['spring', 'winter']) {
-          const index = group[sem].findIndex(i => i.id === updatedIdea.id);
-          if (index !== -1) {
-            group[sem].splice(index, 1, { ...updatedIdea });
-            break;
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Ошибка при обновлении лайка:", error);
     }
-  }), // задержка 500 мс
   },
   watch: {
     instituteStyle: {
@@ -426,7 +398,7 @@ updateLike: debounce(async function (event, idea) {
         this.currentBgColor = newStyle.buttonOffColor;
       },
       immediate: true,
-    },
+    }
   },
 };
 </script>

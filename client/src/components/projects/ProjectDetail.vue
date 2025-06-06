@@ -207,26 +207,27 @@
 
     <div class="w-4/5 m-auto flex flex-col gap-4">
       <button
-      :style="{ backgroundColor: currentBgColor }"
-        @mouseover="currentBgColor = instituteStyle.buttonOnColor"
-        @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
-        @click="handleSubmitJoinRequest"
-        class="text-always-white w-88 ml-20 inline-flex items-center gap--2 focus:outline-none font-medium rounded-lg text-sm px-2 py-2.5"
-      >
-        <svg
-          class="me-1 -ms-1 w-10 h-10"
-          fill="currentColor"
-          viewBox="0 -2 15 25"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            fill-rule="evenodd"
-            d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-            clip-rule="evenodd"
-          ></path>
-        </svg>
-        Подать заявку на проект
-      </button>
+  v-if="canAcceptApplications && userRole == 'ST'"
+  :style="{ backgroundColor: currentBgColor }"
+  @mouseover="currentBgColor = instituteStyle.buttonOnColor"
+  @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
+  @click="handleSubmitJoinRequest"
+  class="text-always-white w-88 ml-20 inline-flex items-center gap--2 focus:outline-none font-medium rounded-lg text-sm px-2 py-2.5"
+>
+  <svg
+    class="me-1 -ms-1 w-10 h-10"
+    fill="currentColor"
+    viewBox="0 -2 15 25"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      fill-rule="evenodd"
+      d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+      clip-rule="evenodd"
+    ></path>
+  </svg>
+  Подать заявку на проект
+</button>
 
       <button
         @click="openModal"
@@ -339,13 +340,16 @@
 
 
     <RespondedTeams
-      v-if="isModalOpen"
-      :projectId="ideaId"
-      @close="closeModal"
-    />
+  v-if="isModalOpen"
+  :projectId="ideaId"
+  @close="closeModal"
+  @close-application-acceptance="handleCloseApplications"
+/>
   </div>
 </template>
-
+isLikedByUser() {
+    return (idea) => idea.likes?.includes(this.userId);
+  },
 <script>
 import api from "@/composables/auth.js";
 import Header from "@/components/header.vue";
@@ -372,6 +376,7 @@ export default {
   },
   data() {
     return {
+      canAcceptApplications: true,
       messages: {},
       showRevisionModal: false,
       revisionMessage: "",
@@ -460,6 +465,9 @@ export default {
     },
   },
   methods: {
+    handleCloseApplications() {
+        this.canAcceptApplications = false;
+    },
     formatDate(date) {
   return new Date(date).toLocaleString('ru-RU', {
     day: '2-digit',

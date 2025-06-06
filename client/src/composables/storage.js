@@ -134,6 +134,10 @@ class UserService {
     return token || null;
   }
 
+  getToken() {
+    return Cookies.get("access_token");  // Получаем access_token из cookies
+  }
+
   /**
    * Обновляет access token, используя refresh token.
    * Выполняет запрос к API для обновления токена, сохраняет и возвращает новый access token.
@@ -146,24 +150,24 @@ class UserService {
       if (!refresh) {
         throw new Error("Refresh token отсутствует");
       }
+
       const response = await axios.post(
         `${this.apiBaseUrl}/users/token/refresh/`,
         { refresh }
       );
+
+      // Если токен обновился, сохраняем новый access_token и refresh_token
       if (response.status === 200 && response.data) {
         const newAccessToken = response.data.access;
-        // Если API возвращает новый refresh token – сохраняем его, иначе оставляем текущий
-        const newRefreshToken = response.data.refresh || refresh;
+        const newRefreshToken = response.data.refresh || refresh; // Если новый refresh не возвращен, сохраняем старый
+
         this.saveTokens(newAccessToken, newRefreshToken);
         return newAccessToken;
       } else {
         throw new Error("Не удалось обновить токен");
       }
     } catch (error) {
-      console.error(
-        "Ошибка при обновлении токена:",
-        error.response?.data || error.message
-      );
+      console.error("Ошибка при обновлении токена:", error.message);
       return null;
     }
   }
@@ -175,11 +179,8 @@ class UserService {
    * @param {string} refreshToken - Refresh токен.
    */
   saveTokens(accessToken, refreshToken) {
-    if (!refreshToken) {
-      console.error("Попытка сохранить refresh token: получено undefined");
-    }
-    Cookies.set("access_token", accessToken, { expires: 7, sameSite: "Lax" });
-    Cookies.set("refresh_token", refreshToken, { expires: 7, sameSite: "Lax" });
+    Cookies.set("access_token", accessToken, { expires: 1, secure: true, sameSite: "Strict" });
+    Cookies.set("refresh_token", refreshToken, { expires: 30, secure: true, sameSite: "Strict" }); // refresh token хранится дольше
   }
 
   /**

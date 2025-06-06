@@ -4,41 +4,49 @@ import axios from "axios";
 const api = axios.create({
   baseURL: "http://127.0.0.1:8000/api",
   timeout: 10000,
-  withCredentials: true,
+  withCredentials: true,  // Обязательно если используешь cookies
 });
 
+// Интерсептор запроса
 api.interceptors.request.use(
   async (config) => {
-    // Перед каждым запросом принудительно обновляем токен
-    // Обратите внимание: метод refreshToken должен посылать запрос к endpoint обновления token
-    // и возвращать новый access token. Если обновление не удалось – можно выполнить очистку хранилища или
-    // перенаправить пользователя на страницу логина.
-    const newToken = await UserService.refreshToken();
-    if (newToken) {
-      config.headers.Authorization = `Bearer ${newToken}`;
+    const token = UserService.getToken();  // Получаем токен из хранилища, если он есть
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     } else {
-      console.error("Не удалось обновить токен");
+      console.error("Токен не найден");
     }
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Интерсептор ответов остаётся стандартным для обработки ошибок 401
+// Интерсептор ответа
 api.interceptors.response.use(
-  (response) => response,
+  (response) => response,  // Если все в порядке, просто возвращаем ответ
   async (error) => {
     const originalRequest = error.config;
+
+    // Обработка ошибки 401 (неавторизован)
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      const newToken = await UserService.refreshToken();
-      if (newToken) {
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
-        return api(originalRequest);
+
+      try {
+        // Попробуем обновить токен
+        const newToken = await UserService.refreshToken();
+
+        if (newToken) {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          // Повторно выполняем запрос с новым токеном
+          return api(originalRequest);
+        }
+      } catch (refreshError) {
+        console.error("Ошибка при обновлении токена:", refreshError);
+        UserService.clearStorage();  // Очистка данных пользователя
+        window.location.href = "/login";  // Перенаправление на страницу входа
       }
-      UserService.clearStorage();
-      // Дополнительно, можно перенаправить пользователя на логин.
     }
+
     return Promise.reject(error);
   }
 );

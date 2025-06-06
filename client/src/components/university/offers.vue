@@ -55,11 +55,16 @@
       </span>
     </div>
 
-    <div class="flex items-center mb-4">
+    <div class="flex items-center mb-4 gap-4">
       <span class="text-sm p-1 rounded-2xl px-2"
       :style="{ backgroundColor: statusStyleMap[offer.status]?.bg || '#eee' }"
       >
         {{ statusStyleMap[offer.status]?.label || offer.status }}
+      </span>
+      <span class="text-sm p-1 rounded-2xl px-2 bg-zinc-500 font-semibold text-always-white"
+      
+      >
+        {{ offer.offer_type || "Прочее" }}
       </span>
     </div>
 

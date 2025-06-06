@@ -40,20 +40,24 @@
     </h3>
 
     <div class="flex items-center mb-4">
-      <span class="text-sm text-gray-500">
+      <span class="text-sm opacity-70 ">
         {{ offer.owner.full_name || "Автор не указан" }}
       </span>
     </div>
 
-    <div class="flex items-center mb-4">
-      <span class="text-sm p-1 rounded-2xl px-2"
+    <div class="flex items-center mb-4 gap-4">
+      <span class="text-sm p-1 rounded-2xl px-2 text-always-black"
       :style="{ backgroundColor: statusStyleMap[offer.status]?.bg || '#eee' }"
       >
         {{ statusStyleMap[offer.status]?.label || offer.status }}
       </span>
+      <span class="text-sm p-1 rounded-2xl px-2 bg-zinc-500 font-semibold text-always-white"
+      >
+        {{ offer.offer_type || "Прочее" }}
+      </span>
     </div>
 
-    <p class="text-gray-600 text-sm mb-4 truncate-text">
+    <p class="opacity-70 text-sm mb-4 truncate-text">
       {{ offer.description || "Описание отсутствует" }}
     </p>
 
@@ -409,7 +413,6 @@ export default {
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   padding: 1.5rem;
-  border: 2px solid var(--border-color, #e9ecef);
   transition: all 0.3s ease;
 }
 

@@ -107,7 +107,7 @@
           </tr>
         </tbody>
       </table>
-
+<button @click="toggleApplicationState">{{ isApplicationsClosed ? 'Возобновить прием заявок' : 'Закрыть прием заявок' }}</button>
       <!-- Кнопка закрытия -->
       <button
         class="mt-4 bg-gray-500 text-always-white px-4 py-2 rounded hover:bg-gray-600 transition-colors"
@@ -139,131 +139,143 @@ export default {
   },
   data() {
     return {
+      isApplicationsClosed: false,
       technologiesMap: {},
       teamApplications: [],
       freelancerApplications: [],
     };
   },
   methods: {
+    toggleApplicationState() {
+      // Переключаем состояние
+      this.isApplicationsClosed = !this.isApplicationsClosed;
+
+      // Дополнительно можно добавить логику для того, чтобы обработать реальное изменение
+      if (this.isApplicationsClosed) {
+        this.closeApplications();  // Если закрыть, выполняем этот метод
+      } else {
+        this.reopenApplications(); // Если возобновить, выполняем этот метод
+      }
+    },
+    closeApplications() {
+    this.isApplicationsClosed = true;
+    this.$emit('close-application-acceptance');
+  },
+  reopenApplications() {
+    this.isApplicationsClosed = false; 
+  },
     viewProfile(userId) {
-    this.$router.push(`/${this.selectedInstitute}/profile/${userId}`);
-  },
-viewTeam(teamId) {
-    this.$router.push(`/${this.selectedInstitute}/team/${teamId}`);
-  },
+      this.$router.push(`/${this.selectedInstitute}/profile/${userId}`);
+    },
+    viewTeam(teamId) {
+      this.$router.push(`/${this.selectedInstitute}/team/${teamId}`);
+    },
     async fetchTechnologies() {
-    try {
-      const response = await api.get('/core/technologies');
-      const map = {};
-      response.data.forEach(tech => {
-        map[tech.id] = tech.name;
-      });
-      this.technologiesMap = map;
-    } catch (error) {
-      console.error("Ошибка при загрузке технологий:", error);
-    }
-  },
+      try {
+        const response = await api.get('/core/technologies');
+        this.technologiesMap = response.data.reduce((map, tech) => {
+          map[tech.id] = tech.name;
+          return map;
+        }, {});
+      } catch (error) {
+        console.error("Ошибка при загрузке технологий:", error);
+      }
+    },
     async fetchProjectApplications() {
       try {
         const applications = await getProjectApplications();
         const filteredApplications = applications.filter(
-          (app) =>
-            app.project === Number(this.projectId) && app.status === "pending"
+          (app) => app.project === Number(this.projectId) && app.status === "pending"
         );
 
-        const teamPromises = filteredApplications
-          .filter((app) => app.team)
-          .map((app) => this.fetchTeamDetails(app.team, app.id));
+        const [teamResponses, freelancerResponses] = await Promise.all([
+          this.fetchTeamApplications(filteredApplications),
+          this.fetchFreelancerApplications(filteredApplications),
+        ]);
 
-        const freelancerPromises = filteredApplications
-          .filter((app) => app.freelancer)
-          .map(async (app) => {
-            const userInfo = await this.fetchUserDetails(app.freelancer);
-            return { ...app, ...userInfo };
-          });
-
-        this.freelancerApplications = await Promise.all(freelancerPromises);
-        this.teamApplications = await Promise.all(teamPromises);
+        this.teamApplications = teamResponses;
+        this.freelancerApplications = freelancerResponses;
       } catch (error) {
         console.error("Ошибка при получении заявок:", error);
       }
     },
-
+    async fetchTeamApplications(filteredApplications) {
+      const teamPromises = filteredApplications
+        .filter((app) => app.team)
+        .map((app) => this.fetchTeamDetails(app.team, app.id));
+      return await Promise.all(teamPromises);
+    },
+    async fetchFreelancerApplications(filteredApplications) {
+      const freelancerPromises = filteredApplications
+        .filter((app) => app.freelancer)
+        .map(async (app) => {
+          const userInfo = await this.fetchUserDetails(app.freelancer);
+          return { ...app, ...userInfo };
+        });
+      return await Promise.all(freelancerPromises);
+    },
     async fetchTeamDetails(teamId, applicationId) {
       try {
         const response = await api.get(`/teams/${teamId}/`);
         return { ...response.data, applicationId };
       } catch (error) {
-        console.error(
-          `Ошибка при получении информации о команде с ID ${teamId}:`,
-          error
-        );
+        console.error(`Ошибка при получении информации о команде с ID ${teamId}:`, error);
         return null;
       }
     },
-
     async fetchUserDetails(userId) {
-  try {
-    const response = await api.get(`/users/${userId}/`);
-    const skillsIds = response.data.skills || [];
+      try {
+        const response = await api.get(`/users/${userId}/`);
+        const skillsIds = response.data.skills || [];
+        const skillNames = skillsIds.map(id => this.technologiesMap[id] || "Неизвестно");
 
-    const skillNames = skillsIds.map(id => this.technologiesMap[id] || "Неизвестно");
-
-    return {
-      user_full_name: `${response.data.first_name} ${response.data.last_name}`,
-      skills: skillNames,
-    };
-  } catch (error) {
-    console.error(
-      `Ошибка при получении информации о пользователе с ID ${userId}:`,
-      error
-    );
-    return {
-      user_full_name: "Неизвестно",
-      skills: [],
-    };
-  }
-},
-
+        return {
+          user_full_name: `${response.data.first_name} ${response.data.last_name}`,
+          skills: skillNames,
+        };
+      } catch (error) {
+        console.error(`Ошибка при получении информации о пользователе с ID ${userId}:`, error);
+        return { user_full_name: "Неизвестно", skills: [] };
+      }
+    },
     async acceptApplication(id, applicationData) {
-  try {
-    const acceptData = {
-      applicant_type: applicationData.applicant_type || null,
-      project: applicationData.project || null,
-      freelancer: applicationData.freelancer || null,
-      team: applicationData.team || null,
-    };
-    const response = await api.get(`/project-applications/${id}/`);
-    const data = response.data;
-    // Принять заявку
-    await acceptProjectApplication(id, acceptData);
-    alert("Заявка принята!");
-    
-    if (data.team && data.project) {
+      try {
+        const acceptData = this.getApplicationData(applicationData);
+        await acceptProjectApplication(id, acceptData);
+        alert("Заявка принята!");
+
+        const data = await this.fetchApplicationData(id);
+        if (data.team && data.project) {
+          await this.createKanbanBoard(data);
+        }
+        this.fetchProjectApplications();
+      } catch (error) {
+        alert("Ошибка при принятии заявки или создании доски.");
+        console.error(error);
+      }
+    },
+    getApplicationData(applicationData) {
+      return {
+        applicant_type: applicationData.applicant_type || null,
+        project: applicationData.project || null,
+        freelancer: applicationData.freelancer || null,
+        team: applicationData.team || null,
+      };
+    },
+    async fetchApplicationData(id) {
+      const response = await api.get(`/project-applications/${id}/`);
+      return response.data;
+    },
+    async createKanbanBoard(data) {
       await api.post('/kanban/boards/', {
         team: data.team,
         project: data.project,
       });
       alert("Канбан-доска создана!");
-    }
-    // Обновляем список заявок
-    this.fetchProjectApplications();
-  } catch (error) {
-    alert("Ошибка при принятии заявки или создании доски.");
-    console.error(error);
-  }
-},
+    },
     async cancelApplication(id, applicationData) {
       try {
-        if (!applicationData) return;
-
-        const cancelData = {
-          applicant_type: applicationData.applicant_type || null,
-          project: applicationData.project || null,
-          freelancer: applicationData.freelancer || null,
-          team: applicationData.team || null,
-        };
-
+        const cancelData = this.getApplicationData(applicationData);
         await cancelProjectApplication(id, cancelData);
         alert("Заявка отменена!");
         this.fetchProjectApplications();
@@ -272,14 +284,13 @@ viewTeam(teamId) {
         console.error(error);
       }
     },
-    
   },
   mounted() {
     this.fetchProjectApplications();
     this.fetchTechnologies();
   },
   computed: {
-        selectedInstitute() {
+    selectedInstitute() {
       return this.globalState.institute;
     },
   },
