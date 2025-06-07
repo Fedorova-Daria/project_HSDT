@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Header @institute-changed="onInstituteChanged" />
+    <Header />
 
     <h1 class="font-display w-4/5 m-auto mt-20 text-dynamic text-5xl">
       Биржа проектов {{ instituteName }}
@@ -288,6 +288,14 @@ export default {
     },
   },
   methods: {
+    openIdea(idea) {
+      const institute = this.globalState.institute;
+      if (institute) {
+        this.$router.push({ path: `/${institute}/project/${idea.id}` });
+      } else {
+        console.error("Институт не выбран");
+      }
+    },
     getStatusStyleMap() {
       return {
         draft: { label: "Черновик", bg: "#f3f4f6" },

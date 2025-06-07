@@ -4,7 +4,7 @@ import api from "@/composables/auth";
 export const notificationService = {
   getNotifications: async () => {
     try {
-      const response = await api.get('/notifications/'); // Запрос на получение уведомлений
+      const response = await api.get('/notifications/?is_read=false'); // Запрос на получение уведомлений
       return response.data; // Возвращаем уведомления
     } catch (error) {
       console.error('Ошибка при получении уведомлений:', error);

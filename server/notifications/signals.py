@@ -15,6 +15,7 @@ def notify_team_join_request_created(sender, instance, created, **kwargs):
             message=f"{instance.user.get_full_name()} подал(а) заявку в команду {instance.team.name}",
             related_team=instance.team,
             related_team_join_request=instance,
+            is_read = False,
         )
 
 @receiver(pre_save, sender=TeamJoinRequest)
@@ -30,6 +31,7 @@ def notify_team_join_request_status_change(sender, instance, **kwargs):
             message=f"Ваша заявка в команду {instance.team.name} была принята!",
             related_team=instance.team,
             related_team_join_request=instance,
+            is_read = False,
         )
 
 # --- PROJECT APPLICATION ---
@@ -49,6 +51,7 @@ def notify_project_application_created(sender, instance, created, **kwargs):
             related_project=instance.project,
             related_project_application=instance,
             related_team=instance.team if instance.applicant_type == 'team' else None,
+            is_read=is_read
         )
 
 @receiver(pre_save, sender=ProjectApplication)
@@ -70,4 +73,5 @@ def notify_project_application_status_change(sender, instance, **kwargs):
             related_project=instance.project,
             related_project_application=instance,
             related_team=instance.team if instance.applicant_type == 'team' else None,
+            is_read = False,
         )

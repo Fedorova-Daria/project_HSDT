@@ -76,7 +76,7 @@ export function useAuth() {
       const response = await api.post("/users/registration/", {
         first_name,
         last_name,
-        university,
+        university_group,
         email,
         password,
       });
@@ -85,9 +85,11 @@ export function useAuth() {
 
       if (response.data.success) {
         const { access_token, refresh_token } = response.data;
+        // Сохраняем токены
         UserService.saveTokens(access_token, refresh_token);
-        // Дополнительно можно сразу сохранить данные пользователя,
-        // если они передаются в ответе, или запросить их потом отдельно.
+        
+        // После успешной регистрации, выполняем вход
+        await loginWithToken(access_token);
         return response.data;
       } else {
         throw new Error(
@@ -100,6 +102,28 @@ export function useAuth() {
         throw new Error("Пользователь с таким email уже существует");
       }
       throw new Error("Ошибка при регистрации студента");
+    }
+  };
+
+  /**
+   * Авторизует пользователя с использованием токена.
+   * @param {string} accessToken
+   */
+  const loginWithToken = async (accessToken) => {
+    try {
+      // Устанавливаем токен в заголовки для использования в запросах
+      api.defaults.headers.Authorization = `Bearer ${accessToken}`;
+
+      // Получаем данные пользователя (если необходимо)
+      const userResponse = await api.get("/users/me");
+      UserService.saveUserData(userResponse.data);
+
+      // Перенаправление на страницу аккаунта или профиля
+      router.push("/TYIU/about");
+
+    } catch (error) {
+      console.error("Ошибка при авторизации с токеном:", error);
+      alert("Ошибка при авторизации, попробуйте войти снова.");
     }
   };
 
@@ -148,5 +172,6 @@ export function useAuth() {
     login,
     registerStudent,
     registerCustomer,
+    loginWithToken, // Обязательно возвращаем loginWithToken
   };
 }

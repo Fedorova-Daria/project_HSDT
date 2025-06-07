@@ -21,7 +21,7 @@
           <!-- Поле ввода почты -->
           <div>
             <div class="w-full mb-4">
-              <h2 class="text-white mb-1">Почта</h2>
+              <h2 class="text-always-white mb-1">Почта</h2>
               <input
                 v-model="email"
                 @input="clearError('email')"
@@ -46,12 +46,12 @@
 
           <!-- Поле ввода пароля -->
           <div class="w-full mb-4 flex flex-col">
-            <h2 class="text-white mb-1">Пароль</h2>
+            <h2 class="text-always-white mb-1">Пароль</h2>
             <input
               v-model="password"
               @input="clearError('password')"
               type="password"
-              class="m-auto w-90 bg-white text-grey px-2 py-2 rounded-lg border-3 border-solid duration-500 ease-linear transition-colors outline-none"
+              class="m-auto w-90 bg-white text-always-black px-2 py-2 rounded-lg border-3 border-solid duration-500 ease-linear transition-colors outline-none"
               :class="{
                 'border-fiol hover:border-purple-500 focus:border-purple-600':
                   !passwordError,
@@ -73,7 +73,7 @@
 
           <button
             @click="asyncLogin"
-            class="bg-purple-500 text-white font-medium w-90 p-2 rounded-lg hover:bg-purple-600 duration-500"
+            class="bg-purple-500 text-always-white font-medium w-90 p-2 rounded-lg hover:bg-purple-600 duration-500"
           >
             Войти
           </button>
@@ -81,7 +81,7 @@
         <div class="w-110 m-auto pl-25 mt-8">
           <button
             @click="goToRegisterZ"
-            class="bg-sky-500 text-white font-medium w-60 p-2 rounded-lg hover:bg-sky-600 duration-500"
+            class="bg-sky-500 text-always-white font-medium w-60 p-2 rounded-lg hover:bg-sky-600 duration-500"
           >
             Я заказчик
           </button>
@@ -89,11 +89,15 @@
         <div class="m-auto w-65 mt-3 flex items-center justify-between">
           <h2 class="text-white text-ms">Нет аккаунта?</h2>
           <button
-            @click="goToRegister"
-            class="text-blue-300 text-ms hover:text-blue-400 duration-500 cursor-pointer"
-          >
-            Зарегистрироваться
-          </button>
+  @click="goToRegister"
+  :style="{
+    color: 'rgb(56, 189, 248) !important', 
+    hover: 'rgb(37, 99, 235) !important'
+  }"
+  class="duration-500 cursor-pointer"
+>
+  Зарегистрироваться
+</button>
         </div>
         <div>
           <router-view></router-view>

@@ -37,10 +37,12 @@ class NotificationViewSet(viewsets.ModelViewSet):
         """
         queryset = self.filter_queryset(self.get_queryset())
 
-        # Не помечать как прочитанные, если есть параметр keep_unread
+# Не помечать как прочитанные, если есть параметр keep_unread
         if not request.query_params.get('keep_unread', '').lower() == 'true':
-            queryset.filter(is_read=False).update(is_read=True)
-
+            # Обновляем только те, которые еще не прочитаны
+            unread_notifications = queryset.filter(is_read=False)
+            updated_count = unread_notifications.update(is_read=True)
+            print(f"Updated {updated_count} notifications as read")
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)

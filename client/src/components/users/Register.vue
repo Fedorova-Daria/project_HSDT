@@ -355,12 +355,10 @@ async registerStudent() {
     await registerStudent({
       first_name: this.first_name,
       last_name: this.last_name,
-      group: this.selectedGroup.id,  // Используем только ID группы
+      university_group: this.selectedGroup.id,  // Используем только ID группы
       email: this.email,
       password: this.password,
     });
-     // Переход на страницу логина после успешной регистрации
-     router.push("/login");
   } catch (error) {
     this.emailError = error.message;
   }

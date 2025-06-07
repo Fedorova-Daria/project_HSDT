@@ -25,13 +25,16 @@
   {{ userData.first_name }} {{ userData.last_name }}
 </h1>
             <div class="mt-2">
-              <span 
-              :style="{ backgroundColor: currentBgColor }"
-                    @mouseover="currentBgColor = instituteStyle.buttonOnColor"
-                    @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
-              class="px-3 py-1 text-always-white rounded-full text-sm">
-                {{ userData.role || "Роль не указана" }}
-              </span>
+              <div v-if="userData && userData.role">
+  <span 
+    :style="{ backgroundColor: currentBgColor }"
+    @mouseover="currentBgColor = instituteStyle.buttonOnColor"
+    @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
+    class="px-3 py-1 text-always-white rounded-full text-sm"
+  >
+    {{ userData.role || "Роль не указана" }}
+  </span>
+</div>
             </div>
           </div>
 
@@ -39,6 +42,7 @@
             <p class="text-sm flex justify-between">
               <strong>Почта:</strong>
             </p>
+            <div v-if="userData && userData.role">
             <div
               class="w-auto mt-2 bg-input text-sm rounded-lg p-2.5 border border-zinc-600 font-medium"
             >
@@ -53,17 +57,20 @@
               {{ userData.university_group || "Не указано" }}
             </div>
           </div>
+          </div>
 
           <!-- Блок биографии -->
           <div class="mt-5">
             <p class="text-sm flex justify-between text-dynamic">
               <strong>Биография:</strong>
             </p>
+             <div v-if="userData && userData.role">
             <div
               class="w-auto mt-2 bg-input text-dynamic text-sm rounded-lg p-2.5 border border-zinc-600 min-h-[100px] font-medium"
             >
               {{ userData.bio || "Пока ничего не рассказал о себе" }}
             </div>
+          </div>
           </div>
         </div>
 

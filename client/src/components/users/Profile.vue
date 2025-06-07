@@ -1,8 +1,8 @@
 <template>
   <div class="relative min-h-screen overflow-hidden">
-    <div class="min-h-screen flex flex-col relative z-10">
+    <div class="min-h-screen flex flex-col relative">
       <!-- Хедер -->
-      <Header />
+      <Header class="relative z-70"/>
 
       <!-- Основной контейнер профиля -->
       <div class="flex w-4/5 mx-auto mt-10 gap-6">
@@ -26,8 +26,6 @@
             <div class="mt-2">
               <span 
               :style="{ backgroundColor: currentBgColor }"
-                    @mouseover="currentBgColor = instituteStyle.buttonOnColor"
-                    @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
               class="px-3 py-1 text-always-white rounded-full text-sm">
                 {{ userData.role || "Роль не указана" }}
               </span>

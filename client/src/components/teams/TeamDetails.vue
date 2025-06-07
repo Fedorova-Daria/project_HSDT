@@ -157,6 +157,7 @@
     </div>
     <div class="w-4/5 m-auto flex flex-col gap-4">
     <button @click="sendJoinRequest"
+    v-if="team.status === 'private'"
             :style="{ backgroundColor: currentBgColor }"
         @mouseover="currentBgColor = instituteStyle.buttonOnColor"
         @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
