@@ -6,6 +6,7 @@ import Rialto from "../components/projects/Rialto.vue";
 import Profile from "../components/users/Profile.vue";
 import Teams from "../components/teams/Teams.vue";
 import ChangeProfile from "../components/users/ChangeProfile.vue";
+import professors from "../components/professors.vue";
 import TeamDetails from "@/components/teams/TeamDetails.vue";
 import Ideas from "@/components/projects/Ideas.vue";
 import ProjectDetail from "@/components/projects/ProjectDetail.vue";
@@ -29,17 +30,22 @@ const routes = [
     },
   },
   {
-  path: '/:institute/profile/:userId',
-  name: 'Profile',
-  component: Profileid,
-  props: true,
-},
+    path: "/:institute/profile/:userId",
+    name: "Profile",
+    component: Profileid,
+    props: true,
+  },
   { path: "/login", component: Login },
   { path: "/register", component: Register },
   { path: "/registerZ", component: RegZ },
   { path: "/:institute/profile", name: "profile", component: Profile },
   { path: "/change-profile", component: ChangeProfile },
   // Динамические маршруты для всех институтов
+  {
+    path: "/:institute/professors",
+    name: "professors",
+    component: professors,
+  },
   {
     path: "/:institute/rialto",
     name: "rialto",
@@ -69,7 +75,7 @@ const routes = [
     path: "/:institute/team/:teamId",
     name: "teamDetails",
     component: TeamDetails,
-    props: true // Это позволяет передавать параметры как props в компонент
+    props: true, // Это позволяет передавать параметры как props в компонент
   },
   {
     path: "/:institute/ideas/",
@@ -77,40 +83,49 @@ const routes = [
     component: Ideas,
   },
   {
-  path: '/:institute/project/:ideaId/kanban',
-  name: 'Kanban',
-  component: Kanban,
-  props: true  // вот это!
-},
+    path: "/:institute/project/:ideaId/kanban",
+    name: "Kanban",
+    component: Kanban,
+    props: true, // вот это!
+  },
   {
-  path: '/:institute/project/:ideaId/statistic',
-  name: 'Statistic',
-  component: Statistic,
-  props: true  // вот это!
-},
+    path: "/:institute/project/:ideaId/statistic",
+    name: "Statistic",
+    component: Statistic,
+    props: true, // вот это!
+  },
   {
-  path: '/:institute/project/:ideaId/info',
-  name: 'info',
-  component: info,
-  props: true  // вот это!
-},
+    path: "/:institute/project/:ideaId/info",
+    name: "info",
+    component: info,
+    props: true, // вот это!
+  },
   {
     path: "/:institute/project/:id",
     name: "ProjectDetail",
     component: ProjectDetail,
-    props: route => ({ ideaId: route.params.id, institute: route.params.institute })  // Передаем параметры как пропсы
+    props: (route) => ({
+      ideaId: route.params.id,
+      institute: route.params.institute,
+    }), // Передаем параметры как пропсы
   },
   {
     path: "/:institute/idea/:id",
     name: "ideaDetail",
     component: ideaDetail,
-    props: route => ({ ideaId: route.params.id, institute: route.params.institute })  // Передаем параметры как пропсы
+    props: (route) => ({
+      ideaId: route.params.id,
+      institute: route.params.institute,
+    }), // Передаем параметры как пропсы
   },
   {
     path: "/:institute/offer/:id",
     name: "OfferDetail",
     component: OfferDetail,
-    props: route => ({ offerId: route.params.id, institute: route.params.institute })  // Передаем параметры как пропсы
+    props: (route) => ({
+      offerId: route.params.id,
+      institute: route.params.institute,
+    }), // Передаем параметры как пропсы
   },
   {
     path: "/TYIU/about",

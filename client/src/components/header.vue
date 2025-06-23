@@ -49,6 +49,27 @@
 
       <!-- Навигация -->
       <nav class="flex items-center gap-10">
+        <!-- Новая кнопка для профессоров -->
+        <router-link
+          :to="`/${
+            instituteMap[selectedInstitute] || selectedInstitute
+          }/professors`"
+          class="relative text-lg font-medium transition-colors duration-300 group text-dynamic"
+          :style="{ '--hover-color': instituteStyle?.textColor }"
+        >
+          Профессоры
+          <span
+            class="absolute left-1/2 bottom-[-5px] h-[3px] rounded-full transition-all duration-300 w-0 group-hover:w-full group-hover:left-0"
+            :style="{ backgroundColor: instituteStyle?.textColor }"
+            :class="{
+              'w-2/3 left-1/6':
+                $route.path ===
+                `/${
+                  instituteMap[selectedInstitute] || selectedInstitute
+                }/professors`,
+            }"
+          ></span>
+        </router-link>
         <label class="switch">
           <input
             id="checkbox"
@@ -96,10 +117,11 @@
         <!-- Кнопка уведомлений -->
         <div class="relative">
           <button class="relative p-1" @click="toggleNotifications">
-            <img 
-            :src="isDarkTheme ? '/notificate.svg' :'/notificate_dark.svg' "
-            alt="notification" 
-            class="w-6" />
+            <img
+              :src="isDark ? '/notificate.svg' : '/notificate_dark.svg'"
+              alt="notification"
+              class="w-6"
+            />
             <span
               v-if="unreadNotificationsCount > 0"
               class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center"
@@ -157,7 +179,7 @@ export default {
     return {
       unreadNotificationsCount: 0,
       isDark: false,
-      userData:null,
+      userData: null,
       isDropdownOpen: false,
       localSelectedInstitute: Cookies.get("institute") || "TYIU",
       showNotifications: false, // Управляет видимостью меню уведомлений
@@ -187,10 +209,10 @@ export default {
   },
   computed: {
     isDarkTheme() {
-    if (!this.userData) return false;
-    return this.userData.mode === 'dark';
-  },
-  pathFillColor() {
+      if (!this.userData) return false;
+      return this.userData.mode === "dark";
+    },
+    pathFillColor() {
       return this.isDarkTheme ? "white" : "black";
     },
     menuItems() {
@@ -292,16 +314,18 @@ export default {
       const storedUser = localStorage.getItem("userData");
       if (!storedUser) return;
 
-  const user = JSON.parse(storedUser);
-    try {
-      const response = await api.get(`/notifications/?is_read=false&user=${user.id}`);
-      this.unreadNotificationsCount = response.data.length;
-    } catch (error) {
-      console.error("Ошибка при получении непрочитанных уведомлений:", error);
-    }
-  },
+      const user = JSON.parse(storedUser);
+      try {
+        const response = await api.get(
+          `/notifications/?is_read=false&user=${user.id}`
+        );
+        this.unreadNotificationsCount = response.data.length;
+      } catch (error) {
+        console.error("Ошибка при получении непрочитанных уведомлений:", error);
+      }
+    },
     async fetchUserData() {
-      const response = await api.get('/users/me');
+      const response = await api.get("/users/me");
       this.userData = response.data;
       return response.data;
     },
@@ -334,33 +358,33 @@ export default {
       });
     },
     initTheme() {
-  const { applyTheme } = useTheme();
-  const userData = JSON.parse(localStorage.getItem("userData"));
-  if (userData && userData.mode) {
-    applyTheme(userData.mode);
-    this.isDark = userData.mode === "dark"; // 👈 вот это
-  }
-},
+      const { applyTheme } = useTheme();
+      const userData = JSON.parse(localStorage.getItem("userData"));
+      if (userData && userData.mode) {
+        applyTheme(userData.mode);
+        this.isDark = userData.mode === "dark"; // 👈 вот это
+      }
+    },
 
     async toggleTheme() {
-  const userData = JSON.parse(localStorage.getItem("userData"));
-  if (!userData) return;
+      const userData = JSON.parse(localStorage.getItem("userData"));
+      if (!userData) return;
 
-  const newMode = userData.mode === "dark" ? "light" : "dark";
+      const newMode = userData.mode === "dark" ? "light" : "dark";
 
-  try {
-    await api.post("/users/change-theme/", { mode: newMode });
-    userData.mode = newMode;
-    localStorage.setItem("userData", JSON.stringify(userData));
+      try {
+        await api.post("/users/change-theme/", { mode: newMode });
+        userData.mode = newMode;
+        localStorage.setItem("userData", JSON.stringify(userData));
 
-    const { applyTheme } = useTheme();
-    applyTheme(newMode);
+        const { applyTheme } = useTheme();
+        applyTheme(newMode);
 
-    this.isDark = newMode === "dark"; // 👈 вот это
-  } catch (error) {
-    console.error("Ошибка при смене темы:", error);
-  }
-},
+        this.isDark = newMode === "dark"; // 👈 вот это
+      } catch (error) {
+        console.error("Ошибка при смене темы:", error);
+      }
+    },
     toggleDropdown() {
       this.isDropdownOpen = !this.isDropdownOpen;
     },
