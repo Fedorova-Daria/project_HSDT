@@ -53,7 +53,7 @@
         <div class="relative" v-if="selectedInstituteFilter">
           <button
             @click="toggleGroupDropdown"
-            class="flex items-center px-4 py-2 rounded-md transition-all duration-500 border border-zinc-400 hover:shadow-md h-10 bg-white dark:bg-gray-800 text-dynamic"
+            class="flex items-center px-4 py-2 rounded-md transition-all duration-500 border border-zinc-400 hover:shadow-md h-10 bg-white dark:bg-gray-500 text-dynamic"
           >
             {{ selectedGroupFilter || "Выберите группу" }}
             <svg
@@ -73,13 +73,13 @@
           </button>
           <ul
             v-if="showGroupDropdown"
-            class="absolute left-0 w-48 mt-1 bg-white dark:bg-gray-800 text-dynamic rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto"
+            class="absolute left-0 w-48 mt-1 bg-white dark:bg-gray-600 text-dynamic rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto"
           >
             <li
               v-for="group in filteredGroups"
               :key="group"
               @click="selectGroup(group)"
-              class="py-2 px-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              class="py-2 px-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-500 transition-colors"
             >
               {{ group }}
             </li>
