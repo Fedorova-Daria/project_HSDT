@@ -288,6 +288,14 @@ export default {
     },
   },
   methods: {
+    openBank() {
+      const institute = this.selectedInstitute; // Используем selectedInstitute из data()
+      if (institute) {
+        this.$router.push({ path: `/${institute}/projectbank/` });
+      } else {
+        console.error("Институт не выбран");
+      }
+    },
     openIdea(idea) {
       const institute = this.globalState.institute;
       if (institute) {

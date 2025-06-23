@@ -711,14 +711,6 @@ const userEntry = [
       if (this.password && this.password === this.confirmPassword) {
         formData.append('password', this.password);
       }
-      // Добавляем навыки как отдельные элементы
-      if (updatedUser.skills) {
-  this.userSkills = updatedUser.skills.map(skillId => 
-    this.allTechnologies.find(t => t.id === skillId) || { id: skillId, name: 'Неизвестный навык' }
-  );
-} else {
-  this.userSkills = [];
-}
       response = await api.patch('users/me/', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
@@ -739,18 +731,19 @@ const userEntry = [
     const updatedUser = response?.data;
 
     if (updatedUser) {
-  UserService.saveUserData(updatedUser);
-  this.userData = { ...this.userData, ...updatedUser };
+      // Сохраняем обновленные данные пользователя
+      UserService.saveUserData(updatedUser);
+      this.userData = { ...this.userData, ...updatedUser };
 
-  if (updatedUser.skills && this.allTechnologies.length) {
-    // Преобразуем ID в объекты навыков
-    this.userSkills = updatedUser.skills.map(skillId => {
-      return this.allTechnologies.find(tech => tech.id === skillId) || { id: skillId, name: 'Неизвестный навык' };
-    });
-  } else {
-    this.userSkills = [];
-  }
-}
+      // Обновляем список навыков
+      if (updatedUser.skills && this.allTechnologies.length) {
+        this.userSkills = updatedUser.skills.map(skillId => {
+          return this.allTechnologies.find(tech => tech.id === skillId) || { id: skillId, name: 'Неизвестный навык' };
+        });
+      } else {
+        this.userSkills = [];
+      }
+    }
 
     this.showModal = false;
   } catch (error) {

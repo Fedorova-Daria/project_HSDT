@@ -4,8 +4,8 @@
     <div class="blurred-bg" :style="bgStyle"></div>
 
     <Header />
-    <div class="p-6 w-4/5 mx-auto relative mt-20">
-      <h1 class="font-display text-5xl font-bold mb-6 text-dynamic">
+    <div class="p-6 w-4/5 mx-auto relative mt-10">
+      <h1 class="font-display text-5xl font-bold mb-6">
         Студенты
       </h1>
       <hr class="divider" />
@@ -16,7 +16,7 @@
         <div class="relative">
           <button
             @click="toggleInstituteDropdown"
-            class="flex items-center px-4 py-2 rounded-md transition-all duration-500 border border-zinc-400 hover:shadow-md h-10 bg-white dark:bg-gray-500 text-dynamic"
+            class="flex items-center px-4 py-2 rounded-md transition-all duration-500 border border-zinc-400 bg-card hover:shadow-md h-10"
           >
             {{ selectedInstituteFilter || "Выберите институт" }}
             <svg
@@ -36,7 +36,7 @@
           </button>
           <ul
             v-if="showInstituteDropdown"
-            class="absolute left-0 w-48 mt-1 bg-white dark:bg-gray-600 text-dynamic rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto"
+            class="absolute left-0 w-48 mt-1 bg-input text-dynamic rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto"
           >
             <li
               v-for="institute in institutes"
@@ -53,7 +53,7 @@
         <div class="relative" v-if="selectedInstituteFilter">
           <button
             @click="toggleGroupDropdown"
-            class="flex items-center px-4 py-2 rounded-md transition-all duration-500 border border-zinc-400 hover:shadow-md h-10 bg-white dark:bg-gray-800 text-dynamic"
+            class="flex items-center px-4 py-2 rounded-md transition-all duration-500 border border-zinc-400 hover:shadow-md h-10 bg-card"
           >
             {{ selectedGroupFilter || "Выберите группу" }}
             <svg
@@ -73,7 +73,7 @@
           </button>
           <ul
             v-if="showGroupDropdown"
-            class="absolute left-0 w-48 mt-1 bg-white dark:bg-gray-800 text-dynamic rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto"
+            class="absolute left-0 w-48 mt-1 bg-input text-dynamic rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto"
           >
             <li
               v-for="group in filteredGroups"
@@ -90,7 +90,7 @@
         <div class="relative">
           <button
             @click="toggleSortDropdown"
-            class="flex items-center px-4 py-2 rounded-md transition-all duration-500 border border-zinc-400 hover:shadow-md h-10 bg-white dark:bg-gray-500 text-dynamic"
+            class="flex items-center px-4 py-2 rounded-md transition-all duration-500 border border-zinc-400 hover:shadow-md h-10 bg-card"
           >
             {{ sortOptions.find((opt) => opt.value === currentSort).label }}
             <svg
@@ -110,7 +110,7 @@
           </button>
           <ul
             v-if="showSortDropdown"
-            class="absolute left-0 w-48 mt-1 bg-white dark:bg-gray-600 text-dynamic rounded-lg shadow-lg z-50"
+            class="absolute left-0 w-48 mt-1 bg-input rounded-lg shadow-lg z-50"
           >
             <li
               v-for="option in sortOptions"
@@ -137,13 +137,13 @@
 
       <!-- Таблица студентов -->
       <div class="overflow-x-auto rounded-lg shadow-lg">
-        <table class="min-w-full bg-card text-dynamic">
-          <thead class="bg-gray-200 dark:bg-gray-700">
+        <table class="min-w-full bg-card">
+          <thead class="bg-input">
             <tr>
-              <th class="py-3 px-6 text-left font-display">Имя студента</th>
-              <th class="py-3 px-6 text-left font-display">Почта студента</th>
-              <th class="py-3 px-6 text-left font-display">Команда</th>
-              <th class="py-3 px-6 text-left font-display">Идея</th>
+              <th class="py-3 px-6 text-left">Имя студента</th>
+              <th class="py-3 px-6 text-left">Почта студента</th>
+              <th class="py-3 px-6 text-left">Команда</th>
+              <th class="py-3 px-6 text-left">Идея</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -174,9 +174,6 @@
                   </div>
                   <div>
                     <div class="font-medium">{{ student.name }}</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">
-                      {{ student.faculty }}
-                    </div>
                   </div>
                 </div>
               </td>
@@ -185,7 +182,7 @@
                 <div class="flex items-center">
                   <div
                     v-if="student.team"
-                    class="bg-blue-100 dark:bg-gray-500 text-blue-400 dark:text-blue-200 px-3 py-1 rounded-full text-sm"
+                    class="bg-input px-3 py-1 rounded-full"
                   >
                     {{ student.team }}
                   </div>
@@ -197,7 +194,7 @@
               <td class="py-4 px-6">
                 <div v-if="student.idea" class="flex items-center">
                   <div
-                    class="bg-purple-100 dark:bg-gray-600 text-purple-400 dark:text-purple-200 px-3 py-1 rounded-full text-sm"
+                    class="bg-input px-3 py-1 rounded-full"
                   >
                     {{ student.idea }}
                   </div>

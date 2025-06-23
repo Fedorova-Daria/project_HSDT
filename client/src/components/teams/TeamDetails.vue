@@ -146,7 +146,8 @@
         <button class="button btn px-4 py-2 rounded-md transition-colors hover:button:hover cursor-pointer">
           Подробнее
         </button>
-        <button class="px-4 py-2 rounded-md transition-all transform hover:scale-105 ml- cursor-pointer">
+        <button class="px-4 py-2 rounded-md transition-all transform hover:scale-105 ml- cursor-pointer"
+        >
           ❌
         </button>
       </td>

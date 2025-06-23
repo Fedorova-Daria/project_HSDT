@@ -51,7 +51,7 @@ def notify_project_application_created(sender, instance, created, **kwargs):
             related_project=instance.project,
             related_project_application=instance,
             related_team=instance.team if instance.applicant_type == 'team' else None,
-            is_read=is_read
+            is_read=False
         )
 
 @receiver(pre_save, sender=ProjectApplication)
