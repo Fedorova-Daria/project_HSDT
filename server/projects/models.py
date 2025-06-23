@@ -62,6 +62,12 @@ class Project(models.Model):
 
     semester = models.ForeignKey(Semester, on_delete=models.SET_NULL, null=True, blank=True)
 
+    def __str__(self):
+        return self.title
+
+    def get_teams_working_on(self):
+        return self.teams.all()  # Возвращает все команды, работающие над проектом
+
     def get_institutes_list(self):
         try:
             return json.loads(self.institutes)
@@ -126,6 +132,7 @@ class Idea(models.Model):
     STATUS_CHOICES = [
         ('draft', 'Черновик'),
         ('open', 'Опубликован'),
+        ('private', 'Приватная'),
         ('under_review', 'На согласовании'),
     ]
 
@@ -138,14 +145,40 @@ class Idea(models.Model):
     owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='ideas')
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+
+    team = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, blank=True,related_name='ideas')  # Связь с командой
+
     visible = models.BooleanField(default=False)
 
     likes = models.ManyToManyField(Account, related_name="liked_ideas", blank=True)
     expert_likes = models.ManyToManyField(Account, related_name="experts_liked_ideas", blank=True)
 
+    # Связь с командами, которые работают над идеей
+    teams_working_on = models.ManyToManyField(Team, related_name="ideas_working_on", blank=True)
+
+
     def __str__(self):
         return self.title
 
+    def is_visible_to_user(self, user):
+        """Проверяет, может ли пользователь видеть идею."""
+        if self.status == "open" or "draft" or "under_review":
+            return True
+        elif self.status == "private":
+            # Проверяем доступ для приватных идей
+            if self.team:
+                # Доступ есть у:
+                # 1. Участников команды
+                # 2. Пользователей с ролью EXPERT
+                # 3. Владельца идеи
+                return (user in self.team.members.all() or
+                        user.role == Account.Role.EXPERT or
+                        user == self.owner)
+            else:
+                # Если идея приватная, но не привязана к команде
+                # Доступ есть только у владельца и экспертов
+                return user == self.owner or user.role == Account.Role.EXPERT
+        return False
 
 # projects/models.py
 

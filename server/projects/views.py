@@ -19,6 +19,7 @@ from .models import Idea, Project, ProjectApplication, ProjectParticipantRating,
 from .filters import ProjectFilter, IdeaFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import ProjectFilter
+from users.models import Account
 
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all().order_by('-created_at')
@@ -49,6 +50,23 @@ class ProjectViewSet(viewsets.ModelViewSet):
         if project.owner != request.user:
             return Response({'detail': 'Вы не являетесь владельцем проекта'}, status=status.HTTP_403_FORBIDDEN)
         return super().update(request, *args, **kwargs)
+
+    @action(detail=True, methods=['post'])
+    def add_project_to_team(request, team_id, project_id):
+        try:
+            team = Team.objects.get(id=team_id)
+            project = Project.objects.get(id=project_id)
+
+            # Добавляем проект к команде
+            team.projects.add(project)
+            team.save()
+
+            return Response({'message': 'Проект успешно добавлен к команде'}, status=status.HTTP_200_OK)
+
+        except Team.DoesNotExist:
+            return Response({'error': 'Команда не найдена'}, status=status.HTTP_404_NOT_FOUND)
+        except Project.DoesNotExist:
+            return Response({'error': 'Проект не найден'}, status=status.HTTP_404_NOT_FOUND)
 
     @action(detail=True, methods=['post'])
     def like(self, request, pk=None):
@@ -196,6 +214,22 @@ class IdeaViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = IdeaFilter
 
+    def create_private_idea(owner, team, title, description, skills=None):
+        """Создает идею, привязанную к приватной команде."""
+        if not team.can_create_idea():
+            raise TeamNotPrivateError("Только приватные команды могут создавать идеи.")
+
+        idea = Idea.objects.create(
+            owner=owner,
+            team=team,
+            title=title,
+            description=description,
+            status="private"  # Автоматически приватная
+        )
+        if skills:
+            idea.skills_required.set(skills)
+        return idea
+
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
             return IdeaEditSerializer
@@ -214,6 +248,24 @@ class IdeaViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         # 👇 вот это добавь
         serializer.save(owner=self.request.user)
+
+    @action(detail=True, methods=['post'])
+    def add_idea_to_team(request, team_id, idea_id):
+        try:
+            team = Team.objects.get(id=team_id)
+            idea = Idea.objects.get(id=idea_id)
+
+            # Добавляем идею к команде
+            team.ideas.add(idea)
+            team.save()
+
+            return Response({'message': 'Идея успешно добавлена к команде'}, status=status.HTTP_200_OK)
+
+        except Team.DoesNotExist:
+            return Response({'error': 'Команда не найдена'}, status=status.HTTP_404_NOT_FOUND)
+        except Idea.DoesNotExist:
+            return Response({'error': 'Идея не найдена'}, status=status.HTTP_404_NOT_FOUND)
+
 
     @action(detail=True, methods=['post'], url_path='like', permission_classes=[IsAuthenticated])
     def like(self, request, pk=None):
