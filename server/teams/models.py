@@ -17,10 +17,18 @@ class Team(models.Model):
     avatar = models.ImageField(upload_to="team_avatars/", blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="open")
 
+    # Связь с проектами, над которыми работает команда
+    projects = models.ManyToManyField(Project, related_name="teams_working_on", blank=True)
+
+    # Связь с идеями, над которыми работает команда
+    ideas = models.ManyToManyField(Idea, related_name="teams_working_on", blank=True)
+
     def __str__(self):
         return self.name
 
-    
+    def can_create_idea(self):
+        """Может ли команда создавать приватные идеи?"""
+        return self.status == "private"
 
 class TeamJoinRequest(models.Model):
     STATUS_CHOICES = (
