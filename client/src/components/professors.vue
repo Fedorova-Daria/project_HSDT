@@ -79,7 +79,7 @@
               v-for="group in filteredGroups"
               :key="group"
               @click="selectGroup(group)"
-              class="py-2 px-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              class="py-2 px-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-500 transition-colors"
             >
               {{ group }}
             </li>
@@ -91,7 +91,7 @@
           <button
             @click="toggleSortDropdown"
             class="flex items-center px-4 py-2 rounded-md transition-all duration-500 border border-zinc-400 hover:shadow-md h-10 bg-card"
-          >
+            >
             {{ sortOptions.find((opt) => opt.value === currentSort).label }}
             <svg
               xmlns="http://www.w3.org/2000/svg"
