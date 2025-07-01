@@ -62,7 +62,7 @@ class TeamDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Team
-        fields = ['id', 'name', 'description', 'owner_name', 'status', 'skills', 'members', 'owner']
+        fields = ['id', 'name', 'description', 'owner_name', 'status', 'skills', 'members', 'owner', 'ideas', 'projects']
 
     def get_owner_name(self, obj):
         return f"{obj.owner.first_name} {obj.owner.last_name}"

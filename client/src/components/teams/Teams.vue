@@ -22,61 +22,6 @@
   @create-team="createTeam"
 />
     </div>
-
-    
-  <!-- Фон модального окна -->
-  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <!-- Контейнер модального окна -->
-    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
-      <!-- Иконка и заголовок -->
-      <div class="text-center mb-6">
-        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
-          <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-          </svg>
-        </div>
-        <h3 class="text-lg font-medium text-gray-900">Вы точно готовы начать работу?</h3>
-      </div>
-
-      <!-- Текст сообщения -->
-      <div class="mb-6 text-center">
-        <p class="text-gray-600">
-          После создания идеи ваша команда автоматически начнёт работу над проектом и не сможет отправлять приглашения на проекты в бирже проектов.
-        </p>
-      </div>
-
-      <!-- Кнопки действий -->
-      <div class="flex justify-center space-x-4">
-        <button class="px-5 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-          Назад
-        </button>
-        <button class="px-5 py-2.5 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-200">
-          Создать
-        </button>
-      </div>
-    </div>
-  </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   </div>
 </template>
 
@@ -256,13 +201,6 @@ export default {
 </script>
 
 <style scoped>
-/* Анимация появления */
-.modal-enter-active, .modal-leave-active {
-  transition: opacity 0.3s ease;
-}
-.modal-enter-from, .modal-leave-to {
-  opacity: 0;
-}
 /* Стили для размытого фона */
 .blurred-bg {
   position: fixed;

@@ -10,9 +10,9 @@
         class="ml-auto font-medium rounded-lg text-sm px-4 py-2 mt-5 duration-300 h-10 w-14 items-center"
       >
         <svg
-          width="13"
-          height="13"
-          viewBox="0 0 17 13"
+          width="20"
+          height="25"
+          viewBox="0 0 17 14"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >

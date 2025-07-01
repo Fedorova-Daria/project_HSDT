@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from teams.models import Team
-from projects.models import Project
+from projects.models import Project, Idea
 
 User = get_user_model()
 
@@ -9,6 +9,7 @@ class Board(models.Model):
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='boards')
     project = models.ForeignKey(Project, on_delete=models.CASCADE, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    idea = models.ForeignKey(Idea, on_delete=models.CASCADE, null=True, blank=True)
 
 class Column(models.Model):
     COLUMN_TYPES = (

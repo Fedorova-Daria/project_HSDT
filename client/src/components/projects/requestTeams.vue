@@ -245,9 +245,7 @@ export default {
         alert("Заявка принята!");
 
         const data = await this.fetchApplicationData(id);
-        if (data.team && data.project) {
-          await this.createKanbanBoard(data);
-        }
+        
         this.fetchProjectApplications();
       } catch (error) {
         alert("Ошибка при принятии заявки или создании доски.");
@@ -265,13 +263,6 @@ export default {
     async fetchApplicationData(id) {
       const response = await api.get(`/project-applications/${id}/`);
       return response.data;
-    },
-    async createKanbanBoard(data) {
-      await api.post('/kanban/boards/', {
-        team: data.team,
-        project: data.project,
-      });
-      alert("Канбан-доска создана!");
     },
     async cancelApplication(id, applicationData) {
       try {

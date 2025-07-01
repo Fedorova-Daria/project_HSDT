@@ -8,10 +8,12 @@ def create_notification(
     related_team=None,
     related_project=None,
     related_team_join_request=None,
-    related_project_application=None
+    related_project_application=None,
+    is_read=False  # добавляем параметр is_read
 ):
     from .models import Notification
 
+    # Передаем is_read при создании уведомления
     return Notification.objects.create(
         user=user,
         notification_type=notification_type,
@@ -19,7 +21,8 @@ def create_notification(
         related_team=related_team,
         related_project=related_project,
         related_team_join_request=related_team_join_request,
-        related_project_application=related_project_application
+        related_project_application=related_project_application,
+        is_read=is_read  # здесь тоже передаем is_read
     )
 
 # 🔹 TEAM_REQUEST шаблоны

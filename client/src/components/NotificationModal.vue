@@ -272,23 +272,44 @@ computed: {
   },
 
   async loadJoinRequestAndUser() {
-    try {
-      const requestRes = await api.get(`/team-join-requests/${this.notification.related_team_join_request}/`);
-      this.joinRequest = requestRes.data;
-
-      const userRes = await api.get(`/users/${this.joinRequest.user}/`);
-      const skillNames = (userRes.data.skills || []).map(id => this.technologiesMap[id] || "Неизвестно");
-
-      this.userData = {
-        full_name: `${userRes.data.first_name} ${userRes.data.last_name}`,
-        avatar: userRes.data.avatar,
-        skills: skillNames,
-        id: userRes.data.id,
-      };
-    } catch (error) {
-      console.error("Ошибка при загрузке данных:", error);
+  try {
+    // Запрос на получение данных о запросе присоединения
+    const requestRes = await api.get(`/team-join-requests/${this.notification.related_team_join_request}/`);
+    
+    // Проверка статуса ответа
+    if (requestRes.status !== 200 || !requestRes.data) {
+      throw new Error(`Ошибка: Неверный ответ от API для запроса команды. Статус: ${requestRes.status}`);
     }
-  },
+    
+    this.joinRequest = requestRes.data;
+    
+    // Проверка, что user ID существует
+    if (!this.joinRequest.user) {
+      throw new Error('Ошибка: user ID отсутствует в ответе на запрос команды');
+    }
+
+    // Запрос на получение данных о пользователе
+    const userRes = await api.get(`/users/${this.joinRequest.user}/`);
+    
+    // Проверка статуса ответа
+    if (userRes.status !== 200 || !userRes.data) {
+      throw new Error(`Ошибка: Неверный ответ от API для запроса пользователя. Статус: ${userRes.status}`);
+    }
+
+    // Обработка навыков пользователя
+    const skillNames = (userRes.data.skills || []).map(id => this.technologiesMap[id] || "Неизвестно");
+
+    // Сохранение данных пользователя
+    this.userData = {
+      full_name: `${userRes.data.first_name} ${userRes.data.last_name}`,
+      avatar: userRes.data.avatar,
+      skills: skillNames,
+      id: userRes.data.id,
+    };
+  } catch (error) {
+    console.error("Ошибка при загрузке данных:", error);
+  }
+},
 async loadJoinRequestProject() {
     try {
       const requestRes = await api.get(`/project-applications/${this.notification.related_project_application}/`);
@@ -342,6 +363,9 @@ async loadJoinRequestProject() {
     await this.fetchTechnologies();
     await this.loadJoinRequestAndUser();
     await this.loadJoinRequestProject();
+    console.log("notification.notification_type:", this.notification.notification_type);
+console.log("joinRequest:", this.joinRequest);
+console.log("userData:", this.userData);
   }
 },
 };

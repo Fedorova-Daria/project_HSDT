@@ -115,7 +115,7 @@
                   <div class="mt-2 flex justify-between items-center">
                     <div>
                       <span class="text-sm">Оценка: </span>
-                      <span class="font-bold"> {{userProjects.averageRating }} /5</span>
+                      <span class="font-bold"> {{ project.averageRating !== null ? project.averageRating : "Не оценено" }}/5</span>
                     </div>
                     <div>
                       <span class="text-sm">Участие: с {{ formatDate(project.date) }} по {{ formatDate(project.endDate) }}</span>
@@ -524,6 +524,7 @@ export default {
       showPasswordFields: false,
       passwordError: "",
       formIsValid: true,
+      isLoading: true,
     };
   },
   computed: {
@@ -594,11 +595,10 @@ toggleSkillInModal(tech) {
       day: "numeric",
       month: "long",
       year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit"
     });
   },
 async fetchUserActivity(userId) {
+  this.isLoading = true; // Начинаем загрузку данных
   const response = await api.get(`/users/user-activity/?user_id=${userId}`);
   const activityData = response.data;
 
@@ -619,7 +619,6 @@ async fetchUserActivity(userId) {
     }));
 
   const projectRequests = projectIds.map(async item => {
-    // Получаем данные проекта и участников
     const [projectRes, participantsRes] = await Promise.all([
       api.get(`/projects/${item.id}`),
       api.get(`/projects/${item.id}/participants-details/`)
@@ -628,16 +627,16 @@ async fetchUserActivity(userId) {
     const projectData = projectRes.data;
     const participants = participantsRes.data;
 
-    // Находим этого пользователя среди участников
-const userEntry = [
-  ...(participants?.workers || []),
-  ...(participants?.teams?.flatMap(team => team.members) || [])
-].find(p => p?.user?.id === userId);
+    const userEntry = [
+      ...(participants?.workers || []),
+      ...(participants?.teams?.flatMap(team => team.members) || [])
+    ].find(p => p?.id === userId);
+
     return {
       ...projectData,
       date: item.started_at,
       endDate: item.ended_at,
-      averageRating: userEntry?.rating ?? null // используем rating, если есть
+      averageRating: userEntry?.average_rating ?? null // Используем average_rating
     };
   });
 
@@ -658,6 +657,7 @@ const userEntry = [
 
   this.userProjects = projects;
   this.userTeams = teams;
+  this.isLoading = false; // Завершаем загрузку данных
 },
     viewTeam(teamId) {
     this.$router.push(`/${this.selectedInstitute}/team/${teamId}`);

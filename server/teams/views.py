@@ -11,9 +11,11 @@ from .serializers import (
     TeamUpdateSerializer,
     TeamJoinRequestSerializer
 )
+from users.models import Account
 from .filters import TeamJoinRequestFilter, TeamFilter
 from notifications.utils import *
 from django_filters.rest_framework import DjangoFilterBackend
+from kanban.models import Board
 
 class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
@@ -37,6 +39,20 @@ class TeamViewSet(viewsets.ModelViewSet):
         if self.action == "create":
             return [permissions.IsAuthenticated()]
         return [permissions.AllowAny()]
+    
+    def perform_create(self, serializer):
+        team = serializer.save()
+
+        board = Board.objects.create(
+            team=team,
+            project=None
+        )
+
+        if team.project:
+            board.project = team.project
+            board.save()
+
+        return team
 
     def perform_update(self, serializer):
         team = self.get_object()
@@ -46,20 +62,30 @@ class TeamViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"], permission_classes=[IsTeamLeader])
     def add_member(self, request, pk=None):
-        team = self.get_object()
-        user_id = request.data.get("user_id")
+        team = self.get_object()  # Получаем команду по первичному ключу
+        user_id = request.data.get("user_id")  # Получаем user_id из данных запроса
 
+        if not user_id:
+            return Response({"detail": "Не указан ID пользователя."}, status=400)
+
+        # Пытаемся найти пользователя по ID
         try:
             user = Account.objects.get(id=user_id)
         except Account.DoesNotExist:
             return Response({"detail": "Пользователь не найден."}, status=404)
 
-        if user.teams.exists():
+        # Проверяем, состоит ли пользователь уже в команде
+        if team.members.filter(id=user.id).exists():
             return Response({"detail": "Пользователь уже в команде."}, status=400)
 
+        # Проверяем, состоит ли пользователь в других командах
+        if user.teams.exists():
+            return Response({"detail": "Пользователь уже состоит в другой команде."}, status=400)
+
+        # Добавляем пользователя в команду
         team.members.add(user)
 
-        # Отклоняем заявки во все команды
+        # Отклоняем все заявки этого пользователя в других командах
         TeamJoinRequest.objects.filter(user=user, status='pending').update(status='declined')
 
         return Response({"detail": "Пользователь добавлен в команду."})
@@ -95,7 +121,6 @@ class TeamJoinRequestViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = TeamJoinRequestFilter
 
-
     def get_queryset(self):
         user = self.request.user
         if user.is_staff:
@@ -103,7 +128,28 @@ class TeamJoinRequestViewSet(viewsets.ModelViewSet):
         return TeamJoinRequest.objects.filter(user=user)
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        user = self.request.user
+        team = serializer.validated_data.get('team')
+
+        # Проверяем, не существует ли уже заявки от этого пользователя на эту команду
+        if TeamJoinRequest.objects.filter(user=user, team=team).exists():
+            raise ValueError("Заявка от этого пользователя уже существует для этой команды.")
+        
+        # Сохраняем заявку
+        team_join_request = serializer.save(user=user)
+
+        # Создаем уведомление для владельца команды
+        create_notification(
+            user=team.owner,  # Уведомление отправляется владельцу команды
+            notification_type='team_join_request_sent',
+            message=f"{user.get_full_name()} подал(а) заявку на присоединение к вашей команде {team.name}.",
+            related_team=team,
+            related_team_join_request=team_join_request,
+            is_read=False  # Уведомление будет считаться непрочитанным
+        )
+
+        # Если заявки нет, сохраняем новую заявку
+        serializer.save(user=user)
 
     @action(detail=True, methods=["post"])
     def cancel(self, request, pk=None):
@@ -132,11 +178,11 @@ class TeamJoinRequestViewSet(viewsets.ModelViewSet):
 
         team.members.add(join_request.user)
 
+        # Отмена всех других заявок этого пользователя
         TeamJoinRequest.objects.filter(
             user=join_request.user,
             status='pending'
         ).exclude(id=join_request.id).update(status='declined')
-
 
         return Response({"detail": "Участник добавлен в команду."})
 
@@ -149,4 +195,3 @@ class TeamJoinRequestViewSet(viewsets.ModelViewSet):
         join_request.status = 'declined'
         join_request.save()
         return Response({"detail": "Заявка отклонена."})
-

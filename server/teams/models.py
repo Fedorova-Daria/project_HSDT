@@ -2,7 +2,6 @@ from django.db import models
 from users.models import Account
 from django.conf import settings
 
-
 class Team(models.Model):
     STATUS_CHOICES = [
         ("open", "Открыта"),
@@ -18,10 +17,10 @@ class Team(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="open")
 
     # Связь с проектами, над которыми работает команда
-    projects = models.ManyToManyField(Project, related_name="teams_working_on", blank=True)
+    projects = models.ManyToManyField('projects.Project', related_name="teams_working_on", blank=True)
 
     # Связь с идеями, над которыми работает команда
-    ideas = models.ManyToManyField(Idea, related_name="teams_working_on", blank=True)
+    ideas = models.ManyToManyField('projects.Idea', related_name="teams_working_on_ideas", blank=True)  # Изменено related_name
 
     def __str__(self):
         return self.name

@@ -46,7 +46,7 @@ class Project(models.Model):
     owner = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='projects_owned')
     initiator = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='projects_initiated', blank=True, null=True)
 
-    teams = models.ManyToManyField(Team, related_name='projects', blank=True)
+    teams = models.ManyToManyField(Team, related_name='projects_team', blank=True)
     workers = models.ManyToManyField(Account, related_name='workers_projects', blank=True)
 
     favorites = models.ManyToManyField(Account, related_name="favorite_projects", blank=True)
@@ -146,7 +146,7 @@ class Idea(models.Model):
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
 
-    team = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, blank=True,related_name='ideas')  # Связь с командой
+    team = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, blank=True,related_name='ideas_team')  # Связь с командой
 
     visible = models.BooleanField(default=False)
 

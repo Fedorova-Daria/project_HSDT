@@ -8,9 +8,9 @@
         class="ml-auto font-medium rounded-lg text-sm px-4 py-2 mt-5 duration-300 h-10 w-14 items-center"
       >
         <svg
-          width="13"
-          height="13"
-          viewBox="0 0 17 13"
+          width="20"
+          height="25"
+          viewBox="0 0 12 12"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
@@ -49,7 +49,7 @@
     @click="saveAllChanges"
     class="w-6 h-6 cursor-pointer"
   ><svg width="23" height="23" viewBox="0 0 12 9" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M11.7 0.7C11.3134 0.3134 10.6866 0.313401 10.3 0.7L4.2 6.8L2.1 4.7C1.7134 4.3134 1.0866 4.3134 0.7 4.7V4.7C0.313401 5.0866 0.3134 5.7134 0.699999 6.1L2.78579 8.18579C3.56683 8.96683 4.83316 8.96683 5.61421 8.18579L11.7 2.1C12.0866 1.7134 12.0866 1.0866 11.7 0.7V0.7Z" fill="white"/>
+<path d="M11.7 0.7C11.3134 0.3134 10.6866 0.313401 10.3 0.7L4.2 6.8L2.1 4.7C1.7134 4.3134 1.0866 4.3134 0.7 4.7V4.7C0.313401 5.0866 0.3134 5.7134 0.699999 6.1L2.78579 8.18579C3.56683 8.96683 4.83316 8.96683 5.61421 8.18579L11.7 2.1C12.0866 1.7134 12.0866 1.0866 11.7 0.7V0.7Z" :fill="pathFillColor"/>
 </svg>
 </button>
     <button
@@ -139,14 +139,14 @@
         {{ member.full_name }}
       </td>
       <td class="p-3 border-t bg-card">
-        {{ member.skills.length ? skills.join(", ") : "Нет навыков" }}
+        {{ member.skills.length ? member.skills.map(skillId => getSkillName(skillId)).join(", "): "Нет навыков" }}
       </td>
       <td class="p-3 border-t bg-card">{{ member.total_rating }}</td>
       <td class="p-3 border-t bg-card">
         <button class="button btn px-4 py-2 rounded-md transition-colors hover:button:hover cursor-pointer">
           Подробнее
         </button>
-        <button class="px-4 py-2 rounded-md transition-all transform hover:scale-105 ml- cursor-pointer"
+        <button @click="removeMember(member.id)" class="px-4 py-2 rounded-md transition-all transform hover:scale-105 ml- cursor-pointer"
         >
           ❌
         </button>
@@ -158,7 +158,7 @@
     </div>
     <div class="w-4/5 m-auto flex flex-col gap-4">
     <button @click="sendJoinRequest"
-    v-if="team.status === 'private'"
+    
             :style="{ backgroundColor: currentBgColor }"
         @mouseover="currentBgColor = instituteStyle.buttonOnColor"
         @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
@@ -224,6 +224,7 @@ export default {
   },
   data() {
     return {
+      members: [],
       isModalOpen: false,
       currentBgColor: "",
       userData: null,
@@ -296,8 +297,41 @@ export default {
     const userData = JSON.parse(localStorage.getItem('userData'));
     console.log('teamId:', this.teamId, 'Тип данных:', typeof this.teamId);
     this.userId = userData?.id;
+    this.loadTechnologies();
   },
   methods: {
+    async loadTechnologies() {
+      try {
+        const response = await api.get('/core/technologies');
+        this.skills = response.data; // Сохраняем полученные скиллы в массив
+      } catch (error) {
+        console.error('Ошибка при загрузке скиллов:', error);
+      }
+    },
+    // Получаем название скилла по ID
+    getSkillName(skillId) {
+      const skill = this.skills.find(tech => tech.id === skillId);
+      return skill ? skill.name : 'Неизвестный скилл'; // Если скилл найден, возвращаем его название
+    },
+    async removeMember(userId) {
+      try {
+        // Попросим сервер удалить участника по его ID
+        const response = await api.post(`/teams/${this.team.id}/remove_member/`, {
+          user_id: userId,
+        });
+        
+        // Если удаление прошло успешно, удалим участника из списка
+        const index = this.team.members.findIndex(member => member.id === userId);
+        if (index !== -1) {
+          this.team.members.splice(index, 1); // Удаляем участника из списка
+        }
+        
+        alert('Пользователь удален из команды');
+      } catch (error) {
+        console.error("Ошибка при удалении участника:", error);
+        alert('Не удалось удалить участника');
+      }
+    },
     confirmDelete() {
     this.handleDeleteTeam(this.teamId); // вызываем удаление
     this.showConfirmModal = false; // закрываем модалку
@@ -335,19 +369,6 @@ export default {
       console.log("Заявка отправлена:", requestData);
       const { data: joinReq } = await api.post("/team-join-requests/", requestData);
       console.log("Заявка отправлена:", joinReq);
-
-      // 3) отправляем уведомление владельцу команды
-      // В this.team.owner должно быть ID тим-лида (если это не так — подгрузите его заранее)
-      const ownerId = this.team.owner;     
-      const teamName = this.team.name;
-
-      await api.post("/notifications/", {
-        notification_type: "team_request",
-        message: `Пользователь ${this.currentUser.firt_name} отправил заявку на вступление в команду "${teamName}".`,
-        user: ownerId,
-        status: "nonreading",
-      });
-      console.log("Уведомление тим-лиду отправлено");
 
     } catch (error) {
       console.error("Ошибка при отправке заявки или уведомления:", error.response || error);
