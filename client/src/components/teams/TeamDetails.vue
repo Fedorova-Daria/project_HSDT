@@ -195,12 +195,16 @@
       @close="closeModal"
     />
 
+  <Kanban :teamId="teamId" />
+
+
   </div>
 </template>
 
 <script>
 import api from "@/composables/auth.js"; // axios-инстанс с интерсепторами
 import Header from "@/components/header.vue";
+import Kanban from "@/components/teams/board.vue";
 import Cookies from "js-cookie"; 
 import { deleteTeam } from "@/services/teamService";
 import { instituteStyles } from "@/assets/instituteStyles.js";
@@ -210,7 +214,7 @@ export default {
   inject: ["globalState"],
   name: "TeamDetails",
   components: {
-    Header, RespondedTeams 
+    Header, RespondedTeams, Kanban
   },
   props: {
     institute: {

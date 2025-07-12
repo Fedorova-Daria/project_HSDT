@@ -16,6 +16,7 @@ from .filters import TeamJoinRequestFilter, TeamFilter
 from notifications.utils import *
 from django_filters.rest_framework import DjangoFilterBackend
 from kanban.models import Board
+from projects.models import Project
 
 class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
@@ -48,10 +49,6 @@ class TeamViewSet(viewsets.ModelViewSet):
             project=None
         )
 
-        if team.project:
-            board.project = team.project
-            board.save()
-
         return team
 
     def perform_update(self, serializer):
@@ -59,6 +56,24 @@ class TeamViewSet(viewsets.ModelViewSet):
         if self.request.user != team.owner:
             raise PermissionError("Только тим-лид может редактировать команду.")
         serializer.save()
+
+    @action(detail=True, methods=['get'])
+    def board_options(self, request, pk=None):
+        team = self.get_object()
+        
+        # Получаем проекты со статусом 'in_process'
+        projects_in_process = Project.objects.filter(
+            id__in=team.projects.all(),
+            status='in_progress'
+        ).values('id', 'title')
+        print(projects_in_process)  # Выводим полученные проекты в консоль
+        # Получаем идеи (если нужно)
+        ideas = team.ideas.all().values('id', 'title')
+        
+        return Response({
+            'projects': list(projects_in_process),
+            'ideas': list(ideas)
+        })
 
     @action(detail=True, methods=["post"], permission_classes=[IsTeamLeader])
     def add_member(self, request, pk=None):

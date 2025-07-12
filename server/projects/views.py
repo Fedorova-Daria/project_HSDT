@@ -20,7 +20,7 @@ from .filters import ProjectFilter, IdeaFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import ProjectFilter
 from users.models import Account
-from kanban.models import Board
+from kanban.models import Board, Column
 
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all().order_by('-created_at')
@@ -213,6 +213,17 @@ class IdeaViewSet(viewsets.ModelViewSet):
         )
         if skills:
             idea.skills_required.set(skills)
+
+        # Создание канбан-доски для новой идеи
+        board = Board.objects.create(
+            team=team,
+            idea=idea,
+            project=None  # Для идей проект не указываем
+        )
+        
+        # Создание базовых колонок для доски идеи
+        create_default_columns(board)
+
         return idea
 
     def get_serializer_class(self):
@@ -293,6 +304,8 @@ class ProjectApplicationViewSet(viewsets.ModelViewSet):
                 project=project
             )
 
+            self.create_default_columns(board)
+
         else:
             return Response({'detail': 'Тип заявки или данные некорректны'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -359,3 +372,14 @@ def add_idea_to_team(request, team_id, idea_id):
         return Response({'error': 'Команда не найдена'}, status=status.HTTP_404_NOT_FOUND)
     except Idea.DoesNotExist:
         return Response({'error': 'Идея не найдена'}, status=status.HTTP_404_NOT_FOUND)
+
+
+def create_default_columns(self, board):
+    """Создание базовых колонок для новой доски"""
+    default_columns = [
+        {'title': 'Сделать', 'column_type': 'default', 'order': 1},
+        {'title': 'В процессе', 'column_type': 'default', 'order': 2},
+        {'title': 'Готово','column_type': 'completed', 'order': 3}
+    ]
+    for col_data in default_columns:
+        Column.objects.create(board=board, **col_data)
