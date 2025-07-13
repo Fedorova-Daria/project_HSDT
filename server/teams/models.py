@@ -7,7 +7,7 @@ class Team(models.Model):
         ("open", "Открыта"),
         ("private", "Приватная"),
         ('in_progress', 'В работе'),
-        ('over', "Распалась")
+        ('over', "Распалась") # !!!
     ]
 
     name = models.CharField(max_length=100, unique=True)
@@ -16,30 +16,26 @@ class Team(models.Model):
     members = models.ManyToManyField(Account, related_name="teams", blank=True)
     avatar = models.ImageField(upload_to="team_avatars/", blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="open")
-    disbanded_at = models.DateTimeField(null=True, blank=True) 
+    disbanded_at = models.DateTimeField(null=True, blank=True) # !!!
 
-    # Связь с проектами, над которыми работает команда
-    projects = models.ManyToManyField('projects.Project', related_name="teams_working_on", blank=True)
+    projects = models.ManyToManyField('projects.Project', related_name="teams_working_on", blank=True) # !!!
+    ideas = models.ManyToManyField('projects.Idea', related_name="teams_working_on_ideas", blank=True) # !!!
 
-    # Связь с идеями, над которыми работает команда
-    ideas = models.ManyToManyField('projects.Idea', related_name="teams_working_on_ideas", blank=True)  # Изменено related_name
+    class Meta: # Пользователь может создать еще одну команду, если прошлая его уже распалась!!!
 
-    class Meta:
-        # Добавляем ограничение: только одна активная команда на пользователя
-        constraints = [
-            models.UniqueConstraint(
+        constraints = [ # !!!
+            models.UniqueConstraint( # !!!
                 fields=['owner'],
-                condition=models.Q(status__in=['active', 'private','in_progress']),
-                name='unique_active_team_per_owner'
-            )
-        ]
+                condition=models.Q(status__in=['active', 'private','in_progress']), # !!!
+                name='unique_active_team_per_owner' # !!!
+            ) # !!!
+        ] # !!!
 
     def __str__(self):
         return self.name
 
-    def can_create_idea(self):
-        """Может ли команда создавать приватные идеи?"""
-        return self.status == "private"
+    def can_create_idea(self): # !!!
+        return self.status == "private" # !!!
 
 class TeamJoinRequest(models.Model):
     STATUS_CHOICES = (

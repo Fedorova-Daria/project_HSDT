@@ -146,21 +146,19 @@ class Idea(models.Model):
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
 
-    team = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, blank=True,related_name='ideas_team')  # Связь с командой
+    team = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, blank=True,related_name='ideas_team') # !!!
 
     visible = models.BooleanField(default=False)
 
     likes = models.ManyToManyField(Account, related_name="liked_ideas", blank=True)
     expert_likes = models.ManyToManyField(Account, related_name="experts_liked_ideas", blank=True)
 
-    # Связь с командами, которые работают над идеей
-    teams_working_on = models.ManyToManyField(Team, related_name="ideas_working_on", blank=True)
 
 
     def __str__(self):
         return self.title
 
-    def is_visible_to_user(self, user):
+    def is_visible_to_user(self, user): # !!!
         """Проверяет, может ли пользователь видеть идею."""
         if self.status == "open" or "draft" or "under_review":
             return True

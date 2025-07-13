@@ -181,7 +181,6 @@ class ProjectParticipantRatingViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(rated_by=self.request.user)
 
-
 class ProjectParticipantsDetailsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -199,7 +198,7 @@ class IdeaViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = IdeaFilter
 
-    @action(detail=False, methods=['post'], url_path='create-private-idea')
+    @action(detail=False, methods=['post'], url_path='create-private-idea') # !!!
     def create_private_idea_endpoint(self, request):
         """Создание приватной идеи через API"""
         owner = request.user
@@ -244,7 +243,7 @@ class IdeaViewSet(viewsets.ModelViewSet):
                 "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def _create_private_idea_internal(self, owner, team, title, description, skills=None):
+    def _create_private_idea_internal(self, owner, team, title, description, skills=None): # !!!
         """Создает идею, привязанную к приватной команде."""
         if not team.can_create_idea():
             raise ValidationError("Только приватные команды могут создавать идеи.")
@@ -276,7 +275,7 @@ class IdeaViewSet(viewsets.ModelViewSet):
 
         return idea
 
-    def _create_default_columns(self, board):  # ✅ Метод внутри класса с правильным отступом
+    def _create_default_columns(self, board):  # ✅ Метод внутри класса с правильным отступом # !!!
         """Создание базовых колонок для новой доски"""
         default_columns = [
             {'title': 'Сделать', 'column_type': 'default', 'order': 1},

@@ -215,7 +215,7 @@
     </div>
 <!-- Модальное окно для приватной команды -->
     <div v-if="isPrivate && showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60">
-      <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
+      <div class="bg-card rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
         <!-- Иконка и заголовок -->
         <div class="text-center mb-6">
           <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
@@ -246,7 +246,22 @@
 
       </div>        
 
-    <!-- Модальное окно для команды, не имеющей статус "приватный" -->
+    
+        </div>
+
+<RespondedTeams
+      v-if="isModalOpen"
+      :teamId="teamId"
+      @close="closeModal"
+    />
+      <IdeaCreateModal
+  :show="showCreateIdeaModal"
+  :teamId="teamId"
+  @close="closeCreateIdeaModal"
+  @created="onIdeaCreated"
+/>
+  <Kanban :teamId="teamId" />
+  <!-- Модальное окно для команды, не имеющей статус "приватный" -->
     <div v-if="!isPrivate && showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60">
       <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
         <!-- Иконка и заголовок -->
@@ -274,21 +289,6 @@
         </div>
       </div>
     </div>
-        </div>
-
-<RespondedTeams
-      v-if="isModalOpen"
-      :teamId="teamId"
-      @close="closeModal"
-    />
-      <IdeaCreateModal
-  :show="showCreateIdeaModal"
-  :teamId="teamId"
-  @close="closeCreateIdeaModal"
-  @created="onIdeaCreated"
-/>
-  <Kanban :teamId="teamId" />
-  
       <!-- Модалка подтверждения -->
     <TeamDeleteModal
       :show="showConfirmModal"
@@ -369,7 +369,7 @@ export default {
       statusStyleMap: this.getStatusStyleMap(),
       showCreateIdeaModal: false,
       showModal: false,
-      isPrivate: true,
+      isPrivate: false,
       projects: [],
     ideas: [],
     isLoading: false,
@@ -447,7 +447,8 @@ export default {
   async mounted() {
     try {
     const response = await api.get(`/teams/${this.teamId}/`);  // Запрос на сервер для получения данных о команде
-    this.isPrivate = response.data.status === 'Приватная';  // Устанавливаем статус приватности команды
+    this.isPrivate = ['private', 'Приватная'].includes(response.data.status);
+    console.log('isPrivate установлен в:', this.isPrivate);
   } catch (error) {
     console.error('Ошибка загрузки данных команды', error);
   }
@@ -507,8 +508,8 @@ export default {
       };
     },
     showIdeaModal() {
-      this.showModal = true;
-    },
+  this.showModal = true;
+},
     // Закрыть модальное окно
     closeIdeaModal() {
       this.showModal = false;

@@ -9,17 +9,16 @@ class TeamJoinRequestFilter(django_filters.FilterSet):
         model = TeamJoinRequest
         fields = ['team', 'status']
 
-class TeamFilter(django_filters.FilterSet):
-    owner = django_filters.NumberFilter(field_name='owner__id', lookup_expr='exact')
-    members_ids = django_filters.NumberFilter(field_name='members__id', lookup_expr='exact')
-    status = django_filters.CharFilter(method='filter_status')
+class TeamFilter(django_filters.FilterSet): # !!!
+    owner = django_filters.NumberFilter(field_name='owner__id', lookup_expr='exact') # !!!
+    members_ids = django_filters.NumberFilter(field_name='members__id', lookup_expr='exact') # !!!
+    status = django_filters.CharFilter(method='filter_status') # !!!
     
-    def filter_status(self, queryset, name, value):
-        """Фильтр по нескольким статусам"""
+    def filter_status(self, queryset, name, value): # !!!
         if value:
-            statuses = value.split(',')
-            return queryset.filter(status__in=statuses)
-        return queryset
+            statuses = value.split(',') # !!!
+            return queryset.filter(status__in=statuses) # !!!
+        return queryset # !!!
 
     class Meta:
         model = Team

@@ -163,7 +163,7 @@ export default {
         const params = new URLSearchParams();
         
         // Исключаем команды со статусом "over" для всех фильтров
-        params.append('status', 'active,private,in_progress');
+        params.append('status', 'open,private,in_progress');
         
         // Применяем фильтры в зависимости от выбранного типа
         switch (this.activeFilter) {
@@ -207,9 +207,9 @@ export default {
     async getFilterCounts() {
       try {
         const [allResponse, ownedResponse, memberResponse] = await Promise.all([
-          api.get('/teams/?status=active,private,in_progress'),
-          api.get(`/teams/?owner=${this.currentUserId}&status=active,private,in_progress`),
-          api.get(`/teams/?members_ids=${this.currentUserId}&status=active,private,in_progress`)
+          api.get('/teams/?status=open,private,in_progress'),
+          api.get(`/teams/?owner=${this.currentUserId}&status=open,private,in_progress`),
+          api.get(`/teams/?members_ids=${this.currentUserId}&status=open,private,in_progress`)
         ]);
 
         // Обновляем фильтры с количеством
@@ -238,7 +238,7 @@ export default {
         break;
       case 'all':
       default:
-        url = `/teams/?status=active,private,in_progress`;
+        url = `/teams/?status=open,private,in_progress`;
         break;
     }
     
