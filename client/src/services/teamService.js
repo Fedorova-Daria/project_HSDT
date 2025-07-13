@@ -57,3 +57,14 @@ export async function deleteTeam(teamId) {
     throw error;
   }
 }
+
+// Распуск команды
+export const disbandTeam = async (teamId) => {
+  try {
+    const response = await api.post(`/teams/${teamId}/disband/`);
+    return response.data;
+  } catch (error) {
+    console.error('Ошибка распуска команды:', error);
+    throw error;
+  }
+}

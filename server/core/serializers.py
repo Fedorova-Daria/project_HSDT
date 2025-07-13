@@ -3,6 +3,13 @@
 from rest_framework import serializers
 from .models import UniversityGroup, Technology, Semester
 
+class UniversityGroupSerializer(serializers.ModelSerializer):
+    institute_display = serializers.CharField(source='get_institute_display', read_only=True)
+    
+    class Meta:
+        model = UniversityGroup
+        fields = ['id', 'name', 'institute', 'institute_display']
+        read_only_fields = ['id']
 
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:

@@ -61,6 +61,9 @@
           <path d="M5.5 1H8.5C8.63261 1 8.75979 1.05268 8.85355 1.14645C8.94732 1.24021 9 1.36739 9 1.5V2.5H5V1.5C5 1.36739 5.05268 1.24021 5.14645 1.14645C5.24021 1.05268 5.36739 1 5.5 1ZM10 2.5V1.5C10 1.10218 9.84196 0.720644 9.56066 0.43934C9.27936 0.158035 8.89782 0 8.5 0L5.5 0C5.10218 0 4.72064 0.158035 4.43934 0.43934C4.15804 0.720644 4 1.10218 4 1.5V2.5H0.5C0.367392 2.5 0.240215 2.55268 0.146447 2.64645C0.0526784 2.74021 0 2.86739 0 3C0 3.13261 0.0526784 3.25979 0.146447 3.35355C0.240215 3.44732 0.367392 3.5 0.5 3.5H1.038L1.891 14.16C1.93122 14.6612 2.15875 15.1289 2.52827 15.4698C2.8978 15.8108 3.38219 16.0001 3.885 16H10.115C10.6178 16.0001 11.1022 15.8108 11.4717 15.4698C11.8412 15.1289 12.0688 14.6612 12.109 14.16L12.962 3.5H13.5C13.6326 3.5 13.7598 3.44732 13.8536 3.35355C13.9473 3.25979 14 3.13261 14 3C14 2.86739 13.9473 2.74021 13.8536 2.64645C13.7598 2.55268 13.6326 2.5 13.5 2.5H10ZM11.958 3.5L11.112 14.08C11.0919 14.3306 10.9781 14.5644 10.7934 14.7349C10.6086 14.9054 10.3664 15.0001 10.115 15H3.885C3.6336 15.0001 3.3914 14.9054 3.20664 14.7349C3.02188 14.5644 2.90811 14.3306 2.888 14.08L2.042 3.5H11.958ZM4.471 4.5C4.60333 4.49235 4.73329 4.53756 4.8323 4.6257C4.93131 4.71383 4.99127 4.83767 4.999 4.97L5.499 13.47C5.50425 13.6008 5.45802 13.7284 5.37022 13.8255C5.28242 13.9225 5.16006 13.9813 5.02941 13.9892C4.89876 13.997 4.77024 13.9533 4.67144 13.8675C4.57265 13.7816 4.51145 13.6605 4.501 13.53L4 5.03C3.99594 4.96431 4.00489 4.89847 4.02633 4.83625C4.04777 4.77403 4.08129 4.71665 4.12495 4.66741C4.16862 4.61817 4.22158 4.57804 4.28079 4.54931C4.34 4.52058 4.4043 4.50382 4.47 4.5H4.471ZM9.529 4.5C9.5947 4.50382 9.659 4.52058 9.71821 4.54931C9.77742 4.57804 9.83038 4.61817 9.87405 4.66741C9.91771 4.71665 9.95123 4.77403 9.97267 4.83625C9.99411 4.89847 10.0031 4.96431 9.999 5.03L9.499 13.53C9.49633 13.5964 9.48043 13.6617 9.45224 13.7219C9.42405 13.7821 9.38413 13.8361 9.33481 13.8807C9.28549 13.9254 9.22777 13.9597 9.16503 13.9817C9.10228 14.0037 9.03578 14.013 8.9694 14.009C8.90302 14.005 8.8381 13.9878 8.77845 13.9585C8.7188 13.9291 8.6656 13.8881 8.62199 13.8379C8.57837 13.7877 8.5452 13.7293 8.52443 13.6661C8.50365 13.603 8.49569 13.5363 8.501 13.47L9.001 4.97C9.00873 4.83767 9.06869 4.71383 9.1677 4.6257C9.26671 4.53756 9.39667 4.49235 9.529 4.5ZM7 4.5C7.13261 4.5 7.25979 4.55268 7.35355 4.64645C7.44732 4.74021 7.5 4.86739 7.5 5V13.5C7.5 13.6326 7.44732 13.7598 7.35355 13.8536C7.25979 13.9473 7.13261 14 7 14C6.86739 14 6.74021 13.9473 6.64645 13.8536C6.55268 13.7598 6.5 13.6326 6.5 13.5V5C6.5 4.86739 6.55268 4.74021 6.64645 4.64645C6.74021 4.55268 6.86739 4.5 7 4.5Z" :fill="pathFillColor"/>
         </svg>
       </button>
+
+
+
     </div>
   </div>
 
@@ -285,7 +288,15 @@
   @created="onIdeaCreated"
 />
   <Kanban :teamId="teamId" />
-
+  
+      <!-- Модалка подтверждения -->
+    <TeamDeleteModal
+      :show="showConfirmModal"
+      :teamId="teamId"
+      @close="closeConfirmModal"
+      @delete="handleDeleteTeam"
+      @disband="handleDisbandTeam"
+    />
 <!-- Модальное окно -->
     <div v-if="showAddMemberModal" class="fixed inset-0 flex justify-center items-center z-70">
       <div class="bg-card rounded-lg p-6 max-w-sm w-full z-70">
@@ -329,15 +340,17 @@ import api from "@/composables/auth.js"; // axios-инстанс с интерс
 import Header from "@/components/header.vue";
 import Kanban from "@/components/teams/board.vue";
 import Cookies from "js-cookie"; 
-import { deleteTeam } from "@/services/teamService";
+import { deleteTeam, disbandTeam  } from "@/services/teamService";
 import { instituteStyles } from "@/assets/instituteStyles.js";
 import RespondedTeams from "@/components/teams/request.vue";
 import IdeaCreateModal from "@/components/teams/createIdea.vue";
+import TeamDeleteModal from "@/components/teams/TeamDeleteModal.vue";
+
 export default {
   inject: ["globalState"],
   name: "TeamDetails",
   components: {
-    Header, RespondedTeams, Kanban, IdeaCreateModal
+    Header, RespondedTeams, Kanban, IdeaCreateModal, TeamDeleteModal
   },
   props: {
     institute: {
@@ -571,26 +584,55 @@ export default {
         alert('Не удалось удалить участника');
       }
     },
-    confirmDelete() {
-    this.handleDeleteTeam(this.teamId); // вызываем удаление
-    this.showConfirmModal = false; // закрываем модалку
-  },
-    async handleDeleteTeam(teamId) {
-    try {
-      const confirmation = confirm("Вы уверены, что хотите удалить проект? Это действие необратимо.");
-      if (!confirmation) return; // Если пользователь отменил действие, ничего не происходит
 
-      // Вызываем метод из `projects.js`
-      await deleteTeam(teamId);
-      this.$router.go(-1); 
-      // Уведомление об успехе и перенаправление
-      this.$toast.success("Проект успешно удалён!");
-      // Перенаправление на список проектов после удаления
-    } catch (error) {
-      console.error("Ошибка при удалении проекта:", error.response?.data || error);
-      this.$toast.error("Не удалось удалить проект. Попробуйте позже.");
-    }
-  },
+    closeConfirmModal() {
+      this.showConfirmModal = false;
+    },
+
+    async handleDeleteTeam() {
+      try {
+        // Вызываем метод из teams.js
+        await deleteTeam(this.teamId);
+        
+        this.showConfirmModal = false;
+        this.$toast?.success?.('Команда успешно удалена!') || 
+        alert('Команда успешно удалена!');
+        
+        // Перенаправление
+        this.$router.go(-1);
+        
+      } catch (error) {
+        console.error("Ошибка при удалении команды:", error.response?.data || error);
+        this.$toast?.error?.('Не удалось удалить команду. Попробуйте позже.') ||
+        alert('Не удалось удалить команду. Попробуйте позже.');
+      }
+    },
+    // Распуск команды (остается в истории)
+    async handleDisbandTeam() {
+      try {
+        const response = await api.post(`/teams/${this.teamId}/disband/`);
+        
+        console.log('Команда распущена:', response.data);
+        
+        this.showConfirmModal = false;
+        this.$toast?.success?.('Команда успешно расформирована!') ||
+        alert('Команда успешно расформирована!');
+        
+        // Обновляем данные команды или перенаправляем
+        this.$router.go(-1);
+        
+      } catch (error) {
+        console.error("Ошибка при расформировании команды:", error.response?.data || error);
+        
+        let errorMessage = 'Не удалось расформировать команду';
+        if (error.response?.data?.detail) {
+          errorMessage = error.response.data.detail;
+        }
+        
+        this.$toast?.error?.(errorMessage) ||
+        alert(errorMessage);
+      }
+    },
   async sendJoinRequest() {
     try {
       // 1) парсим ID команды

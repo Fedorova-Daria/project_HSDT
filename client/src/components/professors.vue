@@ -1,8 +1,5 @@
 <template>
   <div>
-    <!-- Размытый фон, который следует за курсором -->
-    <div class="blurred-bg" :style="bgStyle"></div>
-
     <Header />
     <div class="p-6 w-4/5 mx-auto relative mt-10">
       <h1 class="font-display text-5xl font-bold mb-6">
@@ -53,9 +50,10 @@
         <div class="relative" v-if="selectedInstituteFilter">
           <button
             @click="toggleGroupDropdown"
-            class="flex items-center px-4 py-2 rounded-md transition-all duration-500 border border-zinc-400 hover:shadow-md h-10 bg-card"
+            :disabled="isLoadingGroups"
+            class="flex items-center px-4 py-2 rounded-md transition-all duration-500 border border-zinc-400 hover:shadow-md h-10 bg-card disabled:opacity-50"
           >
-            {{ selectedGroupFilter || "Выберите группу" }}
+            {{ selectedGroupFilter || (isLoadingGroups ? "Загрузка..." : "Выберите группу") }}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               class="ml-2 w-4 h-4"
@@ -71,141 +69,183 @@
               />
             </svg>
           </button>
-          <ul
+          
+          <div
             v-if="showGroupDropdown"
-            class="absolute left-0 w-48 mt-1 bg-input text-dynamic rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto"
+            class="absolute left-0 w-64 mt-1 bg-input text-dynamic rounded-lg shadow-lg z-50"
           >
-            <li
-              v-for="group in filteredGroups"
-              :key="group"
-              @click="selectGroup(group)"
-              class="py-2 px-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-500 transition-colors"
-            >
-              {{ group }}
-            </li>
-          </ul>
+            <!-- Поиск по группам -->
+            <div class="p-3 border-b border-gray-200 dark:border-gray-600">
+              <input
+                v-model="groupSearchQuery"
+                @input="filterGroups"
+                placeholder="Поиск группы..."
+                class="w-full px-3 py-2 bg-card border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            
+            <!-- Список групп -->
+            <ul class="max-h-48 overflow-y-auto">
+              <li
+                v-for="group in safeFilteredGroups"
+                :key="group.id"
+                @click="selectGroup(group)"
+                class="py-2 px-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-500 transition-colors"
+              >
+                {{ group.name }}
+              </li>
+              <li v-if="safeFilteredGroups.length === 0" class="py-2 px-4 text-gray-500">
+                Группы не найдены
+              </li>
+            </ul>
+          </div>
         </div>
 
-        <!-- Сортировка -->
-        <div class="relative">
-          <button
-            @click="toggleSortDropdown"
-            class="flex items-center px-4 py-2 rounded-md transition-all duration-500 border border-zinc-400 hover:shadow-md h-10 bg-card"
-            >
-            {{ sortOptions.find((opt) => opt.value === currentSort).label }}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="ml-2 w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              stroke-width="2"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </button>
-          <ul
-            v-if="showSortDropdown"
-            class="absolute left-0 w-48 mt-1 bg-input rounded-lg shadow-lg z-50"
-          >
-            <li
-              v-for="option in sortOptions"
-              :key="option.value"
-              @click="selectSort(option.value)"
-              class="py-2 px-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-500 transition-colors"
-            >
-              {{ option.label }}
-            </li>
-          </ul>
-        </div>
+        <!-- Кнопка загрузки студентов -->
+        <button
+          @click="loadStudentsData"
+          :disabled="!canLoadStudents || isLoading"
+          :style="{ backgroundColor: currentBgColor }"
+        @mouseover="currentBgColor = instituteStyle.buttonOnColor"
+        @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
+          class="px-6 py-2 disabled:bg-gray-400 disabled:cursor-not-allowed text-always-white rounded-md transition-colors h-10"
+        >
+          {{ isLoading ? 'Загрузка...' : 'Показать студентов' }}
+        </button>
 
         <!-- Кнопка сброса фильтров -->
         <button
+          v-if="selectedInstituteFilter || selectedGroupFilter"
           @click="resetFilters"
-          class="rounded-md px-4 py-2 transition ml-5 h-10 text-always-white"
-          :style="{ backgroundColor: currentBgColorBtnReset }"
-          @mouseover="currentBgColorBtnReset = instituteStyle.buttonOnColor"
-          @mouseleave="currentBgColorBtnReset = instituteStyle.buttonOffColor"
+          class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors h-10"
         >
-          Сбросить фильтры
+          Сбросить
         </button>
       </div>
 
+      <!-- Сообщение о необходимости выбора фильтров -->
+      <div v-if="!canLoadStudents && !isLoading" class="text-center py-12">
+        <div class="text-gray-500 dark:text-gray-400">
+          <svg class="mx-auto h-12 w-12 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+          <h3 class="text-lg font-medium mb-2">Выберите институт и группу</h3>
+          <p>Для просмотра списка студентов необходимо выбрать институт и группу</p>
+        </div>
+      </div>
+
       <!-- Таблица студентов -->
-      <div class="overflow-x-auto rounded-lg shadow-lg">
-        <table class="min-w-full bg-card">
-          <thead class="bg-input">
-            <tr>
-              <th class="py-3 px-6 text-left">Имя студента</th>
-              <th class="py-3 px-6 text-left">Почта студента</th>
-              <th class="py-3 px-6 text-left">Команда</th>
-              <th class="py-3 px-6 text-left">Идея</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-            <tr
-              v-for="(student, index) in filteredStudents"
-              :key="index"
-              class="hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-300"
-            >
-              <td class="py-4 px-6">
-                <div class="flex items-center">
-                  <div
-                    class="flex-shrink-0 h-10 w-10 rounded-full overflow-hidden mr-4"
-                  >
-                    <img
-                      v-if="student.avatar"
-                      :src="student.avatar"
-                      alt="Avatar"
-                      class="object-cover w-full h-full"
-                    />
-                    <div
-                      v-else
-                      class="w-full h-full flex items-center justify-center bg-gray-300 dark:bg-gray-600"
-                    >
-                      <span class="font-semibold">{{
-                        getInitials(student.name)
-                      }}</span>
+      <div v-if="canLoadStudents">
+        <div class="overflow-x-auto rounded-lg shadow-lg">
+          <table class="min-w-full bg-card">
+            <thead class="bg-input">
+              <tr>
+                <th class="py-3 px-6 text-left">Имя студента</th>
+                <th class="py-3 px-6 text-left">Почта студента</th>
+                <th class="py-3 px-6 text-left">Группа</th>
+                <th class="py-3 px-6 text-left">Команда</th>
+                <th class="py-3 px-6 text-left">Проекты/Идеи</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+              <tr
+                v-for="student in safeFlatStudents"
+                :key="`${student.id}-${student.team_id || 'no-team'}`"
+                class="hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-300"
+              >
+                <td class="py-4 px-6">
+                  <div class="flex items-center">
+                    <div class="flex-shrink-0 h-10 w-10 rounded-full overflow-hidden mr-4">
+                      <img
+                        v-if="student.avatar"
+                        :src="student.avatar ? `http://127.0.0.1:8000/${student.avatar}` : null"
+                        alt="Avatar"
+                        class="object-cover w-full h-full"
+                        
+                      />
+                      <div
+                        v-else
+                        class="w-full h-full flex items-center justify-center bg-input"
+                      >
+                        <span class="font-semibold">{{ getInitials(student.full_name) }}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="font-medium cursor-pointer hover:underline" @click="goToUserProfile(student.id)">{{ student.full_name }}</div>
                     </div>
                   </div>
-                  <div>
-                    <div class="font-medium">{{ student.name }}</div>
+                </td>
+                <td class="py-4 px-6">{{ student.email }}</td>
+                <td class="py-4 px-6">
+                  <div class="bg-input px-3 py-1 rounded-full text-sm">
+                    {{ student.group_name }}
                   </div>
-                </div>
-              </td>
-              <td class="py-4 px-6">{{ student.email }}</td>
-              <td class="py-4 px-6">
-                <div class="flex items-center">
-                  <div
-                    v-if="student.team"
-                    class="bg-input px-3 py-1 rounded-full"
-                  >
-                    {{ student.team }}
+                </td>
+                <td class="py-4 px-6">
+                  <div v-if="student.team_name" class="flex items-center text-sm">
+                    <div class="bg-input px-3 py-1 rounded-full cursor-pointer hover:underline" @click="goToTeam(student.team_id)">
+                      {{ student.team_name }}
+                    </div>
                   </div>
-                  <span v-else class="text-gray-500 dark:text-gray-400"
-                    >Не состоит</span
-                  >
-                </div>
-              </td>
-              <td class="py-4 px-6">
-                <div v-if="student.idea" class="flex items-center">
-                  <div
-                    class="bg-input px-3 py-1 rounded-full"
-                  >
-                    {{ student.idea }}
+                  <span v-else class="text-gray-500 dark:text-gray-400">Не состоит</span>
+                </td>
+                <td class="py-4 px-6">
+                  <div v-if="student.projects_ideas && student.projects_ideas.length > 0" class="space-y-1">
+                    <div
+                      v-for="item in student.projects_ideas"
+                      :key="`${item.type}-${item.id}`"
+                      class="flex items-center"
+                    >
+                      <span 
+                        class="px-2 py-1 rounded-full font-medium text-sm cursor-pointer hover:underline"
+                        :class="item.type === 'project' 
+                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' 
+                          : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'"
+                          @click="goToProjectOrIdea(item.type, item.id)"
+                      >
+                        {{ item.type === 'project' ? '📋' : '💡' }} {{ item.title }}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <span v-else class="text-gray-500 dark:text-gray-400"
-                  >Не работает</span
-                >
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                  <span v-else class="text-gray-500 dark:text-gray-400">Не работает</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Показываем сообщение если нет данных -->
+        <div v-if="!isLoading && safeFlatStudents.length === 0" class="text-center py-8">
+          <p class="text-gray-500 dark:text-gray-400">Студенты не найдены</p>
+        </div>
+
+        <!-- Индикатор загрузки -->
+        <div v-if="isLoading" class="text-center py-8">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+          <p class="mt-2 text-gray-500">Загрузка данных...</p>
+        </div>
+
+        <!-- Статистика -->
+        <div class="mt-6 bg-card rounded-lg p-4">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
+            <div>
+              <div class="text-2xl font-bold text-blue-600">{{ totalStudents }}</div>
+              <div class="text-sm text-gray-500">Всего студентов</div>
+            </div>
+            <div>
+              <div class="text-2xl font-bold text-green-600">{{ studentsWithTeams }}</div>
+              <div class="text-sm text-gray-500">В командах</div>
+            </div>
+            <div>
+              <div class="text-2xl font-bold text-purple-600">{{ totalTeams }}</div>
+              <div class="text-sm text-gray-500">Команд</div>
+            </div>
+            <div>
+              <div class="text-2xl font-bold text-orange-600">{{ totalProjects }}</div>
+              <div class="text-sm text-gray-500">Проектов/Идей</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -224,38 +264,30 @@ export default {
   },
   data() {
     return {
-      students: [],
-      filteredStudents: [],
-      bgPosition: { x: 0, y: 0 },
-      targetPosition: { x: 0, y: 0 },
-      lerpFactor: 0.1,
-      currentBgColorBtnReset: "",
-
       // Фильтры
-      institutes: ["ВШЦТ", "АРХИД", "ИПТИ", "СТРОИН", "ТИУ"],
-      groups: {
-        ВШЦТ: ["ЦТ-21", "ЦТ-22", "ЦТ-23", "ЦТ-24"],
-        АРХИД: ["АД-31", "АД-32", "АД-33"],
-        ИПТИ: ["ИТ-41", "ИТ-42", "ИТ-43"],
-        СТРОИН: ["СТ-51", "СТ-52"],
-        ТИУ: ["ТУ-61", "ТУ-62", "ТУ-63"],
-      },
-      selectedInstituteFilter: null,
-      selectedGroupFilter: null,
+      institutes: ["ВШЦТ", "АРХИД", "ИПТИ", "СТРОИН"],
+      selectedInstituteFilter: '',
+      selectedGroupFilter: '',
+      
+      // Группы
+      allGroups: [],
+      filteredGroups: [],
+      groupSearchQuery: '',
+      
+      // Состояние UI
       showInstituteDropdown: false,
       showGroupDropdown: false,
-
-      // Сортировка
-      sortOptions: [
-        { label: "По алфавиту (А-Я)", value: "name_asc" },
-        { label: "По алфавиту (Я-А)", value: "name_desc" },
-        { label: "По командам (А-Я)", value: "team_asc" },
-        { label: "По командам (Я-А)", value: "team_desc" },
-      ],
-      currentSort: "name_asc",
-      showSortDropdown: false,
+      isLoadingGroups: false,
+      isLoading: false,
+      
+      // Данные студентов
+      flatStudents: [],
+      
+      // ✅ ДОБАВЛЕНО: Отсутствующая переменная
+      currentBgColorBtnReset: "#ccc"
     };
   },
+  
   computed: {
     selectedInstitute() {
       return this.globalState.institute;
@@ -265,233 +297,332 @@ export default {
         instituteStyles[this.selectedInstitute] || { buttonOffColor: "#ccc" }
       );
     },
-    bgStyle() {
+    canLoadStudents() {
+      return this.selectedInstituteFilter && this.selectedGroupFilter
+    },
+    
+    // Маппинг названий институтов к кодам
+    instituteCodeMap() {
       return {
-        backgroundImage: "url('/bob.svg')",
-        backgroundPosition: `${this.bgPosition.x}px ${this.bgPosition.y}px`,
-      };
+        'ВШЦТ': 'HSDT',
+        'АРХИД': 'ARHID', 
+        'ИПТИ': 'IPTI',
+        'СТРОИН': 'STROIN'
+      }
     },
-    filteredGroups() {
-      if (!this.selectedInstituteFilter) return [];
-      return this.groups[this.selectedInstituteFilter] || [];
+    
+    selectedInstituteCode() {
+      return this.instituteCodeMap[this.selectedInstituteFilter] || ''
     },
+    // Статистические computed свойства
+  totalStudents() {
+    return this.safeFlatStudents.length
   },
-  methods: {
-    async fetchStudents() {
-      try {
-        // Здесь должен быть реальный API-запрос
-        // const response = await api.get("/students/");
-
-        // Временно используем мок-данные
-        this.students = [
-          {
-            id: 1,
-            name: "Иванов Иван Иванович",
-            email: "ivanov@example.com",
-            faculty: "ВШЦТ",
-            group: "ЦТ-21",
-            team: "Команда А",
-            idea: "Образовательная платформа",
-            avatar: null,
-          },
-          {
-            id: 2,
-            name: "Петрова Анна Сергеевна",
-            email: "petrova@example.com",
-            faculty: "АРХИД",
-            group: "АД-31",
-            team: "Команда Б",
-            idea: "Дизайн городской среды",
-            avatar: "/path/to/avatar.jpg",
-          },
-          {
-            id: 3,
-            name: "Сидоров Алексей Дмитриевич",
-            email: "sidorov@example.com",
-            faculty: "ИПТИ",
-            group: "ИТ-42",
-            team: null,
-            idea: null,
-            avatar: null,
-          },
-          {
-            id: 4,
-            name: "Кузнецова Екатерина Викторовна",
-            email: "kuznetsova@example.com",
-            faculty: "СТРОИН",
-            group: "СТ-51",
-            team: "Команда В",
-            idea: "Строительные инновации",
-            avatar: null,
-          },
-          {
-            id: 5,
-            name: "Николаев Денис Олегович",
-            email: "nikolaev@example.com",
-            faculty: "ТИУ",
-            group: "ТУ-62",
-            team: "Команда Г",
-            idea: "Технологии будущего",
-            avatar: null,
-          },
-          {
-            id: 6,
-            name: "Алексеев Михаил Петрович",
-            email: "alekseev@example.com",
-            faculty: "ВШЦТ",
-            group: "ЦТ-22",
-            team: "Команда Д",
-            idea: "Мобильное приложение",
-            avatar: null,
-          },
-          {
-            id: 7,
-            name: "Васильева Ольга Игоревна",
-            email: "vasilyeva@example.com",
-            faculty: "АРХИД",
-            group: "АД-32",
-            team: "Команда Е",
-            idea: "Архитектурный проект",
-            avatar: null,
-          },
-          {
-            id: 8,
-            name: "Григорьев Павел Сергеевич",
-            email: "grigoriev@example.com",
-            faculty: "ИПТИ",
-            group: "ИТ-41",
-            team: "Команда Ж",
-            idea: "Веб-платформа",
-            avatar: null,
-          },
-        ];
-
-        // Инициализируем отфильтрованный список
-        this.filteredStudents = [...this.students];
-      } catch (error) {
-        console.error("Ошибка загрузки студентов:", error);
-        this.students = [];
-        this.filteredStudents = [];
-      }
-    },
-    getInitials(name) {
-      if (!name) return "";
-      const parts = name.split(" ");
-      if (parts.length >= 2) {
-        return `${parts[0].charAt(0)}${parts[1].charAt(0)}`;
-      }
-      return name.substring(0, 2);
-    },
-    updateBackgroundPosition(event) {
-      const x = (event.clientX / window.innerWidth - 0.5) * 50;
-      const y = (event.clientY / window.innerHeight - 0.5) * 50;
-      this.targetPosition = { x, y };
-    },
-    lerpBackgroundPosition() {
-      this.bgPosition.x +=
-        (this.targetPosition.x - this.bgPosition.x) * this.lerpFactor;
-      this.bgPosition.y +=
-        (this.targetPosition.y - this.bgPosition.y) * this.lerpFactor;
-      requestAnimationFrame(() => this.lerpBackgroundPosition());
-    },
-
-    // Методы для фильтрации
-    toggleInstituteDropdown() {
-      this.showInstituteDropdown = !this.showInstituteDropdown;
-      this.showGroupDropdown = false;
-      this.showSortDropdown = false;
-    },
-    toggleGroupDropdown() {
-      if (this.selectedInstituteFilter) {
-        this.showGroupDropdown = !this.showGroupDropdown;
-      }
-      this.showInstituteDropdown = false;
-      this.showSortDropdown = false;
-    },
-    toggleSortDropdown() {
-      this.showSortDropdown = !this.showSortDropdown;
-      this.showInstituteDropdown = false;
-      this.showGroupDropdown = false;
-    },
-    selectInstitute(institute) {
-      this.selectedInstituteFilter = institute;
-      this.selectedGroupFilter = null;
-      this.showInstituteDropdown = false;
-      this.applyFilters();
-    },
-    selectGroup(group) {
-      this.selectedGroupFilter = group;
-      this.showGroupDropdown = false;
-      this.applyFilters();
-    },
-    selectSort(sortOption) {
-      this.currentSort = sortOption;
-      this.showSortDropdown = false;
-      this.applyFilters();
-    },
-    resetFilters() {
-      this.selectedInstituteFilter = null;
-      this.selectedGroupFilter = null;
-      this.currentSort = "name_asc";
-      this.applyFilters();
-    },
-    applyFilters() {
-      let result = [...this.students];
-
-      // Фильтрация по институту
-      if (this.selectedInstituteFilter) {
-        result = result.filter(
-          (student) => student.faculty === this.selectedInstituteFilter
-        );
-      }
-
-      // Фильтрация по группе
-      if (this.selectedGroupFilter) {
-        result = result.filter(
-          (student) => student.group === this.selectedGroupFilter
-        );
-      }
-
-      // Сортировка
-      switch (this.currentSort) {
-        case "name_asc":
-          result.sort((a, b) => a.name.localeCompare(b.name));
-          break;
-        case "name_desc":
-          result.sort((a, b) => b.name.localeCompare(a.name));
-          break;
-        case "team_asc":
-          result.sort((a, b) => {
-            const teamA = a.team || "ЯЯЯЯЯ";
-            const teamB = b.team || "ЯЯЯЯЯ";
-            return teamA.localeCompare(teamB);
-          });
-          break;
-        case "team_desc":
-          result.sort((a, b) => {
-            const teamA = a.team || "ААААА";
-            const teamB = b.team || "ААААА";
-            return teamB.localeCompare(teamA);
-          });
-          break;
-      }
-
-      this.filteredStudents = result;
-    },
+  
+  studentsWithTeams() {
+    return this.safeFlatStudents.filter(s => s.team_name).length
   },
+  
+  totalTeams() {
+    const uniqueTeams = new Set(
+      this.safeFlatStudents
+        .filter(s => s.team_name)
+        .map(s => s.team_name)
+    )
+    return uniqueTeams.size
+  },
+  
+  totalProjects() {
+    return this.safeFlatStudents.reduce((total, student) => {
+      const projectsCount = student.projects_ideas ? student.projects_ideas.length : 0
+      return total + projectsCount
+    }, 0)
+  },
+    // ✅ ДОБАВЛЕНО: Безопасные computed свойства
+    safeAllGroups() {
+      return Array.isArray(this.allGroups) ? this.allGroups : []
+    },
+    
+    safeFilteredGroups() {
+      return Array.isArray(this.filteredGroups) ? this.filteredGroups : []
+    },
+    
+    safeFlatStudents() {
+      return Array.isArray(this.flatStudents) ? this.flatStudents : []
+    }
+  },
+  
   mounted() {
-    this.fetchStudents();
-    window.addEventListener("mousemove", this.updateBackgroundPosition);
-    this.lerpBackgroundPosition();
-    this.currentBgColorBtnReset = this.instituteStyle.buttonOffColor;
+    // Закрытие dropdown при клике вне
+    document.addEventListener('click', this.handleClickOutside)
   },
-  beforeDestroy() {
-    window.removeEventListener("mousemove", this.updateBackgroundPosition);
+  
+  beforeUnmount() {
+    document.removeEventListener('click', this.handleClickOutside)
   },
+  
+  methods: {
+    /**
+   * Переход на профиль пользователя
+   */
+  goToUserProfile(userId) {
+    try {
+      const route = `/${this.selectedInstitute}/profile/${userId}`;
+      console.log('Переход на профиль пользователя:', route);
+      this.$router.push(route);
+    } catch (error) {
+      console.error('Ошибка навигации к профилю:', error);
+    }
+  },
+  
+  /**
+   * Переход на страницу команды
+   */
+  goToTeam(teamId) {
+    if (!teamId) {
+      console.warn('ID команды не указан');
+      return;
+    }
+    
+    try {
+      const route = `/${this.selectedInstitute}/team/${teamId}`;
+      console.log('Переход на страницу команды:', route);
+      this.$router.push(route);
+    } catch (error) {
+      console.error('Ошибка навигации к команде:', error);
+    }
+  },
+  
+  /**
+   * Переход на страницу проекта или идеи
+   */
+  goToProjectOrIdea(type, itemId) {
+    if (!itemId) {
+      console.warn('ID проекта/идеи не указан');
+      return;
+    }
+    
+    try {
+      let route;
+      
+      if (type === 'project') {
+        route = `/${this.selectedInstitute}/project/${itemId}`;
+      } else if (type === 'idea') {
+        route = `/${this.selectedInstitute}/idea/${itemId}`;
+      } else {
+        console.warn('Неизвестный тип элемента:', type);
+        return;
+      }
+      
+      console.log(`Переход на страницу ${type}:`, route);
+      this.$router.push(route);
+    } catch (error) {
+      console.error(`Ошибка навигации к ${type}:`, error);
+    }
+  },
+    // === Управление институтами ===
+    toggleInstituteDropdown() {
+      this.showInstituteDropdown = !this.showInstituteDropdown
+      this.showGroupDropdown = false
+    },
+    
+    async selectInstitute(institute) {
+      this.selectedInstituteFilter = institute
+      this.selectedGroupFilter = '' // Сбрасываем выбор группы
+      this.showInstituteDropdown = false
+      this.flatStudents = [] // Очищаем данные студентов
+      
+      // Загружаем группы для выбранного института
+      await this.loadGroupsForInstitute()
+    },
+    
+    // === Управление группами ===
+    async loadGroupsForInstitute() {
+      if (!this.selectedInstituteCode) return
+      
+      this.isLoadingGroups = true
+      try {
+        const response = await api.get('/core/university-groups/')
+        
+        console.log('Все группы:', response.data)
+        console.log('Выбранный институт код:', this.selectedInstituteCode)
+        
+        // ✅ ИСПРАВЛЕНО: Добавлена проверка на массив
+        const groups = Array.isArray(response.data) ? response.data : []
+        
+        // Фильтруем группы по выбранному институту
+        this.allGroups = groups.filter(group => {
+          console.log(`Группа ${group.name}: ${group.institute} === ${this.selectedInstituteCode}?`, group.institute === this.selectedInstituteCode)
+          return group.institute === this.selectedInstituteCode
+        })
+        
+        console.log('Отфильтрованные группы:', this.allGroups)
+        this.filteredGroups = [...this.allGroups]
+        
+      } catch (error) {
+        console.error('Ошибка загрузки групп:', error)
+        this.allGroups = []
+        this.filteredGroups = []
+      } finally {
+        this.isLoadingGroups = false
+      }
+    },
+    
+    toggleGroupDropdown() {
+      if (this.isLoadingGroups) return
+      this.showGroupDropdown = !this.showGroupDropdown
+      this.showInstituteDropdown = false
+    },
+    
+    selectGroup(group) {
+      this.selectedGroupFilter = group.name
+      this.showGroupDropdown = false
+      this.groupSearchQuery = ''
+      this.filteredGroups = [...this.allGroups]
+      this.flatStudents = [] // Очищаем данные студентов
+    },
+    
+    // === Поиск по группам ===
+    filterGroups() {
+      const query = this.groupSearchQuery.toLowerCase()
+      // ✅ ИСПРАВЛЕНО: Добавлена проверка массива
+      this.filteredGroups = this.safeAllGroups.filter(group =>
+        group.name && group.name.toLowerCase().includes(query)
+      )
+    },
+    
+    // === Загрузка данных студентов ===
+    async loadStudentsData() {
+      if (!this.canLoadStudents) {
+        alert('Выберите институт и группу')
+        return
+      }
+      
+      this.isLoading = true
+      
+      try {
+        const response = await api.get('/core/university-groups/students_table/')
+        
+        if (response.data && response.data.success) {
+          const allStudents = this.convertToFlatStructure(response.data.institutes || [])
+          
+          // Фильтруем по коду института
+          this.flatStudents = allStudents.filter(student => 
+            student.institute_code === this.selectedInstituteCode &&
+            student.group_name === this.selectedGroupFilter
+          )
+          
+        } else {
+          console.error('Ошибка загрузки данных:', response.data?.error)
+          this.flatStudents = []
+        }
+      } catch (error) {
+        console.error('Ошибка API:', error)
+        this.flatStudents = []
+      } finally {
+        this.isLoading = false
+      }
+    },
+    
+    // ✅ ИСПРАВЛЕНО: Добавлены проверки на существование массивов
+    convertToFlatStructure(institutes) {
+  const flatStudents = []
+  
+  if (!Array.isArray(institutes)) {
+    console.warn('institutes не является массивом:', institutes)
+    return flatStudents
+  }
+  
+  institutes.forEach(institute => {
+    if (!institute || !Array.isArray(institute.groups)) {
+      console.warn('institute.groups не является массивом:', institute)
+      return
+    }
+    
+    institute.groups.forEach(group => {
+      if (!group || !Array.isArray(group.users)) {
+        console.warn('group.users не является массивом:', group)
+        return
+      }
+      
+      group.users.forEach(user => {
+        if (!user) return
+        
+        const userTeams = Array.isArray(user.teams) ? user.teams : []
+        
+        if (userTeams.length > 0) {
+          userTeams.forEach(team => {
+            flatStudents.push({
+              id: user.id,
+              full_name: user.full_name || '',
+              email: user.email || '',
+              institute_name: institute.institute_name || '',
+              institute_code: institute.institute_code || '',
+              avatar: user.avatar || null, 
+              group_name: group.group_name || '',
+              team_id: team.id,
+              team_name: team.name || '',
+              projects_ideas: Array.isArray(team.projects_or_ideas) ? team.projects_or_ideas : []
+            })
+          })
+        } else {
+          flatStudents.push({
+            id: user.id,
+            full_name: user.full_name || '',
+            email: user.email || '',
+            institute_name: institute.institute_name || '',
+            institute_code: institute.institute_code || '',
+            avatar: user.avatar || null,
+            group_name: group.group_name || '',
+            team_id: null,
+            team_name: null,
+            projects_ideas: []
+          })
+        }
+      })
+    })
+  })
+  
+  console.log('🔍 Созданные студенты:', flatStudents)
+  return flatStudents
+},
+    
+    // === Сброс фильтров ===
+    resetFilters() {
+      this.selectedInstituteFilter = ''
+      this.selectedGroupFilter = ''
+      this.allGroups = []
+      this.filteredGroups = []
+      this.groupSearchQuery = ''
+      this.flatStudents = []
+      this.showInstituteDropdown = false
+      this.showGroupDropdown = false
+    },
+    
+    // === Обработка кликов вне dropdown ===
+    handleClickOutside(event) {
+      if (!this.$el || !this.$el.contains(event.target)) {
+        this.showInstituteDropdown = false
+        this.showGroupDropdown = false
+      }
+    },
+    
+    getInitials(fullName) {
+      if (!fullName || typeof fullName !== 'string') return '??'
+      
+      const names = fullName.trim().split(' ')
+      if (names.length >= 2) {
+        return `${names[0][0]}${names[1][0]}`.toUpperCase()
+      }
+      return fullName.substring(0, 2).toUpperCase()
+    }
+  },
+  
   watch: {
     instituteStyle: {
       handler(newStyle) {
-        this.currentBgColorBtnReset = newStyle.buttonOffColor;
+        // ✅ ИСПРАВЛЕНО: Проверка на существование newStyle
+        this.currentBgColorBtnReset = newStyle?.buttonOffColor || "#ccc";
       },
       immediate: true,
     },

@@ -17,6 +17,9 @@ from notifications.utils import *
 from django_filters.rest_framework import DjangoFilterBackend
 from kanban.models import Board
 from projects.models import Project
+from django.utils import timezone
+from users.models import UserActivity
+
 
 class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
@@ -74,7 +77,164 @@ class TeamViewSet(viewsets.ModelViewSet):
             'projects': list(projects_in_process),
             'ideas': list(ideas)
         })
+    
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def disband(self, request, pk=None):
+        """Распад команды с сохранением связей для статистики"""
+        team = self.get_object()
+        user = request.user
+        
+        # Проверяем права доступа
+        if team.owner != user:
+            return Response({
+                'detail': 'Только владелец команды может распустить команду'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Проверяем текущий статус
+        if team.status == 'over':
+            return Response({
+                'detail': 'Команда уже распущена',
+                'disbanded_at': team.disbanded_at
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Сохраняем информацию для уведомлений
+            members_to_notify = list(team.members.all())
+            boards_count = self._count_team_boards(team)
+            projects_count = team.projects.count()
+            ideas_count = team.ideas.count()
+            
+            # Выполняем распад команды
+            disbanded_data = self._disband_team_internal(team)
+            
+            # Отправляем уведомления
+            self._notify_team_disbandment(team, members_to_notify)
+            
+            return Response({
+                'detail': 'Команда успешно распущена',
+                'team_id': team.id,
+                'status': team.status,
+                'disbanded_at': team.disbanded_at,
+                'removed_members_count': len(members_to_notify),
+                'deleted_boards_count': disbanded_data['deleted_boards'],
+                'preserved_projects_count': projects_count,
+                'preserved_ideas_count': ideas_count,
+                'note': 'Связи с проектами и идеями сохранены для статистики'
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'detail': 'Ошибка при распуске команды',
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    def _disband_team_internal(self, team):
+        """Внутренний метод для распуска команды"""
+        disbanded_data = {
+            'deleted_boards': 0
+        }
+
+        # Закрываем активность участников
+        self._close_team_members_activity(team)
+
+        # 1. Удаляем все канбан доски команды
+        deleted_boards = self._delete_team_boards(team)
+        disbanded_data['deleted_boards'] = deleted_boards
+        
+        # 2. Очищаем участников команды
+        team.members.clear()
+        
+        # 3. Изменяем статус и заполняем disbanded_at
+        team.status = 'over'
+        team.disbanded_at = timezone.now()
+        
+        # 4. Сохраняем изменения
+        team.save()
+        
+        print(f"Команда {team.id} распущена. Связи с проектами и идеями сохранены.")
+        
+        return disbanded_data
+    
+    def _close_team_members_activity(self, team):
+        """Закрытие активности всех участников команды при распаде"""
+        from users.models import UserActivity  # Правильный импорт
+        
+        disbandment_time = timezone.now()
+        closed_activities_count = 0
+        
+        # Получаем все активные записи UserActivity для данной команды
+        active_activities = UserActivity.objects.filter(
+            team=team,
+            ended_at__isnull=True
+        )
+        
+        for activity in active_activities:
+            activity.ended_at = disbandment_time
+            activity.save()
+            closed_activities_count += 1
+            print(f"Закрыта активность пользователя {activity.user.id} в команде {team.id}")
+        
+        print(f"Закрыто {closed_activities_count} активных записей при распаде команды {team.id}")
+
+        return closed_activities_count
+
+    def _delete_team_boards(self, team):
+        """Удаление всех канбан досок команды"""
+        try:
+            from kanban.models import Board, Column, Task  # Правильный импорт
+            
+            boards = Board.objects.filter(team=team)
+            deleted_count = 0
+            
+            for board in boards:
+                # Удаляем все задачи в колонках доски
+                columns = Column.objects.filter(board=board)
+                for column in columns:
+                    Task.objects.filter(column=column).delete()
+                
+                # Удаляем все колонки доски
+                columns.delete()
+                
+                # Удаляем саму доску
+                board.delete()
+                deleted_count += 1
+                
+                print(f"Удалена доска ID: {board.id} команды {team.id}")
+            
+            return deleted_count
+            
+        except ImportError:
+            print("Модули kanban не найдены, пропускаем удаление досок")
+            return 0
+
+    def _count_team_boards(self, team):
+        """Подсчет количества досок команды"""
+        try:
+            from kanban.models import Board  # Правильный импорт
+            return Board.objects.filter(team=team).count()
+        except ImportError:
+            print("Модуль kanban.models не найден")
+            return 0
+
+    def _notify_team_disbandment(self, team, members):
+        """Отправка уведомлений о распуске команды"""
+        for member in members:
+            try:
+                # Если у вас есть система уведомлений, раскомментируйте:
+                # from notifications.models import Notification
+                # Notification.objects.create(
+                #     user=member,
+                #     title=f'Команда "{team.name}" распущена',
+                #     message=f'Команда "{team.name}" была распущена владельцем. '
+                #             f'История участия в проектах и идеях сохранена.',
+                #     notification_type='team_disbanded',
+                #     related_team=team
+                # )
+                print(f"Уведомление отправлено пользователю {member.id} о распуске команды {team.id}")
+            except Exception as e:
+                print(f"Ошибка отправки уведомления пользователю {member.id}: {e}")
+
+                
     @action(detail=True, methods=["post"], permission_classes=[IsTeamLeader])
     def add_member(self, request, pk=None):
         team = self.get_object()  # Получаем команду по первичному ключу

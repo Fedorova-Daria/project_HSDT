@@ -7,20 +7,32 @@ class Team(models.Model):
         ("open", "Открыта"),
         ("private", "Приватная"),
         ('in_progress', 'В работе'),
+        ('over', "Распалась")
     ]
 
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True, null=True)
-    owner = models.OneToOneField(Account, on_delete=models.CASCADE, related_name="owned_team")
+    owner = models.ForeignKey(Account, on_delete=models.CASCADE)
     members = models.ManyToManyField(Account, related_name="teams", blank=True)
     avatar = models.ImageField(upload_to="team_avatars/", blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="open")
+    disbanded_at = models.DateTimeField(null=True, blank=True) 
 
     # Связь с проектами, над которыми работает команда
     projects = models.ManyToManyField('projects.Project', related_name="teams_working_on", blank=True)
 
     # Связь с идеями, над которыми работает команда
     ideas = models.ManyToManyField('projects.Idea', related_name="teams_working_on_ideas", blank=True)  # Изменено related_name
+
+    class Meta:
+        # Добавляем ограничение: только одна активная команда на пользователя
+        constraints = [
+            models.UniqueConstraint(
+                fields=['owner'],
+                condition=models.Q(status__in=['active', 'private','in_progress']),
+                name='unique_active_team_per_owner'
+            )
+        ]
 
     def __str__(self):
         return self.name

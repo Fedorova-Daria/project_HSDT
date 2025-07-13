@@ -222,6 +222,7 @@
             </button>
           </div>
     </div>
+    <Kanban :ideaId="ideaId" />
   </div>
   </template>
   
@@ -230,11 +231,11 @@
   import Header from "@/components/header.vue";
   import { getIdeaById, fetchOwnerName, toggleLike, deleteIdea } from "@/services/ideas.js";
   import { instituteStyles } from "@/assets/instituteStyles.js";
-
+  import Kanban from "@/components/projects/IdeaKanban.vue";
   export default {
     inject: ["globalState"],
     name: "IdeaDetails",
-    components: { Header },
+    components: { Header, Kanban },
     props: {
       ideaId: {
         type: String,

@@ -38,14 +38,29 @@ class Technology(models.Model):
 
 
 class UniversityGroup(models.Model):
-    name = models.CharField(max_length=255, unique=True)    # Создаём уникальное текстовое поле на 255 символов
+    INSTITUTE_CHOICES = [
+        ('HSDT', 'ВШЦТ'),
+        ('IPTI', 'ИПТИ'),
+        ('STROIN', 'СТРОИН'),
+        ('ARHID', 'АРХИД'),
+    ]
+    
+    name = models.CharField(max_length=255, unique=True)  # Уникальное текстовое поле на 255 символов
+    institute = models.CharField(
+        max_length=10, 
+        choices=INSTITUTE_CHOICES,
+        verbose_name="Институт",
+        default='HSDT' 
+    )
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.get_institute_display()})"
 
     class Meta:
         verbose_name = "Группа"
         verbose_name_plural = "Группы"
+        # Добавляем уникальность по комбинации имени и института
+        unique_together = ['name', 'institute']
 
 
 class Semester(models.Model):
