@@ -65,10 +65,10 @@ class TeamViewSet(viewsets.ModelViewSet):
         projects_in_process = Project.objects.filter(
             id__in=team.projects.all(),
             status='in_progress'
-        ).values('id', 'title')
+        ).values('id', 'title', 'description')
         print(projects_in_process)  # Выводим полученные проекты в консоль
         # Получаем идеи (если нужно)
-        ideas = team.ideas.all().values('id', 'title')
+        ideas = team.ideas.all().values('id', 'title', 'description')
         
         return Response({
             'projects': list(projects_in_process),

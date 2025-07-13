@@ -1,5 +1,6 @@
 <template>
-  <div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm z-100">
+    <teleport to="body">
+  <div v-if="show" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm z-100">
     <!-- Main modal -->
     <div class="relative p-4 w-full max-w-md max-h-full">
       <!-- Modal content -->
@@ -113,88 +114,6 @@
 </div>
   </div>
   </div>
-    <div v-if="userRole !== 'ST'" class="dropdown" @click="toggleDropdownSem" tabindex="0" @blur="closeDropdownSem">
-    <div class="dropdown-selected">
-      {{ selectedLabel || 'Выберите семестр' }}
-      <span class="arrow">{{ dropdownOpenSem ? '▲' : '▼' }}</span>
-    </div>
-
-    <div v-if="dropdownOpenSem" class="dropdown-menu">
-      <ul>
-        <li v-for="year in years" :key="year" class="dropdown-year">
-          <div @click.stop="toggleYear(year)">
-            {{ year }}
-            <span>{{ openedYear === year ? '-' : '+' }}</span>
-          </div>
-
-          <ul v-if="openedYear === year" class="dropdown-semesters">
-            <li 
-              v-for="semester in semestersByYear[year]" 
-              :key="semester.id" 
-              @click.stop="selectSemester(semester)"
-              :class="{ selected: semester.id === selectedSemesterId }"
-            >
-              {{ semesterDisplay(semester.semester) }}
-            </li>
-          </ul>
-        </li>
-      </ul>
-    </div>
-  </div>
-<div v-if="userRole !== 'ST'" class="col-span-2">
-<!-- Кнопка для открытия списка институтов -->
-<div
-  class="w-full border-dynamic rounded-md py-2 px-3 bg-input text-black cursor-pointer flex justify-between items-center transition-colors"
-  @click="instituteDropdownOpen = !instituteDropdownOpen"
->
-  <span>Выберите институты</span>
-  <span :class="{ 'rotate-180': instituteDropdownOpen }" class="transition-transform">
-    &#9660;
-  </span>
-</div>
-
-<!-- Выпадающий список институтов -->
-<div
-  v-if="instituteDropdownOpen"
-  class="flex flex-col absolute left-0 w-full bg-input rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto z-50 transition-colors"
->
-  <!-- Поле поиска -->
-  <input
-    v-model="instituteSearchQuery"
-    type="text"
-    placeholder="Поиск..."
-    class="w-full px-3 py-2 border-b border-fiol outline-none transition-colors"
-  />
-
-  <!-- Список институтов -->
-  <div
-    v-for="(name, code) in filteredInstitutes"
-    :key="code"
-    @click="toggleInstitute(code)"
-    class="p-2 cursor-pointer hover:bg-gray-200 transition-colors duration-300"
-  >
-    <input
-      type="checkbox"
-      :id="code"
-      :value="code"
-      v-model="selectedInstitutes"
-      class="mr-2"
-    />
-    {{ name }}
-  </div>
-</div>
-
-<!-- Отображение выбранных институтов -->
-<div class="flex flex-wrap gap-2 mt-2">
-  <span
-    v-for="code in selectedInstitutes"
-    :key="code"
-    class="px-2 py-1 text-sm bg-gray-200 rounded-full"
-  >
-    {{ instituteNames[code] }}
-  </span>
-</div>
-</div>
 
             <div class="col-span-2">
               <label
@@ -214,7 +133,7 @@
           </div>
           <div class="flex justify-between gap-4">
             <button
-              @click="submitIdea(userRole === 'CU' || userRole === 'EX' ? 'new' : userRole === 'ST' ? 'open' : 'default')"
+              @click="submitIdea"
                         :style="{ backgroundColor: currentBgColor }"
         @mouseover="currentBgColor = instituteStyle.buttonOnColor"
         @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
@@ -226,64 +145,48 @@
               </svg>
               Добавить новый проект
             </button>
-
-            <button
-              @click="submitIdea('draft')"
-              type="button"
-              class=" text-always-white inline-flex items-center bg-gray-400 hover:bg-gray-500 focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center"
-            >
-              <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path>
-              </svg>
-              Отложить проект
-            </button>
           </div>
         </form>
       </div>
     </div>
   </div>
+  </teleport>
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
-import { createIdeaOrProject } from "@/services/create"; // Импортируем метод создания
 import { fetchTechnologies } from "@/services/technologies.js";
 import { instituteStyles } from "@/assets/instituteStyles.js";
 import api from "@/composables/auth";
 
 export default {
+    name: 'IdeaCreateModal',
   inject: ["globalState"],
+  props: {
+    show: {
+      type: Boolean,
+      default: false
+    },
+    teamId: {
+      type: String,
+      required: true
+    },
+  },
+  emits: ['close', 'created'],
   data() {
     return {
       userRole: null,
-      instituteDropdownOpen: false,
-    instituteSearchQuery: "",
     selectedInstitutes: [],
-    instituteNames: {
-      HSDT: "ВШЦТ",
-      ARCHID: "АРХИД",
-      IPTI: "ИПТИ",
-      STROIN: "СТРОИН",
-      TYIU: "ТИУ",
-    },
       currentBgColor: "",
       form: {
         title: '',
         description: '',
         technologies: [], // Массив для выбранных технологий
-        semester: null, 
-        institutes: [],
       },
       dropdownOpen: false,
       searchQuery: "",
       selectedTechnologies: [], // Массив для выбранных технологий
       technologies: [], // Массив всех технологий
       filteredTechnologies: [], // Отфильтрованные технологии
-      semesters: [],          // Все семестры с API
-      dropdownOpenSem: false,
-      selectedYear: null,
-      openedYear: null,           // Какой год раскрыт
-      selectedSemesterId: null, // Выбранный семестр (ID)
     };
   },
   computed: {
@@ -294,39 +197,11 @@ export default {
       const style = instituteStyles[this.selectedInstitute]; // Используем глобальное состояние
       return style || { buttonOffColor: "#ccc" }; // Дефолтный стиль
     },
-    years() {
-      return [...new Set(this.semesters.map(s => s.year))].sort((a,b) => b - a);
-    },
-    semestersByYear() {
-      return this.semesters.reduce((acc, s) => {
-        if (!acc[s.year]) acc[s.year] = [];
-        acc[s.year].push(s);
-        return acc;
-      }, {});
-    },
-    selectedLabel() {
-    if (!this.selectedSemesterId || !this.semesters.length) return null;
-    const semester = this.semesters.find(s => s.id === this.selectedSemesterId);
-    return semester ? `${semester.year} год, ${this.semesterDisplay(semester.semester)}` : null;
-  },
-  filteredInstitutes() {
-      const query = this.instituteSearchQuery.toLowerCase();
-      return Object.fromEntries(
-        Object.entries(this.instituteNames).filter(([code, name]) =>
-          name.toLowerCase().includes(query)
-        )
-      );
-    },
   },
   methods: {
-    toggleInstitute(code) {
-      const index = this.selectedInstitutes.indexOf(code);
-      if (index === -1) {
-        this.selectedInstitutes.push(code);
-      } else {
-        this.selectedInstitutes.splice(index, 1);
-      }
-    },
+    closeModal() {
+    this.$emit("close"); // ✅ Правильно
+  },
     toggleTechnology(tech) {
       const index = this.selectedTechnologies.indexOf(tech.id);
       if (index > -1) {
@@ -341,60 +216,38 @@ export default {
         tech.name.toLowerCase().includes(query)
       );
     },
-    async fetchSemesters() {
-      try {
-        const response = await api.get('/core/semesters/');
-        this.semesters = response.data;
-      } catch (e) {
-        console.error(e);
-      }
-    },
-    toggleDropdownSem() {
-      this.dropdownOpenSem = !this.dropdownOpenSem;
-      if (!this.dropdownOpenSem) {
-        this.openedYear = null;
-      }
-    },
-    closeDropdownSem() {
-      this.dropdownOpenSem = false;
-      this.openedYear = null;
-    },
-    toggleYear(year) {
-      this.openedYear = this.openedYear === year ? null : year;
-    },
-    selectSemester(semester) {
-  this.selectedSemesterId = semester.id;
-  this.dropdownOpenSem = false;
-  this.openedYear = null;
-  // Можно обновить form.semester сразу
-  this.form.semester = semester.id;
-  // Или оставить в submitIdea
-},
-    semesterDisplay(code) {
-      return code === 'spring' ? 'Весенний' : 'Зимний';
-    },
-async submitIdea(status) {
-  const validStatuses = ['draft', 'open', 'review', 'new'];
-  if (!validStatuses.includes(status)) {
-    console.error(`Невалидный статус: ${status}`);
-    return;
-  }
-
+async submitIdea() {
   // Обновляем form.technologies перед отправкой
   this.form.technologies = this.selectedTechnologies;
-  this.form.semester = this.selectedSemesterId;
-  this.form.institutes = this.selectedInstitutes;
 
   const data = {
-    ...this.form,
-    status,
+    team: this.teamId, // ID команды
+    title: this.form.title,
+    description: this.form.description,
+    skills: this.form.technologies, // Массив ID навыков
   };
 
   try {
-    const response = await createIdeaOrProject(data);
-    console.log("Создано:", response);
+    // Отправляем POST запрос на создание приватной идеи
+    const response = await api.post('/ideas/create-private-idea/', data);
+    
+    console.log("✅ Идея создана:", response.data);
+    
+    // Показываем успешное сообщение
+    this.$toast?.success?.('Идея успешно создана!') || 
+    alert('Идея успешно создана!');
+    
+    // Очищаем форму
+    this.resetForm();
+    
+    // Закрываем модальное окно (если есть)
+    this.closeModal();
+    
+    // Перенаправляем на страницу идеи или обновляем список
+    // this.$router.push(`/ideas/${response.data.idea.id}`);
+    
   } catch (error) {
-    console.error("Ошибка при создании:", error);
+    console.error("❌ Ошибка при создании идеи:", error);
   }
 },
     closeModal() {
@@ -402,7 +255,6 @@ async submitIdea(status) {
     },
   },
   async mounted() {
-    this.fetchSemesters();
     const technologiesData = await fetchTechnologies(); // Загружаем данные
     if (technologiesData) {
       this.technologies = technologiesData; // Обновляем массив технологий

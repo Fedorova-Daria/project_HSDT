@@ -4,44 +4,40 @@
     <div class="flex-1 overflow-auto custom-scrollbar-horizontal">
 
       <div class="h-full overflow-hidden p-3 pt-16 w-4/5 m-auto">
-        <!-- Селектор досок -->
+<!-- Селектор досок -->
 <div class="mb-4 flex justify-between items-center">
   <div class="flex space-x-4">
-    <!-- Выбор проекта -->
+    <!-- Единый селектор для проектов и идей -->
     <div class="relative">
       <select 
-  v-model="selectedProject" 
-  @change="onProjectChange"
-  class="bg-input text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-  :disabled="isLoading"
->
-  <option value="">Основная доска команды</option>
-  <option 
-    v-for="project in availableProjects" 
-    :key="project.id" 
-    :value="project.id"
-  >
-    {{ project.title }}
-  </option>
-</select>
-    </div>
-
-    <!-- Выбор идеи (если есть) -->
-    <div class="relative" v-if="availableIdeas.length > 0">
-      <select 
-        v-model="selectedIdea" 
-        @change="onIdeaChange"
+        v-model="selectedBoard" 
+        @change="onBoardChange"
         class="bg-input text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        :disabled="isLoading || selectedProject"
+        :disabled="isLoading"
       >
-        <option value="">Выберите идею</option>
-        <option 
-          v-for="idea in availableIdeas" 
-          :key="idea.id" 
-          :value="idea.id"
-        >
-          {{ idea.title }}
-        </option>
+        <option value="">Основная доска команды</option>
+        
+        <!-- Группа проектов -->
+        <optgroup v-if="availableProjects.length > 0" label="Проекты">
+          <option 
+            v-for="project in availableProjects" 
+            :key="`project-${project.id}`" 
+            :value="`project-${project.id}`"
+          >
+            📋 {{ project.title }}
+          </option>
+        </optgroup>
+        
+        <!-- Группа идей -->
+        <optgroup v-if="availableIdeas.length > 0" label="Идеи">
+          <option 
+            v-for="idea in availableIdeas" 
+            :key="`idea-${idea.id}`" 
+            :value="`idea-${idea.id}`"
+          >
+            💡 {{ idea.title }}
+          </option>
+        </optgroup>
       </select>
     </div>
 
@@ -391,6 +387,7 @@ export default {
         editingTask: null, // Для отслеживания редактируемой задачи
         selectedProject: '', // Выбранный проект
         selectedIdea: '', // Выбранная идея
+        selectedBoard: '',
         availableProjects: [], // Доступные проекты
         availableIdeas: [], // Доступные идеи
         team: null, // Данные команды
@@ -407,11 +404,35 @@ export default {
     document.removeEventListener('click', this.handleClickOutside);
   },
   methods: {
+    onBoardChange() {
+    if (!this.selectedBoard) {
+      // Загружаем основную доску команды
+      this.selectedProject = '';
+      this.selectedIdea = '';
+      this.fetchBoardData();
+      return;
+    }
+
+    const [type, id] = this.selectedBoard.split('-');
+    
+    if (type === 'project') {
+      this.selectedProject = id;
+      this.selectedIdea = '';
+      this.fetchBoardData(id);
+    } else if (type === 'idea') {
+      this.selectedIdea = id;
+      this.selectedProject = '';
+      this.fetchBoardData(null, id);
+    }
+  },
     // Загрузка данных команды
   async loadTeamData() {
     try {
       const response = await api.get(`/teams/${this.teamId}/`);
       this.team = response.data;
+      
+      console.log('Данные команды:', this.team);
+      console.log('Идеи команды:', this.team.ideas);
       
       // Загружаем доступные проекты и идеи
       await this.loadAvailableProjects();
@@ -448,12 +469,16 @@ export default {
     }
 
     try {
+      console.log('Загружаем идеи для команды:', this.team.ideas);
+      
       const ideaPromises = this.team.ideas.map(ideaId => 
         api.get(`/ideas/${ideaId}/`)
       );
       
       const ideaResponses = await Promise.all(ideaPromises);
       this.availableIdeas = ideaResponses.map(response => response.data);
+      
+      console.log('Загруженные идеи:', this.availableIdeas);
         
     } catch (error) {
       console.error("❌ Ошибка загрузки идей:", error);

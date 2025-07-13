@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 from rest_framework import status
 from django.utils import timezone
 from collections import defaultdict
-
+from rest_framework.exceptions import ValidationError
 from .serializers import (ProjectSerializer, ProjectUpdateSerializer, ProjectUpdateStatusSerializer, ProjectMessageSerializer,
                         IdeaSerializer, ProjectApplicationSerializer, IdeaEditSerializer, ProjectParticipantRatingSerializer, ProjectParticipantDetailSerializer)
 from .permissions import IsStudent, IsOwnerOrReadOnly
@@ -199,10 +199,55 @@ class IdeaViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = IdeaFilter
 
-    def create_private_idea(owner, team, title, description, skills=None):
+    @action(detail=False, methods=['post'], url_path='create-private-idea')
+    def create_private_idea_endpoint(self, request):
+        """Создание приватной идеи через API"""
+        owner = request.user
+        team_id = request.data.get("team")  # Изменено имя переменной
+        title = request.data.get("title")
+        description = request.data.get("description")
+        skills = request.data.get("skills", [])
+        
+        # Валидация обязательных полей
+        if not team_id:
+            return Response({"detail": "team обязателен."}, status=status.HTTP_400_BAD_REQUEST)
+        if not title:
+            return Response({"detail": "title обязателен."}, status=status.HTTP_400_BAD_REQUEST)
+        if not description:
+            return Response({"detail": "description обязателен."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Получаем команду по ID
+            team = Team.objects.get(id=team_id)
+        except Team.DoesNotExist:
+            return Response({"detail": "Команда не найдена."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Создаем приватную идею
+        try:
+            idea = self._create_private_idea_internal(owner, team, title, description, skills)
+            
+            # Сериализуем созданную идею для ответа
+            serializer = IdeaSerializer(idea)
+            
+            return Response({
+                "detail": "Идея успешно создана.",
+                "idea": serializer.data,
+            }, status=status.HTTP_201_CREATED)
+            
+        except ValidationError as e:
+            return Response({
+                "detail": str(e),
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "detail": "Ошибка при создании идеи.",
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def _create_private_idea_internal(self, owner, team, title, description, skills=None):
         """Создает идею, привязанную к приватной команде."""
         if not team.can_create_idea():
-            raise TeamNotPrivateError("Только приватные команды могут создавать идеи.")
+            raise ValidationError("Только приватные команды могут создавать идеи.")
 
         idea = Idea.objects.create(
             owner=owner,
@@ -211,20 +256,36 @@ class IdeaViewSet(viewsets.ModelViewSet):
             description=description,
             status="private"
         )
-        if skills:
+        
+        # Добавляем навыки, если они переданы
+        if skills and isinstance(skills, list):
             idea.skills_required.set(skills)
+
+        team.ideas.add(idea)
+        team.save()
 
         # Создание канбан-доски для новой идеи
         board = Board.objects.create(
             team=team,
             idea=idea,
-            project=None  # Для идей проект не указываем
+            project=None
         )
-        
+
         # Создание базовых колонок для доски идеи
-        create_default_columns(board)
+        self._create_default_columns(board)  # Изменено имя метода
 
         return idea
+
+    def _create_default_columns(self, board):  # ✅ Метод внутри класса с правильным отступом
+        """Создание базовых колонок для новой доски"""
+        default_columns = [
+            {'title': 'Сделать', 'column_type': 'default', 'order': 1},
+            {'title': 'В процессе', 'column_type': 'default', 'order': 2},
+            {'title': 'Готово', 'column_type': 'completed', 'order': 3}
+        ]
+        
+        for col_data in default_columns:
+            Column.objects.create(board=board, **col_data)
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
@@ -296,7 +357,12 @@ class ProjectApplicationViewSet(viewsets.ModelViewSet):
         elif app.applicant_type == 'team' and app.team:
             if app.team in project.teams.all():
                 return Response({'detail': 'Команда уже в проекте'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Добавляем команду к проекту
             project.teams.add(app.team)
+            
+            app.team.projects.add(project)
+            app.team.save()
 
             # Создание канбан-доски для команды, которая была добавлена в проект
             board = Board.objects.create(
@@ -373,13 +439,12 @@ def add_idea_to_team(request, team_id, idea_id):
     except Idea.DoesNotExist:
         return Response({'error': 'Идея не найдена'}, status=status.HTTP_404_NOT_FOUND)
 
-
 def create_default_columns(self, board):
-    """Создание базовых колонок для новой доски"""
-    default_columns = [
-        {'title': 'Сделать', 'column_type': 'default', 'order': 1},
-        {'title': 'В процессе', 'column_type': 'default', 'order': 2},
-        {'title': 'Готово','column_type': 'completed', 'order': 3}
-    ]
-    for col_data in default_columns:
-        Column.objects.create(board=board, **col_data)
+        """Создание базовых колонок для новой доски"""
+        default_columns = [
+            {'title': 'Сделать', 'column_type': 'default', 'order': 1},
+            {'title': 'В процессе', 'column_type': 'default', 'order': 2},
+            {'title': 'Готово','column_type': 'completed', 'order': 3}
+        ]
+        for col_data in default_columns:
+            Column.objects.create(board=board, **col_data)

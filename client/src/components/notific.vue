@@ -1,60 +1,62 @@
 <template>
   <div>
-  <div
-    v-if="showNotifications"
-    class="absolute right-0 mt-2 w-72 bg-input rounded-md shadow-lg py-1 z-50 border border-gray-700 max-h-96 overflow-y-auto"
-  >
-    <div class="px-4 py-2 flex justify-between items-center">
-      <h3 class="font-medium">Уведомления</h3>
-      <button
-        @click="markAllAsRead"
-        class="btn-read-all text-xs"
-        :disabled="loading"
-      >
-        {{ loading ? 'Обработка...' : 'Прочитать все' }}
-      </button>
-    </div>
+    <div
+      v-if="showNotifications"
+      @click.stop
+      ref="notificationsDropdown"
+      class="absolute right-0 mt-2 w-72 bg-input rounded-md shadow-lg py-1 border border-gray-700 max-h-96 overflow-y-auto" style="z-index: 99999;"
+    >
+      <div class="px-4 py-2 flex justify-between items-center">
+        <h3 class="font-medium">Уведомления</h3>
+        <button
+          @click="markAllAsRead"
+          class="btn-read-all text-xs"
+          :disabled="loading"
+        >
+          {{ loading ? 'Обработка...' : 'Прочитать все' }}
+        </button>
+      </div>
 
-    <div v-if="notifications.length > 0">
-      <div
-        v-for="notification in notifications"
-        :key="notification.id"
-        class="px-4 py-3 cursor-pointer bg-card border-b last:border-b-0"
-        :class="{ read: !notification.is_read }"
-        @click="openModal(notification)"
-      >
-        <div class="flex items-start">
-          <div class="flex-shrink-0 mr-3">
-            <div class="h-8 w-8 rounded-full bg-zinc-500 flex items-center justify-center text-white">
-              {{ getNotificationIcon(notification.type) }}
+      <div v-if="notifications.length > 0">
+        <div
+          v-for="notification in notifications"
+          :key="notification.id"
+          class="px-4 py-3 cursor-pointer bg-card border-b last:border-b-0"
+          :class="{ read: !notification.is_read }"
+          @click="openModal(notification)"
+        >
+          <div class="flex items-start">
+            <div class="flex-shrink-0 mr-3">
+              <div class="h-8 w-8 rounded-full bg-zinc-500 flex items-center justify-center text-white">
+                {{ getNotificationIcon(notification.type) }}
+              </div>
             </div>
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium truncate">
-              {{ notification.title }}
-            </p>
-            <p class="text-xs mt-1">
-              {{ notification.message }}
-            </p>
-            <p class="text-xs text-gray-500 mt-1">
-              {{ formatTime(new Date(notification.created_at)) }}
-            </p>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium truncate">
+                {{ notification.title }}
+              </p>
+              <p class="text-xs mt-1">
+                {{ notification.message }}
+              </p>
+              <p class="text-xs text-gray-500 mt-1">
+                {{ formatTime(new Date(notification.created_at)) }}
+              </p>
+            </div>
           </div>
         </div>
       </div>
+      <div v-else class="px-4 py-6 text-center">
+        <p class="text-gray-400 text-sm">Нет новых уведомлений</p>
+      </div>
     </div>
-    <div v-else class="px-4 py-6 text-center">
-      <p class="text-gray-400 text-sm">Нет новых уведомлений</p>
-    </div>
-</div>
-<!-- Модальное окно -->
-  <NotificationModal
-  v-if="isModalOpen && selectedNotification"
-    :show="isModalOpen"
-    :notification="selectedNotification"
-    @close="closeModal"
-  />
 
+    <!-- Модальное окно -->
+    <NotificationModal
+      v-if="isModalOpen && selectedNotification"
+      :show="isModalOpen"
+      :notification="selectedNotification"
+      @close="closeModal"
+    />
   </div>
 </template>
 
@@ -69,59 +71,88 @@ export default {
   components: {NotificationModal},
   props: {
     showNotifications: Boolean,
+    notificationButton: {
+      type: Object,
+      default: null
+    }
   },
+  emits: ['close'], // ✅ Добавляем эмит для закрытия
   data() {
     return {
       loading: false,
       currentBgColor: "",
       notifications: [],
-      pollingInterval: null,  // для автообновления
+      pollingInterval: null,
       isModalOpen: false,
       selectedNotification: null,
     };
   },
   computed: {
     selectedInstitute() {
-      return this.globalState.institute; // Глобальное состояние для чтения
+      return this.globalState.institute;
     },
     instituteStyle() {
-      const style = instituteStyles[this.selectedInstitute]; // Используем глобальное состояние
-      return style || { buttonOffColor: "#ccc" }; // Дефолтный стиль
+      const style = instituteStyles[this.selectedInstitute];
+      return style || { buttonOffColor: "#ccc" };
     },
     unreadNotificationsCount() {
       return this.notifications.filter((n) => !n.read).length;
     },
   },
   mounted() {
+
     this.loadNotifications();
-    // Устанавливаем автообновление уведомлений каждые 30 секунд
     this.pollingInterval = setInterval(this.loadNotifications, 300000);
+    
+    // ✅ Добавляем обработчик клика при монтировании
+    document.addEventListener('click', this.handleClickOutside);
   },
   beforeUnmount() {
     clearInterval(this.pollingInterval);
+    
+    // ✅ Удаляем обработчик при размонтировании
+    document.removeEventListener('click', this.handleClickOutside);
   },
   methods: {
+    // ✅ Новый метод для обработки кликов вне области
+    handleClickOutside(event) {
+      if (!this.showNotifications) return;
+      
+      const dropdown = this.$refs.notificationsDropdown;
+      const button = this.notificationButton;
+      
+      // Проверяем, что клик не по dropdown и не по кнопке уведомлений
+      if (dropdown && !dropdown.contains(event.target) && 
+          (!button || !button.contains(event.target))) {
+        this.closeNotifications();
+      }
+    },
+    
+    // ✅ Метод для закрытия уведомлений
+    closeNotifications() {
+      this.$emit('close');
+    },
+
     async markAllAsRead() {
-    try {
-      await api.post('/notifications/mark_all_as_read/', {
-        notification_type: "",  // или что требует API
-        message: "",                        // если поле можно пустым
-        is_read: true,
-        related_team: null,
-        related_project: null,
-        related_team_join_request: null,
-        related_project_application: null,
-      });
-      // Обнови локально, если надо
-      this.notifications.forEach(n => n.is_read = true);
-    } catch (error) {
-      console.error('Ошибка отметки всех уведомлений прочитанными', error);
-    }
-  },
+      try {
+        await api.post('/notifications/mark_all_as_read/', {
+          notification_type: "",
+          message: "",
+          is_read: true,
+          related_team: null,
+          related_project: null,
+          related_team_join_request: null,
+          related_project_application: null,
+        });
+        this.notifications.forEach(n => n.is_read = true);
+      } catch (error) {
+        console.error('Ошибка отметки всех уведомлений прочитанными', error);
+      }
+    },
+
     async loadNotifications() {
       try {
         const data = await notificationService.getNotifications();
-        // Если data не массив, то пробуем получить data.notifications или устанавливаем []
         if (Array.isArray(data)) {
           this.notifications = data;
         } else if (data && Array.isArray(data.notifications)) {
@@ -134,6 +165,7 @@ export default {
         this.notifications = [];
       }
     },
+
     getNotificationIcon(type) {
       const icons = {
         message: "✉️",
@@ -144,6 +176,7 @@ export default {
       };
       return icons[type] || "🔔";
     },
+
     formatTime(date) {
       const now = new Date();
       const diffInSeconds = Math.floor((now - date) / 1000);
@@ -161,11 +194,13 @@ export default {
         month: "short",
       });
     },
+
     openModal(notification) {
-  console.log('Открываем модалку с уведомлением:', notification);
-  this.selectedNotification = notification;
-  this.isModalOpen = true;
-},
+      console.log('Открываем модалку с уведомлением:', notification);
+      this.selectedNotification = notification;
+      this.isModalOpen = true;
+    },
+
     closeModal() {
       this.isModalOpen = false;
       this.selectedNotification = null;
@@ -187,7 +222,11 @@ export default {
 };
 </script>
 
+
 <style scoped>
+.z-70 {
+  z-index: 80; /* Обеспечим, чтобы модалки были выше колонок */
+}
 .read {
   opacity: 0.6;
 }

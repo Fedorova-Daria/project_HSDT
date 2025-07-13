@@ -175,7 +175,7 @@
         </div>
       </div>
       <div
-        class="w-3/4 mt-5 bg-card rounded-lg p-6 overflow-auto"
+        class="w-3/4 mt-5 bg-card rounded-lg p-6 overflow-auto z-content"
         style="height: auto; max-height: 100vh; overflow-y: auto"
       >
         <h2 class="text-2xl font-semibold mb-4">Описание идеи</h2>
@@ -870,5 +870,8 @@ export default {
 
 .animate-like {
   animation: likeJump 0.3s ease-in-out;
+}
+.z-content {
+  z-index: 1 !important;
 }
 </style>

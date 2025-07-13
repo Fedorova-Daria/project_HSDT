@@ -7,7 +7,7 @@ export const instituteStyles = {
     },
     ARCHID: {
       buttonOnColor: "#BE2300",
-      buttonOffColor: "#FF3204",   
+      buttonOffColor: "#F9613E",   
       textColor: "#F9613E",
       likeColor: "#FF4500",
     },

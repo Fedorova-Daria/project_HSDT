@@ -116,7 +116,7 @@
 
         <!-- Кнопка уведомлений -->
         <div class="relative">
-          <button class="relative p-1" @click="toggleNotifications">
+          <button class="relative p-1" @click.stop="toggleNotifications">
             <img
               :src="isDark ? '/notificate.svg' : '/notificate_dark.svg'"
               alt="notification"
