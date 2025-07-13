@@ -117,7 +117,7 @@
         <button
           v-if="selectedInstituteFilter || selectedGroupFilter"
           @click="resetFilters"
-          class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors h-10"
+          class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-always-white rounded-md transition-colors h-10"
         >
           Сбросить
         </button>
@@ -199,8 +199,8 @@
                       <span 
                         class="px-2 py-1 rounded-full font-medium text-sm cursor-pointer hover:underline"
                         :class="item.type === 'project' 
-                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' 
-                          : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'"
+                          ? 'bg-blue-100 ' 
+                          : 'bg-green-100 '"
                           @click="goToProjectOrIdea(item.type, item.id)"
                       >
                         {{ item.type === 'project' ? '📋' : '💡' }} {{ item.title }}

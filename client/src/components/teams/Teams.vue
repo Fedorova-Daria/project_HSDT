@@ -12,12 +12,47 @@
       >
       Создать команду
       </button>
+      <!-- Фильтры с анимацией -->
+<div class="flex justify-center space-x-6 relative mt-3">
+  <button
+    v-for="(filter, index) in filters"
+    :key="index"
+    @click="setFilter(filter.value)"
+    class="relative pb-1 text-lg font-medium transition-colors duration-300"
+    :class="{
+      'text-white': activeFilter === filter.value,
+      'text-zinc-200 opacity-70 hover:text-white': activeFilter !== filter.value,
+    }"
+  >
+    {{ filter.label }}
+    <!-- Анимированная полоска -->
+    <span
+      class="absolute bottom-0 h-0.5 transition-all duration-300 rounded-lg"
+      :style="{
+        backgroundColor: currentBgColor,
+        left: activeFilter === filter.value ? '0' : '50%',
+        width: activeFilter === filter.value ? '100%' : '0',
+        transform: activeFilter === filter.value ? 'translateX(0)' : 'translateX(-50%)'
+      }"
+    >
+    </span>
+  </button>
+</div>
+
+    <!-- Индикатор загрузки -->
+    <div v-if="isLoading" class="flex justify-center items-center py-8">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      <span class="ml-2">Загрузка команд...</span>
+    </div>
+
+    <!-- Таблица команд -->
+    <div v-else>
       <!-- Таблица команд --> 
-      <TeamTable :teams="teams" :availableTechStack="availableTechStack"  :globalState="globalState"/>
+      <TeamTable :teams="teams"  :globalState="globalState"/>
+    </div>
       <!-- Компонент для создания команды -->
       <TeamCreate
   :isCreateModalOpen="isCreateModalOpen"
-  :availableTechStack="availableTechStack"
   @close="closeCreateModal"
   @create-team="createTeam"
 />
@@ -44,17 +79,20 @@ export default {
   data() {
     return {
       userRole: null, // Роль текущего пользователя
-      availableTechStack: {
-        "Программирование": ["Python", "Vue", "Django", "Node.js", "React"],
-        "Дизайн": ["3D-моделирование", "Figma", "Photoshop"],
-        "Маркетинг": ["SEO", "SMM", "Контент-маркетинг"],
-      },
+      currentUserId: null,
       currentBgColor: "",
+      isLoading: false,
+      activeFilter: 'all',
       teams: [],
       isCreateModalOpen: false,
       bgPosition: { x: 0, y: 0 },
       targetPosition: { x: 0, y: 0 },
       lerpFactor: 0.1, // Коэффициент плавности анимации
+      filters: [
+        { label: 'Все', value: 'all' },
+        { label: 'Мои', value: 'owned' },
+        { label: 'Участвую', value: 'member' }
+      ]
     };
   },
   computed: {
@@ -92,19 +130,128 @@ export default {
     },
   },
   methods: {
-    /**
-     * Загружает список команд с использованием настроенного axios-инстанса.
-     */
-      async fetchTeams() {
-      try {
-        // При выполнении запроса через "api" интерсептор гарантирует, что передается корректный token.
-        const response = await api.get("/teams/");
-        this.teams = response.data;
-        console.log("Команды успешно загружены:", response.data);
-      } catch (error) {
-        console.error("Ошибка загрузки команд:", error);
+    // Инициализация данных пользователя
+    initializeUser() {
+      const userDataStr = localStorage.getItem('userData');
+      if (userDataStr) {
+        try {
+          const userData = JSON.parse(userDataStr);
+          this.currentUserId = userData.id;
+        } catch (e) {
+          console.error('Ошибка парсинга userData из localStorage', e);
+        }
       }
     },
+
+    // Установка активного фильтра
+    async setFilter(filterValue) {
+      this.activeFilter = filterValue;
+      await this.fetchTeams();
+    },
+
+    // Загрузка команд с учетом фильтра
+    async fetchTeams() {
+      if (!this.currentUserId) {
+        console.error('ID пользователя не найден');
+        return;
+      }
+
+      this.isLoading = true;
+      
+      try {
+        let url = '/teams/';
+        const params = new URLSearchParams();
+        
+        // Исключаем команды со статусом "over" для всех фильтров
+        params.append('status', 'active,private,in_progress');
+        
+        // Применяем фильтры в зависимости от выбранного типа
+        switch (this.activeFilter) {
+          case 'owned':
+            // Команды, где пользователь является владельцем
+            params.append('owner', this.currentUserId);
+            break;
+            
+          case 'member':
+            // Команды, где пользователь является участником
+            params.append('members_ids', this.currentUserId);
+            break;
+            
+          case 'all':
+          default:
+            // Все команды (без дополнительных фильтров, кроме статуса)
+            break;
+        }
+        
+        // Добавляем параметры к URL
+        if (params.toString()) {
+          url += '?' + params.toString();
+        }
+        
+        console.log('Запрос команд с URL:', url);
+        
+        const response = await api.get(url);
+        this.teams = response.data;
+        
+        console.log(`Команды успешно загружены (${this.activeFilter}):`, response.data);
+        
+      } catch (error) {
+        console.error('Ошибка загрузки команд:', error);
+        this.teams = [];
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    // Получение количества команд для каждого фильтра (опционально)
+    async getFilterCounts() {
+      try {
+        const [allResponse, ownedResponse, memberResponse] = await Promise.all([
+          api.get('/teams/?status=active,private,in_progress'),
+          api.get(`/teams/?owner=${this.currentUserId}&status=active,private,in_progress`),
+          api.get(`/teams/?members_ids=${this.currentUserId}&status=active,private,in_progress`)
+        ]);
+
+        // Обновляем фильтры с количеством
+        this.filters = [
+          { label: `Все (${allResponse.data.length})`, value: 'all' },
+          { label: `Мои (${ownedResponse.data.length})`, value: 'owned' },
+          { label: `Участвую (${memberResponse.data.length})`, value: 'member' }
+        ];
+        
+      } catch (error) {
+        console.error('Ошибка получения количества команд:', error);
+      }
+    },
+    async fetchTeams() {
+  this.isLoading = true;
+  
+  try {
+    let url;
+    
+    switch (this.activeFilter) {
+      case 'owned':
+        url = `/teams/?owner=${this.currentUserId}`;
+        break;
+      case 'member':
+        url = `/teams/?members_ids=${this.currentUserId}`;
+        break;
+      case 'all':
+      default:
+        url = `/teams/?status=active,private,in_progress`;
+        break;
+    }
+    
+    const response = await api.get(url);
+    this.teams = response.data;
+    
+  } catch (error) {
+    console.error('Ошибка загрузки команд:', error);
+    this.teams = [];
+  } finally {
+    this.isLoading = false;
+  }
+},
     /**
      * Проверяет, что имя команды является уникальным.
      * @param {string} name - Имя команды, которое нужно проверить.
@@ -174,10 +321,11 @@ export default {
       requestAnimationFrame(() => this.lerpBackgroundPosition());
     },
   },
-  mounted() {
+  async mounted() {
     window.addEventListener("mousemove", this.updateBackgroundPosition);
     this.lerpBackgroundPosition();
-    this.fetchTeams();
+    this.initializeUser();
+    await this.fetchTeams();
   },
   beforeDestroy() {
     window.removeEventListener("mousemove", this.updateBackgroundPosition);
@@ -201,6 +349,7 @@ export default {
 </script>
 
 <style scoped>
+
 /* Стили для размытого фона */
 .blurred-bg {
   position: fixed;
@@ -231,7 +380,10 @@ export default {
   ); /* Затемнение (0.5 = 50% прозрачности) */
   z-index: 1;
 }
-
+.relative.z-10 {
+  position: relative;
+  z-index: 10;
+}
 /* Остальные стили */
 .bg-cards {
   background-color: #292929;
