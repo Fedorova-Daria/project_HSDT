@@ -260,7 +260,49 @@
   @close="closeCreateIdeaModal"
   @created="onIdeaCreated"
 />
-  <Kanban :teamId="teamId" />
+
+
+
+<div class="w-4/5 mx-auto">
+    <!-- Кнопка -->
+    <button
+      @click="toggleKanban"
+      class="w-full  text-always-white font-semibold py-4 px-6 rounded-t-lg shadow-lg transition-colors duration-200 flex items-center justify-center relative z-10"
+      :class="{ 'rounded-b-none': isOpen, 'rounded-b-lg': !isOpen }"
+      :style="{ backgroundColor: currentBgColor }"
+      @mouseover="currentBgColor = instituteStyle.buttonOnColor"
+      @mouseleave="currentBgColor = instituteStyle.buttonOffColor"
+    >
+      <span class="text-lg">{{ isOpen ? 'Скрыть канбан-доску' : 'Открыть канбан-доску' }}</span>
+      <svg
+        :class="{ 'rotate-180': isOpen }"
+        class="ml-2 w-5 h-5 transition-transform duration-300"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+      </svg>
+    </button>
+
+    <!-- Контейнер с фиксированной высотой -->
+    <div
+      class="bg-gray-100 border border-gray-200 border-t-0 rounded-b-lg shadow-lg overflow-hidden transition-all duration-600 ease-out z-1"
+      :style="{ 
+        height: isOpen ? '800px' : '0px',
+        opacity: isOpen ? 1 : 0,
+        transform: isOpen ? 'scaleY(1)' : 'scaleY(0)',
+        transformOrigin: 'top'
+      }"
+    >
+      <div class="p-6 h-full">
+        <Kanban :teamId="teamId" />
+      </div>
+    </div>
+  </div>
+
+
+
   <!-- Модальное окно для команды, не имеющей статус "приватный" -->
     <div v-if="!isPrivate && showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60">
       <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
@@ -371,10 +413,10 @@ export default {
       showModal: false,
       isPrivate: false,
       projects: [],
-    ideas: [],
-    isLoading: false,
-    activeItemType: null,  // Поле для хранения активного типа (project или idea)
-    activeItemId: null,
+      ideas: [],
+      isLoading: false,
+      activeItemType: null,  // Поле для хранения активного типа (project или idea)
+      activeItemId: null,
       members: [],
       isModalOpen: false,
       currentBgColor: "",
@@ -390,7 +432,8 @@ export default {
         status: "",
       },
       errorMessage: '',        // Сообщения об ошибках
-      skills: []
+      skills: [],
+      isOpen: false
     };
   },
   computed: {
@@ -460,6 +503,9 @@ export default {
     this.loadTechnologies();
   },
   methods: {
+    toggleKanban() {
+      this.isOpen = !this.isOpen
+    },
     openCreateIdeaModal() {
     this.showModal = false; // Закрываем первую модалку
     this.showCreateIdeaModal = true; // Открываем модалку создания идеи
@@ -758,5 +804,19 @@ export default {
 }
 .z-content {
   z-index: 1 !important;
+}
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.5s ease-in-out;
+}
+
+.slide-down-enter-from {
+  height: 0;
+  opacity: 0;
+}
+
+.slide-down-leave-to {
+  height: 0;
+  opacity: 0;
 }
 </style>

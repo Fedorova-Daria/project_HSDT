@@ -3,87 +3,133 @@
 
     <div class="flex-1 overflow-auto custom-scrollbar-horizontal">
 
-      <div class="h-full overflow-hidden p-3 pt-16 w-4/5 m-auto">
-<!-- Селектор досок -->
-<div class="mb-4 flex justify-between items-center">
-  <div class="flex space-x-4">
-    <!-- Единый селектор для проектов и идей -->
-    <div class="relative">
-      <select 
-        v-model="selectedBoard" 
-        @change="onBoardChange"
-        class="bg-input text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        :disabled="isLoading"
-      >
-        <option value="">Основная доска команды</option>
-        
-        <!-- Группа проектов -->
-        <optgroup v-if="availableProjects.length > 0" label="Проекты">
-          <option 
-            v-for="project in availableProjects" 
-            :key="`project-${project.id}`" 
-            :value="`project-${project.id}`"
-          >
-            📋 {{ project.title }}
-          </option>
-        </optgroup>
-        
-        <!-- Группа идей -->
-        <optgroup v-if="availableIdeas.length > 0" label="Идеи">
-          <option 
-            v-for="idea in availableIdeas" 
-            :key="`idea-${idea.id}`" 
-            :value="`idea-${idea.id}`"
-          >
-            💡 {{ idea.title }}
-          </option>
-        </optgroup>
-      </select>
+      <div class="h-full overflow-hidden p-3  w-7/8 m-auto">
+<div class="h-full overflow-hidden p-3  m-auto">
+  <!-- Селектор досок -->
+  <div class="mb-4 flex justify-between items-center">
+    <div class="flex space-x-4">
+      <!-- Единый селектор для проектов и идей -->
+      <div class="relative">
+        <select 
+          v-model="selectedBoard" 
+          @change="onBoardChange"
+          class="bg-input rounded-lg px-4 py-2 focus:outline-none"
+          :disabled="isLoading"
+        >
+          <option value="">Основная доска команды</option>
+          
+          <!-- Группа проектов -->
+          <optgroup v-if="availableProjects.length > 0" label="Проекты">
+            <option 
+              v-for="project in availableProjects" 
+              :key="`project-${project.id}`" 
+              :value="`project-${project.id}`"
+            >
+              📋 {{ project.title }}
+            </option>
+          </optgroup>
+          
+          <!-- Группа идей -->
+          <optgroup v-if="availableIdeas.length > 0" label="Идеи">
+            <option 
+              v-for="idea in availableIdeas" 
+              :key="`idea-${idea.id}`" 
+              :value="`idea-${idea.id}`"
+            >
+              💡 {{ idea.title }}
+            </option>
+          </optgroup>
+        </select>
+      </div>
+
+      <!-- Индикатор загрузки -->
+      <div v-if="isLoading" class="flex items-center">
+        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+        <span class="ml-2 text-sm text-gray-400">Загрузка...</span>
+      </div>
     </div>
 
-    <!-- Индикатор загрузки -->
-    <div v-if="isLoading" class="flex items-center">
-      <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-      <span class="ml-2 text-sm text-gray-400">Загрузка...</span>
+    <!-- Контейнер для всех элементов с относительным позиционированием -->
+    <div class="relative" ref="dropdownWrapper">
+      
+      <!-- Кнопка добавления новой колонки -->
+      <button
+        @click="toggleDropdown"
+        class="text-always-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800" 
+        type="button"
+      >
+        Добавить колонку 
+        <svg 
+          :class="{ 'rotate-180': showDropdown }"
+          class="w-2.5 h-2.5 ms-3 transition-transform duration-200" 
+          aria-hidden="true" 
+          xmlns="http://www.w3.org/2000/svg" 
+          fill="none" 
+          viewBox="0 0 10 6"
+        >
+          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
+        </svg>
+      </button>
+
+      <!-- Выпадающее меню выбора типа колонки -->
+      <div 
+        v-if="showDropdown && !creatingColumn"
+        class="absolute top-full right-0 mt-1 z-50 bg-white divide-y divide-gray-100 rounded-lg shadow-lg w-48 dark:bg-gray-700 border border-gray-200 dark:border-gray-600"
+      >
+        <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
+          <li>
+            <a 
+              @click="prepareColumn('default')" 
+              class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer"
+            >
+              Добавить обычную
+            </a>
+          </li>
+          <li>
+            <a 
+              @click="prepareColumn('completed')" 
+              class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer"
+            >
+              Добавить финальную
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Поле ввода названия колонки -->
+      <div 
+        v-if="creatingColumn" 
+        class="absolute top-full right-0 mt-1 z-50 w-64"
+      >
+        <div class="bg-white dark:bg-gray-700 rounded-lg shadow-lg p-3 border border-gray-200 dark:border-gray-600">
+          <input
+            v-model="newColumnTitle"
+            @keyup.enter="createColumn"
+            @keyup.escape="cancelCreatingColumn"
+            @blur="handleInputBlur"
+            placeholder="Введите название колонки"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-800"
+            autofocus
+          />
+          <div class="flex justify-end mt-2 space-x-2">
+            <button 
+              @click="cancelCreatingColumn"
+              class="px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+            >
+              Отмена
+            </button>
+            <button 
+              @click="createColumn"
+              class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Создать
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-
-    <!-- Кнопка добавления новой колонки -->
-    <div class="mb-4 flex justify-end relative" ref="dropdownWrapper">
-        <button
-            @click="toggleDropdownn"
-            class="text-always-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800" type="button">Добавить колонку <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
-            </svg>
-        </button>
-    </div>
-        
-        <!-- Форма добавления новой колонки -->
-        <div v-if="showDropdown"
-        ref="dropdownButton"
-            class="z-10 bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-44 dark:bg-gray-700 absolute top-full mr-1.5">
-            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
-                <li>
-                    <a  @click="prepareColumn('default')" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Добавить обычную</a>
-                </li>
-                <li>
-                    <a  @click="prepareColumn('completed')" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Добавить финальную</a>
-                </li>
-                <li>
-                </li>
-            </ul>
-        </div>
-        <div v-if="creatingColumn" class="absolute top-full right-0 mt-14 w-64">
-    <input
-    v-model="newColumnTitle"
-    @keyup.enter="createColumn"
-    @blur="cancelCreatingColumn"
-    placeholder="Введите название колонки"
-    class="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring text-white bg-zinc-700"
-    autofocus
-    />
 </div>
-        </div>
 
         <div class="overflow-x-auto pb-4">
     <div class="inline-flex space-x-3">
@@ -879,7 +925,9 @@ async deleteTask(taskId) {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
-
+.z-50 {
+  z-index: 70; /* Обеспечим, чтобы модалки были выше колонок */
+}
 select:disabled {
   opacity: 0.5;
   cursor: not-allowed;
